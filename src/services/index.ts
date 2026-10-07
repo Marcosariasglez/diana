@@ -1,7 +1,7 @@
-// Unico punto de cambio mock -> Supabase (7.7). Lee EXPO_PUBLIC_BACKEND.
-import { BACKEND } from '@/lib/env';
+// Unico punto de cambio mock -> Supabase (7.7). Lee EXPO_PUBLIC_BACKEND y CATALOG.
+import { BACKEND, CATALOG } from '@/lib/env';
 import type { CatalogRepository } from './catalog.repository';
-import { importRepository } from './import.repository';
+import { importRepository as mockImportRepository, type ImportRepository } from './import.repository';
 import { mockProfileRepository, type ProfileRepository } from './profile.repository';
 import { ratingRepository as mockRatingRepository, type RatingRepository } from './rating.repository';
 import { roomRepository as mockRoomRepository, type RoomRepository } from './room.repository';
@@ -10,8 +10,12 @@ import { activeCatalogRepository } from './catalog.select';
 import { supabaseProfileRepository } from './supabase/profile.repository';
 import { supabaseRatingRepository } from './supabase/rating.repository';
 import { supabaseRoomRepository } from './supabase/room.repository';
+import { tmdbCatalogRepository } from './tmdb/catalog.repository';
+import { tmdbSearchRepository } from './tmdb/search.repository';
+import { tmdbImportRepository } from './tmdb/import.repository';
 
 const useServer = BACKEND === 'supabase';
+const useTmdb = CATALOG === 'tmdb';
 
 /**
  * Los repositorios mock y los stores se importan entre si (dependencia circular). Para que el
@@ -25,8 +29,8 @@ export const catalogRepository = lazy<CatalogRepository>(() => activeCatalogRepo
 export const ratingRepository = lazy<RatingRepository>(() => (useServer ? supabaseRatingRepository : mockRatingRepository));
 export const profileRepository = lazy<ProfileRepository>(() => (useServer ? supabaseProfileRepository : mockProfileRepository));
 export const roomRepository = lazy<RoomRepository>(() => (useServer ? supabaseRoomRepository : mockRoomRepository));
-export const searchRepository = lazy<SearchRepository>(() => mockSearchRepository);
-export { importRepository };
+export const searchRepository = lazy<SearchRepository>(() => (useTmdb ? tmdbSearchRepository : mockSearchRepository));
+export const importRepository = lazy<ImportRepository>(() => (useTmdb ? tmdbImportRepository : mockImportRepository));
 
 export type { CatalogRepository } from './catalog.repository';
 export type { ImportRepository } from './import.repository';

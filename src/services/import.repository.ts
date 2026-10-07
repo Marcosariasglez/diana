@@ -45,9 +45,9 @@ export class ImportError extends Error {
 export const IMPORT_YEAR_TOLERANCE = 1;
 const BATCH = 500;
 
-type CsvRow = Record<string, string | undefined>;
+export type CsvRow = Record<string, string | undefined>;
 
-interface ParsedCsv {
+export interface ParsedCsv {
   fields: string[];
   rows: CsvRow[];
 }
@@ -120,20 +120,20 @@ function matchMovie(index: Map<string, Movie[]>, row: CsvRow): Movie | null {
   return best;
 }
 
-function parseRating(raw: string | undefined): Rating | null {
+export function parseRating(raw: string | undefined): Rating | null {
   const n = Number((raw ?? '').replace(',', '.'));
   if (!Number.isFinite(n) || n < 0.5 || n > 5) return null;
   return (Math.round(n * 2) / 2) as Rating;
 }
 
-function ratedAtOf(date: string | undefined): string {
+export function ratedAtOf(date: string | undefined): string {
   const d = date ? new Date(date) : null;
   return d && !Number.isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
 }
 
-type Report = (phase: ImportPhase, processed?: number, total?: number) => void;
+export type Report = (phase: ImportPhase, processed?: number, total?: number) => void;
 
-async function readFile(
+export async function readFile(
   file: { uri: string; name: string },
   report: Report,
 ): Promise<{ ratings: ParsedCsv | null; watched: ParsedCsv | null }> {
