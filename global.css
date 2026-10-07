@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Simulador de app movil en desktop. En pantalla real ocupa todo. */
+@media (min-width: 430px) {
+  #__next {
+    max-width: 390px;
+    margin: 0 auto;
+    min-height: 100vh;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+}

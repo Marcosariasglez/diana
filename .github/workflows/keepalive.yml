@@ -1,0 +1,11 @@
+name: keepalive
+on:
+  schedule:
+    - cron: '0 6 */3 * *'
+  workflow_dispatch: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evita la pausa de Supabase por inactividad
+        run: curl -fsS -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" "${{ vars.SUPABASE_URL }}/auth/v1/health"
