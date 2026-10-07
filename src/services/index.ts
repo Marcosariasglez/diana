@@ -10,7 +10,6 @@ import { activeCatalogRepository } from './catalog.select';
 import { supabaseProfileRepository } from './supabase/profile.repository';
 import { supabaseRatingRepository } from './supabase/rating.repository';
 import { supabaseRoomRepository } from './supabase/room.repository';
-import { tmdbCatalogRepository } from './tmdb/catalog.repository';
 import { tmdbSearchRepository } from './tmdb/search.repository';
 import { tmdbImportRepository } from './tmdb/import.repository';
 
