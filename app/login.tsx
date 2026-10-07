@@ -32,14 +32,14 @@ export default function Login() {
       <View style={styles.wrap}>
         <Text accessibilityRole="header" style={[textStyle('heroTitle'), styles.title]}>Diana</Text>
         <Text style={[textStyle('body'), styles.subtitle]}>
-          Inicia sesi\u00f3n para guardar tus valoraciones y jugar con amigos.
+          Inicia sesión para guardar tus valoraciones y jugar con amigos.
         </Text>
 
         <Button label="Continuar con Google" variant="primary" onPress={() => void signInWithGoogle()} />
 
-        <Text style={[textStyle('label'), styles.or]}>O CON UN C\u00d3DIGO POR CORREO</Text>
+        <Text style={[textStyle('label'), styles.or]}>O CON UN CÓDIGO POR CORREO</Text>
         <TextInput
-          accessibilityLabel="Correo electr\u00f3nico"
+          accessibilityLabel="Correo electrónico"
           placeholder="tu@correo.com"
           value={email}
           onChangeText={setEmail}
@@ -50,17 +50,17 @@ export default function Login() {
         {sent ? (
           <>
             <TextInput
-              accessibilityLabel="C\u00f3digo de verificaci\u00f3n"
-              placeholder="C\u00f3digo"
+              accessibilityLabel="Código de verificación"
+              placeholder="Código"
               value={code}
               onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 8))}
               keyboardType="number-pad"
               style={styles.input}
             />
-            <Button label="Verificar c\u00f3digo" variant="dark" loading={busy} disabled={code.length < 6} onPress={() => void verify()} />
+            <Button label="Verificar código" variant="dark" loading={busy} disabled={code.length < 6} onPress={() => void verify()} />
           </>
         ) : (
-          <Button label="Enviar c\u00f3digo" variant="secondary" loading={busy} disabled={!email.includes('@')} onPress={() => void send()} />
+          <Button label="Enviar código" variant="secondary" loading={busy} disabled={!email.includes('@')} onPress={() => void send()} />
         )}
         {error ? <Text accessibilityLiveRegion="polite" style={[textStyle('bodySmall'), styles.error]}>{error}</Text> : null}
       </View>
