@@ -25,7 +25,7 @@ jobs:
         env:
           EXPO_BASE_URL: /diana
           EXPO_PUBLIC_BASE_URL: /diana
-          EXPO_PUBLIC_BACKEND: ${{ vars.BACKEND || 'mock' }}
+          EXPO_PUBLIC_BACKEND: ${{ vars.BACKEND || 'supabase' }}
           EXPO_PUBLIC_CATALOG: ${{ vars.CATALOG || 'mock' }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
