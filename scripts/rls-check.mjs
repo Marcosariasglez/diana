@@ -1,6 +1,10 @@
-// Prueba de aislamiento (RLS) con dos usuarios reales de prueba. Uso: node scripts/rls-check.mjs
+// Prueba de aislamiento (RLS) con usuarios reales de prueba. Uso: node scripts/rls-check.mjs
 // Lee .env.local: EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY y SUPABASE_SERVICE_ROLE_KEY (la de servicio SOLO en local).
-// Crea 2 usuarios temporales, comprueba permisos y los borra. Sale con codigo 1 si algo falla.
+// Crea 3 usuarios temporales (diana-rls-*@example.com), comprueba permisos y los borra al final.
+// ⚠️ Apunta al proyecto de .env.local (hoy: PRODUCCIÓN; no existe proyecto de pruebas).
+//    Solo ejecutarlo con la migración 0005 desplegada (`npx supabase db push`) y un
+//    respaldo reciente: la comprobación de `delete_user_data` espera denegación por
+//    permisos (revoke), no "función inexistente". Sale con codigo 1 si algo falla.
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 
@@ -106,8 +110,15 @@ try {
   check('B no modifica el perfil de A', (profUpdate.data ?? []).length === 0);
 
   // delete_user_data: RPC security definer REVOKE a public/anon/authenticated.
-  const delClient = await a.client.rpc('delete_user_data', { target_user_id: a.id });
-  check('delete_user_data no es llamable por el cliente (solo service_role)', !!delClient.error);
+  // La comprobación exige denegación por PERMISOS (el revoke de 0005), no
+  // "función inexistente": si 0005 no está desplegada, PostgREST contesta
+  // "Could not find the function..." y el check debe fallar.
+  const delClient = await a.client.rpc('delete_user_data', { p_target_user_id: a.id });
+  check(
+    'delete_user_data bloqueado por permisos (revoke a clientes)',
+    /permission denied/i.test(delClient.error?.message ?? ''),
+    delClient.error?.message,
+  );
   // ...y A sigue intacto tras el intento.
   const profStill = await a.client.from('profiles').select('id').eq('id', a.id).single();
   check('A sigue vivo tras el intento de borrado', !profStill.error);

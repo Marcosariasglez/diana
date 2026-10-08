@@ -24,8 +24,12 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({})) as { everywhere?: boolean };
   const everywhere = body.everywhere === true;
 
-  // Borra datos de Diana en transacción (order matters for FKs)
-  const { error: dbError } = await admin.rpc('delete_user_data', { target_user_id: userId });
+  // Borra datos de Diana en transacción (order matters for FKs).
+  // El nombre del parámetro debe coincidir con la firma de la migración 0005
+  // (`p_target_user_id`): Postgres resuelve los parámetros del RPC por nombre y
+  // cualquier otro daría "function not found" (prueba en
+  // delete-account.test.ts, que compara ambos ficheros).
+  const { error: dbError } = await admin.rpc('delete_user_data', { p_target_user_id: userId });
   if (dbError) {
     console.error('DB error:', dbError);
     return json({ error: 'delete-failed' }, 500);

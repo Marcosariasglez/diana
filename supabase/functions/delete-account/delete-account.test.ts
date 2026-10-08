@@ -5,11 +5,16 @@
  *   NO toca la identidad de Auth.
  * - con everywhere → además borra la identidad (admin.deleteUser).
  * - sin JWT válido → 401.
+ * - el parámetro del RPC coincide con la firma de la migración 0005
+ *   (comparando ambos ficheros en disco): si divergen, Supabase real
+ *   respondería "function not found" y el borrado fallaría.
  *
  * Mock de service_role: el cliente Supabase se sustituye por uno falso que
  * registra las llamadas (lo que en producción haría la clave de servicio,
  * que solo vive en el servidor, nunca en el cliente).
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 type Handler = (req: Request) => Promise<Response> | Response;
 
@@ -75,14 +80,14 @@ describe('Edge Function delete-account (Q2)', () => {
     const res = await post({ everywhere: false });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
-    expect(rpcCalls).toEqual([{ fn: 'delete_user_data', params: { target_user_id: 'user-1' } }]);
+    expect(rpcCalls).toEqual([{ fn: 'delete_user_data', params: { p_target_user_id: 'user-1' } }]);
     expect(authDeleteCalls).toEqual([]);
   });
 
   it('everywhere:true: borra datos Diana Y la identidad', async () => {
     const res = await post({ everywhere: true });
     expect(res.status).toBe(200);
-    expect(rpcCalls).toEqual([{ fn: 'delete_user_data', params: { target_user_id: 'user-1' } }]);
+    expect(rpcCalls).toEqual([{ fn: 'delete_user_data', params: { p_target_user_id: 'user-1' } }]);
     expect(authDeleteCalls).toEqual(['user-1']);
   });
 
@@ -111,5 +116,41 @@ describe('Edge Function delete-account (Q2)', () => {
     const res = await globals.__handler(req);
     expect(res.status).toBe(200);
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
+  });
+
+  it('el parámetro del RPC coincide con la firma de la migración 0005', () => {
+    // Lee los DOS ficheros en disco y compara el nombre del parámetro:
+    // Postgres resuelve los parámetros del RPC por nombre; si divergen,
+    // Supabase real respondería "function not found" y el borrado fallaría.
+    // (__dirname = supabase/functions/delete-account → subir 3 al root del repo.)
+    const root = join(__dirname, '..', '..', '..');
+    const fnSrc = readFileSync(join(__dirname, 'index.ts'), 'utf8');
+    const sqlSrc = readFileSync(join(root, 'supabase', 'migrations', '0005_delete_user_data.sql'), 'utf8');
+
+    // Fichero de la migración: firma `delete_user_data(p_target_user_id uuid)`
+    // (toma el primer parámetro; si la firma cambiera a varios, la prueba
+    // exige que ambos coincidan uno a uno).
+    const sqlFn = sqlSrc.match(/create\s+or\s+replace\s+function\s+public\.delete_user_data\s*\(([^)]*)\)/i);
+    expect(sqlFn).not.toBeNull();
+    const sqlParams = sqlFn![1]
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => p.split(/\s+/)[0]);
+
+    // Fichero de la función: objeto de parámetros de admin.rpc('delete_user_data', {...})
+    const rpcCall = fnSrc.match(/admin\.rpc\(\s*['"]delete_user_data['"]\s*,\s*\{([^}]*)\}/);
+    expect(rpcCall).not.toBeNull();
+    const rpcParams = Object.keys(
+      Object.fromEntries(
+        rpcCall![1]
+          .split(',')
+          .map((kv) => kv.trim())
+          .filter(Boolean)
+          .map((kv) => kv.split(':').map((s) => s.trim())),
+      ),
+    );
+
+    expect(rpcParams).toEqual(sqlParams);
   });
 });
