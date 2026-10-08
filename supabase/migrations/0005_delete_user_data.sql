@@ -2,6 +2,9 @@
 -- Borra SOLO los datos de la app Diana del usuario de `p_target_user_id`, en
 -- orden de dependencias (FK cascade haría el trabajo de las hijas, pero se
 -- explicita para que quede claro y no dependa del esquema).
+-- El alcance de las salas está RESTRINGIDO a las salas en las que participaba
+-- este usuario (miembro o anfitrión): nunca se borran salas huérfanas de
+-- otras personas.
 -- La identidad de Supabase Auth (auth.users) NO se toca: la borra la Edge
 -- Function `delete-account` con service_role solo cuando recibe
 -- { everywhere: true }.
@@ -14,20 +17,32 @@
 create or replace function public.delete_user_data(p_target_user_id uuid)
 returns void
 language plpgsql security definer set search_path = public as $$
+declare
+  -- Salas en las que participa el usuario (miembro o anfitrión), calculadas
+  -- ANTES de borrar sus filas de room_members: delimitan todo el borrado.
+  v_room_codes text[];
 begin
   if p_target_user_id is null then
     raise exception 'bad-input';
   end if;
 
-  -- Orden por dependencias (hijas primero).
+  select array_agg(distinct s.code) into v_room_codes
+    from (
+      select code from public.room_members where user_id = p_target_user_id
+      union
+      select code from public.rooms where host_id = p_target_user_id
+    ) s;
+
+  -- Orden por dependencias (hijas primero), solo en SUS salas.
   delete from public.room_decisions
-    where code in (select code from public.room_members where user_id = p_target_user_id);
+    where code = any(coalesce(v_room_codes, '{}'));
 
   delete from public.room_members where user_id = p_target_user_id;
 
-  -- Salas huérfanas: si ya no queda ningún miembro, se borra la sala.
+  -- Salas huérfanas: solo de SUS salas, y solo si ya no queda ningún miembro.
   delete from public.rooms
-    where not exists (select 1 from public.room_members m where m.code = public.rooms.code);
+    where code = any(coalesce(v_room_codes, '{}'))
+      and not exists (select 1 from public.room_members m where m.code = public.rooms.code);
 
   delete from public.watched where user_id = p_target_user_id;
   delete from public.history_entries where user_id = p_target_user_id;
