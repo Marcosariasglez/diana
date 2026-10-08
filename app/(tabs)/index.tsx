@@ -17,7 +17,7 @@ import { EmptyState, ErrorState, PillGroup, Screen, Skeleton } from '@/component
 import { BOTTOM_NAV_HEIGHT } from '@/components/ui/BottomNav';
 import { PLATFORMS } from '@/constants/platforms';
 import { useFeedData } from '@/features/feed/useFeedData';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 import type { FeedCategory, Media } from '@/types/media';
@@ -30,14 +30,20 @@ const CATEGORY_TITLES: Record<FeedCategory['id'], string> = {
 const PLATFORM_ITEMS = PLATFORMS.map((p) => ({ label: p.name, value: p.id }));
 const NEAR_END = 240;
 
+const SKELETON_STYLES = StyleSheet.create({
+  skeleton: { paddingHorizontal: 20, gap: 24 },
+  skeletonRow: { gap: 12 },
+  skeletonPosters: { flexDirection: 'row' as const, gap: 12 },
+});
+
 function FeedSkeleton() {
   return (
-    <View style={styles.skeleton} accessibilityLabel="Cargando tu feed">
+    <View style={SKELETON_STYLES.skeleton} accessibilityLabel="Cargando tu feed">
       <Skeleton width="100%" height={300} radius={16} />
       {[0, 1].map((i) => (
-        <View key={i} style={styles.skeletonRow}>
+        <View key={i} style={SKELETON_STYLES.skeletonRow}>
           <Skeleton width={160} height={22} />
-          <View style={styles.skeletonPosters}>
+          <View style={SKELETON_STYLES.skeletonPosters}>
             <Skeleton width={120} height={180} radius={12} />
             <Skeleton width={120} height={180} radius={12} />
             <Skeleton width={120} height={180} radius={12} />
@@ -52,6 +58,40 @@ export default function HomeScreen() {
   const router = useRouter();
   const feed = useFeedData();
   const { featured, categories, status, platforms } = feed;
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    content: { paddingTop: 16, paddingBottom: BOTTOM_NAV_HEIGHT + 24, gap: 16 },
+    header: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'space-between' as const,
+      paddingHorizontal: 20,
+    },
+    title: { color: c.ink },
+    bell: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.card,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    pillScroll: { flexGrow: 0 },
+    pills: { paddingHorizontal: 20, paddingVertical: 4 },
+    sections: { gap: 24 },
+    featured: { paddingHorizontal: 20 },
+    skeleton: { paddingHorizontal: 20, gap: 24 },
+    skeletonRow: { gap: 12 },
+    skeletonPosters: { flexDirection: 'row' as const, gap: 12 },
+    spinner: { paddingVertical: 12 },
+    inlineError: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      gap: 12,
+    },
+    retry: { minHeight: 44, minWidth: 44, justifyContent: 'center' as const, paddingHorizontal: 8 },
+  }));
 
   const openDetail = useCallback(
     (media: Media) =>
@@ -83,7 +123,7 @@ export default function HomeScreen() {
         scrollEventThrottle={100}
       >
         <View style={styles.header}>
-          <Text accessibilityRole="header" style={styles.title}>
+          <Text accessibilityRole="header" style={[textStyle('screenTitle'), styles.title]}>
             Para ti
           </Text>
           <Pressable
@@ -92,7 +132,7 @@ export default function HomeScreen() {
             accessibilityLabel="Notificaciones"
             style={[styles.bell, SHADOWS.card]}
           >
-            <Bell size={22} color={COLORS.textPrimary} fill={COLORS.textPrimary} strokeWidth={2} />
+            <Bell size={20} color={colors.ink} fill={colors.ink} strokeWidth={2} />
           </Pressable>
         </View>
 
@@ -107,7 +147,7 @@ export default function HomeScreen() {
             selected={platforms}
             onChange={feed.setPlatforms}
             multiple
-            activeColor={COLORS.textPrimary}
+            activeColor={colors.ink}
           />
         </ScrollView>
 
@@ -151,14 +191,14 @@ export default function HomeScreen() {
             ))}
             {feed.loadingMore ? (
               <ActivityIndicator
-                color={COLORS.accent}
+                color={colors.acc}
                 accessibilityLabel="Cargando más títulos"
                 style={styles.spinner}
               />
             ) : null}
             {feed.pageError ? (
               <View style={styles.inlineError}>
-                <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>
+                <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                   No pudimos cargar más títulos
                 </Text>
                 <Pressable
@@ -167,7 +207,7 @@ export default function HomeScreen() {
                   accessibilityLabel="Reintentar"
                   style={styles.retry}
                 >
-                  <Text style={textStyle('bodySmall', { fontWeight: '700', color: COLORS.accent })}>
+                  <Text style={textStyle('bodySmall', { fontFamily: 'Inter-Bold', color: colors.acc })}>
                     Reintentar
                   </Text>
                 </Pressable>
@@ -180,36 +220,3 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingTop: 16, paddingBottom: BOTTOM_NAV_HEIGHT + 24, gap: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
-  title: textStyle('screenTitle', { fontSize: 34, color: COLORS.textPrimary }),
-  bell: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pillScroll: { flexGrow: 0 },
-  pills: { paddingHorizontal: 20, paddingVertical: 4 },
-  sections: { gap: 24 },
-  featured: { paddingHorizontal: 20 },
-  skeleton: { paddingHorizontal: 20, gap: 24 },
-  skeletonRow: { gap: 12 },
-  skeletonPosters: { flexDirection: 'row', gap: 12 },
-  spinner: { paddingVertical: 12 },
-  inlineError: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  retry: { minHeight: 44, minWidth: 44, justifyContent: 'center', paddingHorizontal: 8 },
-});

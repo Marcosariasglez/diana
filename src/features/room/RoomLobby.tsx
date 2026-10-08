@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { RoomCodeTiles } from '@/components/ui/RoomCodeTiles';
 import { useToast } from '@/components/ui/Toast';
 import { MAX_ROOM_MEMBERS } from '@/constants/room';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 import type { RoomMember } from '@/types/room';
@@ -52,6 +52,29 @@ export function RoomLobby({
   onBack,
 }: RoomLobbyProps) {
   const copy = useCopyCode(code);
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    root: { flex: 1 },
+    header: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 16, paddingHorizontal: 20, paddingTop: 12 },
+    back: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.card,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    title: { color: c.ink },
+    scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24, gap: 14 },
+    card: { backgroundColor: c.card, borderRadius: 24, padding: 24 },
+    eyebrow: { textAlign: 'center' as const, letterSpacing: 0.5, marginBottom: 14 },
+    cardHeader: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const, marginBottom: 16 },
+    slots: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, rowGap: 16 },
+    slot: { width: '33.333%', alignItems: 'center' as const, gap: 2 },
+    plus: { position: 'absolute' as const, top: 0, left: 0, width: 56, height: 56, alignItems: 'center' as const, justifyContent: 'center' as const },
+    footer: { paddingHorizontal: 20, paddingBottom: 24, paddingTop: 8, gap: 12 },
+    note: { textAlign: 'center' as const },
+  }));
   const isHost = hostId !== null && hostId === currentUserId;
   const me = members.find((m) => m.userId === currentUserId);
   const freeCount = Math.max(0, MAX_ROOM_MEMBERS - members.length);
@@ -65,7 +88,7 @@ export function RoomLobby({
           accessibilityLabel="Volver"
           style={[styles.back, SHADOWS.card]}
         >
-          <ChevronLeft size={24} color={COLORS.textPrimary} strokeWidth={2.25} />
+          <ChevronLeft size={20} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text accessibilityRole="header" style={[textStyle('screenTitle'), styles.title]}>
           Sala de amigos
@@ -74,7 +97,7 @@ export function RoomLobby({
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={[styles.card, SHADOWS.card]}>
-          <Text style={[textStyle('body', { fontWeight: '600', color: COLORS.textSecondary }), styles.eyebrow]}>
+          <Text style={[textStyle('label'), { color: colors.textSecondary }, styles.eyebrow]}>
             CÓDIGO DE SALA
           </Text>
           <RoomCodeTiles code={code} onCopy={copy} tone="neutral" />
@@ -82,12 +105,12 @@ export function RoomLobby({
 
         <View style={[styles.card, SHADOWS.card]}>
           <View style={styles.cardHeader}>
-            <Text style={textStyle('body', { fontWeight: '800', fontSize: 20, color: COLORS.textPrimary })}>
+            <Text style={textStyle('sectionTitle', { color: colors.ink })}>
               En la sala
             </Text>
             <Text
               accessibilityLabel={`En la sala ${members.length} de ${MAX_ROOM_MEMBERS}`}
-              style={textStyle('bodySmall', { fontWeight: '600', color: COLORS.textSecondary })}
+              style={textStyle('bodySmall', { fontFamily: 'Inter-SemiBold', color: colors.textSecondary })}
             >
               {`${members.length} de ${MAX_ROOM_MEMBERS}`}
             </Text>
@@ -102,8 +125,7 @@ export function RoomLobby({
                   <Text
                     style={textStyle('label', {
                       letterSpacing: 0,
-                      fontWeight: '700',
-                      color: host || m.isReady ? COLORS.accent : COLORS.textSecondary,
+                      color: host || m.isReady ? colors.acc : colors.textSecondary,
                     })}
                   >
                     {status}
@@ -116,7 +138,7 @@ export function RoomLobby({
                 <View>
                   <AvatarSlot name="Libre" size={56} />
                   <View style={styles.plus} pointerEvents="none">
-                    <Plus size={20} color={COLORS.textSecondary} strokeWidth={2} />
+                    <Plus size={20} color={colors.textSecondary} strokeWidth={2} />
                   </View>
                 </View>
               </View>
@@ -140,7 +162,7 @@ export function RoomLobby({
             onPress={() => onToggleReady(!me.isReady)}
           />
         ) : null}
-        <Text style={[textStyle('bodySmall', { color: COLORS.textSecondary }), styles.note]}>
+        <Text style={[textStyle('bodySmall', { color: colors.textSecondary }), styles.note]}>
           Solo el anfitrión puede comenzar
         </Text>
       </View>
@@ -148,25 +170,3 @@ export function RoomLobby({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingTop: 12 },
-  back: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: { color: COLORS.textPrimary },
-  scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24, gap: 14 },
-  card: { backgroundColor: COLORS.card, borderRadius: 20, padding: 20 },
-  eyebrow: { textAlign: 'center', letterSpacing: 0.5, marginBottom: 14 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  slots: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 16 },
-  slot: { width: '33.333%', alignItems: 'center', gap: 2 },
-  plus: { position: 'absolute', top: 0, left: 0, width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
-  footer: { paddingHorizontal: 20, paddingBottom: 24, paddingTop: 8, gap: 12 },
-  note: { textAlign: 'center' },
-});

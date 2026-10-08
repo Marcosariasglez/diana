@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
@@ -8,8 +8,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
+import { webBlur } from '@/theme/alpha';
 import { toJS } from '@/utils/worklets';
 
 export interface BottomSheetProps {
@@ -25,6 +26,7 @@ const CLOSE_VELOCITY = 800;
 const CLOSE_DISTANCE = 100;
 
 export function BottomSheet({ children, visible, onClose, snapPoints = [0.7] }: BottomSheetProps) {
+  const { colors } = useTheme();
   const { height } = useWindowDimensions();
   const reduced = useReducedMotion();
   const [mounted, setMounted] = useState(visible);
@@ -67,7 +69,14 @@ export function BottomSheet({ children, visible, onClose, snapPoints = [0.7] }: 
 
   return (
     <View style={styles.root} pointerEvents="box-none">
-      <Animated.View style={[styles.overlay, overlayStyle]}>
+      <Animated.View
+        style={[
+          styles.overlay,
+          overlayStyle,
+          { backgroundColor: colors.overlay },
+          Platform.OS === 'web' && webBlur(3),
+        ]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Cerrar panel"
@@ -75,13 +84,15 @@ export function BottomSheet({ children, visible, onClose, snapPoints = [0.7] }: 
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
-      <Animated.View testID="bottom-sheet" style={[styles.sheet, { maxHeight }, sheetStyle]}>
+      <Animated.View testID="bottom-sheet" style={[styles.sheet, SHADOWS.sheet, { maxHeight }, sheetStyle]}>
         <GestureDetector gesture={pan}>
           <View style={styles.handleArea} accessibilityLabel="Arrastra hacia abajo para cerrar">
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: colors.line }]} />
           </View>
         </GestureDetector>
-        <View style={styles.content}>{children}</View>
+        <View style={[styles.content, { backgroundColor: colors.bg }]}>
+          {children}
+        </View>
       </Animated.View>
     </View>
   );
@@ -89,14 +100,12 @@ export function BottomSheet({ children, visible, onClose, snapPoints = [0.7] }: 
 
 const styles = StyleSheet.create({
   root: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', zIndex: 50 },
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#000000' },
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
-    backgroundColor: COLORS.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    ...SHADOWS.sheet,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
   handleArea: { height: 44, alignItems: 'center', justifyContent: 'center' },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.divider },
+  handle: { width: 40, height: 5, borderRadius: 9 },
   content: { paddingHorizontal: 20, paddingBottom: 24 },
 });

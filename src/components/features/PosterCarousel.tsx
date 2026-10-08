@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { LockedAffinityChip } from '@/components/ui/LockedAffinityChip';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import type { Media, MediaWithAffinity } from '@/types/media';
 import { mediaTitle } from './mediaHelpers';
@@ -27,11 +27,12 @@ function Separator() {
 }
 
 export function PosterCarousel({ items, onPress, onSeeAll, title }: PosterCarouselProps) {
+  const { colors } = useTheme();
   const renderItem: ListRenderItem<MediaWithAffinity> = useCallback(
     ({ item }) => (
       <View style={styles.item}>
         <Poster media={item.media} size="medium" onPress={() => onPress(item.media)} />
-        <Text numberOfLines={1} style={styles.caption}>
+        <Text numberOfLines={1} style={[textStyle('posterTitle'), { color: colors.ink }]}>
           {mediaTitle(item.media)}
         </Text>
         {item.bucket === 'bajo' ? null : <LockedAffinityChip bucket={item.bucket} locked />}
@@ -45,7 +46,7 @@ export function PosterCarousel({ items, onPress, onSeeAll, title }: PosterCarous
       {title || onSeeAll ? (
         <View style={styles.header}>
           {title ? (
-            <Text accessibilityRole="header" style={styles.title}>
+            <Text accessibilityRole="header" style={[textStyle('sectionTitle'), { color: colors.ink }]}>
               {title}
             </Text>
           ) : (
@@ -58,7 +59,7 @@ export function PosterCarousel({ items, onPress, onSeeAll, title }: PosterCarous
               accessibilityLabel={title ? `Ver todo en ${title}` : 'Ver todo'}
               style={styles.seeAll}
             >
-              <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>Ver todo</Text>
+              <Text style={textStyle('link', { color: colors.acc })}>Ver todo</Text>
             </Pressable>
           ) : null}
         </View>
@@ -85,7 +86,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SIDE,
     marginBottom: 12,
   },
-  title: textStyle('body', { fontWeight: '700', fontSize: 20, color: COLORS.textPrimary }),
   seeAll: {
     minHeight: 44,
     minWidth: 44,
@@ -96,5 +96,4 @@ const styles = StyleSheet.create({
     width: ITEM_WIDTH,
     gap: 8,
   },
-  caption: textStyle('body', { fontWeight: '600', color: COLORS.textPrimary }),
 });

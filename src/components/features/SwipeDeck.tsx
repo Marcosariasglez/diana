@@ -2,8 +2,7 @@ import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { EyeOff, Heart, X, type LucideIcon } from 'lucide-react-native';
 import type { SwipeDir } from '@/features/swipe/direction';
-import { COLORS } from '@/theme/colors';
-import { SHADOWS } from '@/theme/shadows';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import type { Media } from '@/types/media';
 import { mediaMeta, mediaTitle } from './mediaHelpers';
@@ -29,22 +28,24 @@ interface RoundButtonProps {
 }
 
 function RoundButton({ icon: Icon, label, caption, primary, onPress }: RoundButtonProps) {
+  const { colors } = useTheme();
   return (
     <View style={styles.buttonCol}>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={label}
-        style={[styles.round, SHADOWS.card, primary ? styles.roundPrimary : styles.roundLight]}
+        style={[styles.round, { backgroundColor: primary ? colors.acc : colors.card }]}
       >
-        <Icon size={28} color={primary ? '#FFFFFF' : COLORS.textPrimary} strokeWidth={2} />
+        <Icon size={28} color={primary ? colors.onAcc : colors.ink} strokeWidth={2} />
       </Pressable>
-      <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>{caption}</Text>
+      <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>{caption}</Text>
     </View>
   );
 }
 
 export function SwipeDeck({ cards, onDecide, progress, max, allowUnseen = true }: SwipeDeckProps) {
+  const { colors } = useTheme();
   const top = cards[0];
   const next = cards[1];
   // La carta de arriba se remonta por `key`, asi que un unico ref apunta siempre a la activa.
@@ -73,10 +74,10 @@ export function SwipeDeck({ cards, onDecide, progress, max, allowUnseen = true }
         />
       </View>
 
-      <Text accessibilityRole="header" style={styles.title} numberOfLines={1}>
+      <Text accessibilityRole="header" style={[textStyle('detailTitle'), { color: colors.ink, textAlign: 'center' }]} numberOfLines={1}>
         {mediaTitle(top)}
       </Text>
-      <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>{mediaMeta(top)}</Text>
+      <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>{mediaMeta(top)}</Text>
 
       <View style={styles.buttons}>
         <RoundButton
@@ -106,16 +107,8 @@ export function SwipeDeck({ cards, onDecide, progress, max, allowUnseen = true }
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  stack: {
-    width: 270,
-    height: 405,
-    marginTop: 8,
-    marginBottom: 20,
-  },
+  root: { flex: 1, alignItems: 'center' },
+  stack: { width: 270, height: 405, marginTop: 8, marginBottom: 20 },
   behind: {
     position: 'absolute',
     top: 12,
@@ -123,29 +116,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.94 }, { rotate: '2deg' }],
     opacity: 0.9,
   },
-  title: textStyle('screenTitle', { fontSize: 24, color: COLORS.textPrimary, textAlign: 'center' }),
-  buttons: {
-    marginTop: 'auto',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 28,
-    paddingBottom: 24,
-  },
-  buttonCol: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  round: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roundLight: {
-    backgroundColor: COLORS.card,
-  },
-  roundPrimary: {
-    backgroundColor: COLORS.accent,
-  },
+  buttons: { marginTop: 'auto', flexDirection: 'row', justifyContent: 'center', gap: 28, paddingBottom: 24 },
+  buttonCol: { alignItems: 'center', gap: 8 },
+  round: { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' },
 });

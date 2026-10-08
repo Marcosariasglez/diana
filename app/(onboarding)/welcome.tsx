@@ -7,7 +7,7 @@ import { Button, Screen } from '@/components/ui';
 import { importRepository, ImportError, IMPORT_ERROR_MESSAGES } from '@/services';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useProfileStore } from '@/store/useProfileStore';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 
@@ -17,11 +17,11 @@ const FAN = [
   { title: 'Burning', color: '#7A5C1E', transform: [{ translateX: 30 }, { rotate: '9deg' }], z: 2 },
 ] as const;
 
-function DianaLogo() {
+function DianaLogo({ accent }: { accent: string }) {
   return (
-    <View accessible accessibilityRole="image" accessibilityLabel="Logo de Diana" style={styles.logo}>
-      <Svg width={64} height={64} viewBox="0 0 64 64">
-        <Circle cx={32} cy={32} r={32} fill={COLORS.accent} />
+    <View accessible accessibilityRole="image" accessibilityLabel="Logo de Diana" style={{ width: 56, height: 56 }}>
+      <Svg width={56} height={56} viewBox="0 0 64 64">
+        <Circle cx={32} cy={32} r={32} fill={accent} />
         <Circle cx={32} cy={32} r={16} fill="none" stroke="#FFFFFF" strokeWidth={3} />
         <Circle cx={32} cy={32} r={9} fill="none" stroke="#FFFFFF" strokeWidth={3} />
         <Circle cx={32} cy={32} r={3} fill="#FFFFFF" />
@@ -36,6 +36,33 @@ export default function WelcomeScreen() {
   const importResult = useHistoryStore((s) => s.importResult);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    root: { flex: 1, paddingHorizontal: 20, paddingBottom: 24, alignItems: 'center' as const },
+    fan: {
+      height: 260,
+      width: '100%',
+      marginTop: 24,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    poster: {
+      position: 'absolute' as const,
+      top: 28,
+      width: 130,
+      height: 195,
+      borderRadius: 14,
+      justifyContent: 'flex-end' as const,
+      padding: 10,
+    },
+    brand: { alignItems: 'center' as const, gap: 8, marginTop: 8 },
+    title: {
+      textAlign: 'center' as const,
+      marginTop: 24,
+    },
+    actions: { marginTop: 'auto', width: '100%', gap: 12 },
+    error: { color: c.neg, textAlign: 'center' as const, fontSize: 12.5 },
+  }));
 
   const pickFile = async () => {
     setError(null);
@@ -80,7 +107,7 @@ export default function WelcomeScreen() {
                 { backgroundColor: p.color, zIndex: p.z, transform: [...p.transform] },
               ]}
             >
-              <Text style={textStyle('posterTitle', { color: '#FFFFFF', fontSize: 16, fontWeight: '800' })}>
+              <Text style={textStyle('posterTitle', { color: '#FFFFFF', fontSize: 16, fontFamily: 'Manrope-ExtraBold' })}>
                 {p.title}
               </Text>
             </View>
@@ -88,11 +115,11 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.brand}>
-          <DianaLogo />
-          <Text style={textStyle('body', { fontWeight: '800', color: COLORS.textPrimary })}>Diana</Text>
+          <DianaLogo accent={colors.acc} />
+          <Text style={textStyle('body', { fontFamily: 'Manrope-ExtraBold', color: colors.ink })}>Diana</Text>
         </View>
 
-        <Text accessibilityRole="header" style={styles.title}>
+        <Text accessibilityRole="header" style={[textStyle('heroTitle'), { color: colors.ink }, styles.title]}>
           {'Encuentra tu\npróxima película\nfavorita en\nsegundos'}
         </Text>
 
@@ -119,31 +146,3 @@ export default function WelcomeScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, paddingHorizontal: 20, paddingBottom: 24, alignItems: 'center' },
-  fan: {
-    height: 260,
-    width: '100%',
-    marginTop: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  poster: {
-    position: 'absolute',
-    top: 28,
-    width: 130,
-    height: 195,
-    borderRadius: 14,
-    justifyContent: 'flex-end',
-    padding: 10,
-  },
-  brand: { alignItems: 'center', gap: 8, marginTop: 8 },
-  logo: { width: 64, height: 64 },
-  title: {
-    ...textStyle('heroTitle', { fontSize: 34, lineHeight: 40, textAlign: 'center', color: COLORS.textPrimary }),
-    marginTop: 24,
-  },
-  actions: { marginTop: 'auto', width: '100%', gap: 12 },
-  error: textStyle('bodySmall', { color: '#B3261E', textAlign: 'center' }),
-});

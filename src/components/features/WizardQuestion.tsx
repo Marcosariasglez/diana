@@ -3,8 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { haptic } from '@/hooks/useHaptics';
 import { useMotionPreference } from '@/hooks/useMotionPreference';
-import { COLORS } from '@/theme/colors';
-import { SHADOWS } from '@/theme/shadows';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import type { MoodQuestion } from '@/types/mood';
 import { toJS } from '@/utils/worklets';
@@ -31,6 +30,7 @@ export function WizardQuestion({
   index,
   total,
 }: WizardQuestionProps) {
+  const { colors } = useTheme();
   const reduced = useMotionPreference();
   const opacity = useSharedValue(0);
   const locked = useRef(false);
@@ -70,14 +70,14 @@ export function WizardQuestion({
   return (
     <Animated.View style={[styles.root, style]}>
       {index !== undefined && total !== undefined ? (
-        <Text style={[textStyle('label', { color: COLORS.textSecondary }), styles.eyebrow]}>
+        <Text style={[textStyle('label'), { color: colors.textSecondary, textAlign: 'center', marginTop: 24 }]}>
           {`PREGUNTA ${index} DE ${total}`}
         </Text>
       ) : null}
       <Text
         accessibilityRole="header"
         maxFontSizeMultiplier={1.2}
-        style={[textStyle('wizardQuestion', { color: COLORS.textPrimary }), styles.question]}
+        style={[textStyle('wizardQuestion'), { color: colors.ink, textAlign: 'center', marginTop: 12, marginBottom: 32 }]}
       >
         {question.title}
       </Text>
@@ -106,12 +106,14 @@ export function WizardQuestion({
           accessibilityRole="button"
           accessibilityLabel="Continuar"
           accessibilityState={{ disabled: selectedIds.length === 0 }}
-          style={[styles.continue, selectedIds.length === 0 && styles.continueDisabled]}
+          style={[
+            styles.continue,
+            { backgroundColor: selectedIds.length === 0 ? colors.chip : colors.ink },
+          ]}
         >
           <Text
-            style={textStyle('body', {
-              fontWeight: '700',
-              color: selectedIds.length === 0 ? COLORS.textSecondary : '#FFFFFF',
+            style={textStyle('button', {
+              color: selectedIds.length === 0 ? colors.mut : colors.onInk,
             })}
           >
             Continuar
@@ -123,41 +125,15 @@ export function WizardQuestion({
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  eyebrow: {
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  question: {
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 32,
-  },
-  grid: {
-    gap: 14,
-  },
-  gridRow: {
-    flexDirection: 'row',
-    gap: 14,
-  },
-  filler: {
-    flex: 1,
-  },
+  root: { flex: 1, paddingHorizontal: 20 },
+  grid: { gap: 14 },
+  gridRow: { flexDirection: 'row', gap: 14 },
+  filler: { flex: 1 },
   continue: {
     marginTop: 24,
     minHeight: 60,
-    borderRadius: 30,
-    backgroundColor: COLORS.accent,
+    borderRadius: 99,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.buttonPrimary,
-  },
-  continueDisabled: {
-    backgroundColor: COLORS.disabled,
-    shadowOpacity: 0,
-    elevation: 0,
   },
 });

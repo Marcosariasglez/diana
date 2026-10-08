@@ -6,7 +6,7 @@ import { mediaTitle } from '@/components/features/mediaHelpers';
 import { PosterCarousel } from '@/components/features/PosterCarousel';
 import { Button, EmptyState, ErrorState, Screen, Skeleton } from '@/components/ui';
 import { useMoodStore } from '@/store/useMoodStore';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 import type { Media } from '@/types/media';
@@ -15,6 +15,26 @@ export default function MoodResultsScreen() {
   const router = useRouter();
   const status = useMoodStore((s) => s.resultsStatus);
   const results = useMoodStore((s) => s.results);
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
+    close: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.card,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    scroll: { paddingTop: 12, paddingBottom: 40 },
+    pad: { paddingHorizontal: 20 },
+    content: { gap: 20 },
+    heading: { color: c.ink },
+    bestTitle: { marginTop: 16 },
+    others: { marginTop: 4 },
+    loading: { gap: 20 },
+    row: { flexDirection: 'row' as const, gap: 12 },
+  }));
 
   const openDetail = (media: Media) =>
     router.push(`/detail/${media.id}?type=${media.media_type}` as never);
@@ -41,13 +61,13 @@ export default function MoodResultsScreen() {
           accessibilityLabel="Cerrar"
           style={[styles.close, SHADOWS.card]}
         >
-          <X size={22} color={COLORS.textPrimary} strokeWidth={2.25} />
+          <X size={20} color={colors.ink} strokeWidth={2} />
         </Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {status === 'loading' ? (
           <View accessibilityLabel="Calculando tu mejor match..." style={styles.loading}>
-            <Text style={[textStyle('body', { fontWeight: '600', color: COLORS.textSecondary }), styles.pad]}>
+            <Text style={[textStyle('body', { fontFamily: 'Inter-SemiBold', color: colors.textSecondary }), styles.pad]}>
               Calculando tu mejor match...
             </Text>
             <View style={styles.pad}>
@@ -82,7 +102,7 @@ export default function MoodResultsScreen() {
               <FeaturedMatchCard item={best} onPress={() => openDetail(best.media)} />
               <Text
                 accessibilityRole="header"
-                style={[textStyle('bestMatch', { color: COLORS.textPrimary }), styles.bestTitle]}
+                style={[textStyle('bestMatch', { color: colors.ink }), styles.bestTitle]}
               >
                 {mediaTitle(best.media)}
               </Text>
@@ -102,22 +122,3 @@ export default function MoodResultsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
-  close: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scroll: { paddingTop: 12, paddingBottom: 40 },
-  pad: { paddingHorizontal: 20 },
-  content: { gap: 20 },
-  heading: { color: COLORS.textPrimary },
-  bestTitle: { marginTop: 16 },
-  others: { marginTop: 4 },
-  loading: { gap: 20 },
-  row: { flexDirection: 'row', gap: 12 },
-});

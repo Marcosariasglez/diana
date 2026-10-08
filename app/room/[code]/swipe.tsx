@@ -9,7 +9,7 @@ import { formatGroupLikes } from '@/features/room/groupRanking';
 import { useGroupSwipe } from '@/features/room/useGroupSwipe';
 import { useRoomState } from '@/features/room/useRoomState';
 import { useRoomStore } from '@/store/useRoomStore';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 import { confirmDialog } from '@/utils/confirmDialog';
@@ -24,6 +24,34 @@ export default function GroupSwipeScreen() {
   const params = useLocalSearchParams<{ code: string }>();
   const room = useRoomState({ code: String(params.code ?? '').toUpperCase() });
   const swipe = useGroupSwipe();
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    header: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 16, paddingHorizontal: 20, paddingTop: 12 },
+    close: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.card,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    progress: { flex: 1 },
+    loading: { alignItems: 'center' as const, paddingTop: 32 },
+    center: { flex: 1, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 14, paddingHorizontal: 24 },
+    waitText: { textAlign: 'center' as const },
+    rankingScroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40, gap: 14 },
+    rankingTitle: { color: c.ink, marginBottom: 6 },
+    rankRow: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 14,
+      backgroundColor: c.card,
+      borderRadius: 20,
+      padding: 12,
+    },
+    rankInfo: { flex: 1, gap: 4 },
+    actions: { gap: 12, marginTop: 16 },
+  }));
 
   const leave = () => {
     useRoomStore.getState().leaveRoom();
@@ -43,7 +71,7 @@ export default function GroupSwipeScreen() {
         accessibilityLabel="Salir de la sala"
         style={[styles.close, SHADOWS.card]}
       >
-        <X size={22} color={COLORS.textPrimary} strokeWidth={2.25} />
+        <X size={20} color={colors.ink} strokeWidth={2} />
       </Pressable>
       <View style={styles.progress}>
         <ProgressBar value={swipe.index} max={Math.max(swipe.total, 1)} />
@@ -94,7 +122,7 @@ export default function GroupSwipeScreen() {
             Lo que más gustó
           </Text>
           {swipe.ranking.length === 0 ? (
-            <Text style={textStyle('body', { color: COLORS.textSecondary })}>
+            <Text style={textStyle('body', { color: colors.textSecondary })}>
               Nadie coincidió en ningún título.
             </Text>
           ) : (
@@ -105,21 +133,21 @@ export default function GroupSwipeScreen() {
                 accessibilityLabel={`${i + 1}. ${mediaTitle(item.media)}. ${formatGroupLikes(item)}`}
                 style={[styles.rankRow, SHADOWS.card]}
               >
-                <Text style={textStyle('body', { fontWeight: '800', fontSize: 20, color: COLORS.accent })}>
+                <Text style={textStyle('body', { fontFamily: 'Manrope-ExtraBold', fontSize: 20, color: colors.acc })}>
                   {i + 1}
                 </Text>
                 <Poster media={item.media} size="small" />
                 <View style={styles.rankInfo}>
                   <Text
                     numberOfLines={2}
-                    style={textStyle('body', { fontWeight: '700', color: COLORS.textPrimary })}
+                    style={textStyle('body', { fontFamily: 'Manrope-Bold', color: colors.ink })}
                   >
                     {mediaTitle(item.media)}
                   </Text>
-                  <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>
+                  <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                     {mediaMeta(item.media)}
                   </Text>
-                  <Text style={textStyle('bodySmall', { fontWeight: '700', color: COLORS.accent })}>
+                  <Text style={textStyle('bodySmall', { fontFamily: 'Inter-Bold', color: colors.acc })}>
                     {formatGroupLikes(item)}
                   </Text>
                 </View>
@@ -141,7 +169,7 @@ export default function GroupSwipeScreen() {
       <Screen>
         {header}
         <View style={styles.center} accessibilityLiveRegion="polite">
-          <Text style={[textStyle('body', { fontWeight: '700', color: COLORS.textPrimary }), styles.waitText]}>
+          <Text style={[textStyle('body', { fontFamily: 'Manrope-Bold', color: colors.ink }), styles.waitText]}>
             {names.length > 0 ? `Esperando a ${joinNames(names)}...` : 'Esperando al grupo...'}
           </Text>
           <Skeleton width={200} height={16} radius={8} />
@@ -167,30 +195,3 @@ export default function GroupSwipeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingTop: 12 },
-  close: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progress: { flex: 1 },
-  loading: { alignItems: 'center', paddingTop: 32 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 24 },
-  waitText: { textAlign: 'center' },
-  rankingScroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40, gap: 14 },
-  rankingTitle: { color: COLORS.textPrimary, marginBottom: 6 },
-  rankRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    padding: 12,
-  },
-  rankInfo: { flex: 1, gap: 4 },
-  actions: { gap: 12, marginTop: 16 },
-});

@@ -1,8 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Flame, Lock } from 'lucide-react-native';
 import { platformName } from '@/constants/platforms';
-import { COLORS } from '@/theme/colors';
-import { SHADOWS } from '@/theme/shadows';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import type { AffinityBucket, MediaWithAffinity } from '@/types/media';
 import { mediaMeta, mediaTitle } from './mediaHelpers';
@@ -29,6 +28,7 @@ export function FeaturedMatchCard({
   badge = 'Recomendación Top',
   onPress,
 }: FeaturedMatchCardProps) {
+  const { colors } = useTheme();
   const { media, bucket } = item;
   const title = mediaTitle(media);
   const platform = media.platforms[0];
@@ -38,11 +38,11 @@ export function FeaturedMatchCard({
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={`${eyebrow}: ${title}. ${BUCKET_LABEL[bucket]}, nota de IA oculta`}
-      style={[styles.card, SHADOWS.card]}
+      style={[styles.card, { backgroundColor: colors.card }]}
     >
-      <View style={styles.badge} accessibilityElementsHidden importantForAccessibility="no">
-        <Flame size={16} color="#FFFFFF" strokeWidth={2.25} />
-        <Text style={textStyle('bodySmall', { color: '#FFFFFF', fontWeight: '700' })}>
+      <View style={[styles.badge, { backgroundColor: colors.accSoft }]} accessibilityElementsHidden importantForAccessibility="no">
+        <Flame size={16} color={colors.acc} strokeWidth={2.25} />
+        <Text style={textStyle('bodySmall', { color: colors.acc, fontFamily: 'Inter-Bold' })}>
           {badge}
         </Text>
       </View>
@@ -52,15 +52,15 @@ export function FeaturedMatchCard({
           <View>
             <Text
               numberOfLines={2}
-              style={[textStyle('label', { color: COLORS.textSecondary }), styles.eyebrow]}
+              style={[textStyle('label'), { color: colors.textSecondary, textTransform: 'uppercase' as const, marginBottom: 8 }]}
             >
               {eyebrow}
             </Text>
-            <Text style={textStyle('body', { fontWeight: '700', color: COLORS.textPrimary })}>
+            <Text style={textStyle('body', { fontFamily: 'Manrope-Bold', color: colors.ink })}>
               {mediaMeta(media)}
             </Text>
             {platform ? (
-              <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>
+              <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                 {platformName(platform)}
               </Text>
             ) : null}
@@ -68,15 +68,15 @@ export function FeaturedMatchCard({
           <View>
             <Text
               style={textStyle('body', {
-                fontWeight: '800',
-                color: bucket === 'alto' ? COLORS.accent : COLORS.textPrimary,
+                fontFamily: 'Manrope-ExtraBold',
+                color: bucket === 'alto' ? colors.acc : colors.ink,
               })}
             >
               {BUCKET_LABEL[bucket]}
             </Text>
             <View style={styles.lockRow}>
-              <Lock size={14} color={COLORS.textSecondary} strokeWidth={2} />
-              <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>
+              <Lock size={14} color={colors.textSecondary} strokeWidth={2} />
+              <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                 Nota IA oculta
               </Text>
             </View>
@@ -89,8 +89,7 @@ export function FeaturedMatchCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
+    borderRadius: 24,
     padding: 12,
     gap: 12,
   },
@@ -99,8 +98,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COLORS.accent,
-    borderRadius: 20,
+    borderRadius: 99,
     paddingHorizontal: 14,
     minHeight: 32,
   },
@@ -111,10 +109,6 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     justifyContent: 'space-between',
-  },
-  eyebrow: {
-    textTransform: 'uppercase',
-    marginBottom: 8,
   },
   lockRow: {
     flexDirection: 'row',

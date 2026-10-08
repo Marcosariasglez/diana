@@ -20,7 +20,7 @@ import { resultKey, useDailyLogSearch } from '@/features/daily-log/useDailyLogSe
 import { refOf, subtitleOf } from '@/features/daily-log/resultRef';
 import { SAVE_ERROR_MESSAGE } from '@/features/detail/useDetailData';
 import { selectEntryByKey, useHistoryStore } from '@/store/useHistoryStore';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 import type { Rating } from '@/types/rating';
@@ -50,9 +50,16 @@ interface TileProps {
   width: number;
   selected: boolean;
   onPress: () => void;
+  s: {
+    tile: React.ComponentProps<typeof View>['style'];
+    tileSelected: React.ComponentProps<typeof View>['style'];
+    badge: React.ComponentProps<typeof View>['style'];
+    tileTitle: React.ComponentProps<typeof Text>['style'];
+    caption: React.ComponentProps<typeof Text>['style'];
+  };
 }
 
-function ResultTile({ result, width, selected, onPress }: TileProps) {
+function ResultTile({ result, width, selected, onPress, s }: TileProps) {
   const height = Math.round((width * 3) / 2);
   return (
     <Pressable
@@ -64,19 +71,19 @@ function ResultTile({ result, width, selected, onPress }: TileProps) {
     >
       <View
         style={[
-          styles.tile,
+          s.tile,
           { width, height, backgroundColor: result.posterColor },
-          selected && styles.tileSelected,
+          selected && s.tileSelected,
         ]}
       >
-        <View style={styles.badge}>
+        <View style={s.badge}>
           <TypeBadge label={result.label} />
         </View>
-        <Text numberOfLines={3} style={[textStyle('posterTitle', { color: '#FFFFFF' }), styles.tileTitle]}>
+        <Text numberOfLines={3} style={[textStyle('posterTitle', { color: 'white' }), s.tileTitle]}>
           {result.title}
         </Text>
       </View>
-      <Text numberOfLines={2} style={[textStyle('bodySmall', { fontWeight: '600' }), styles.caption]}>
+      <Text numberOfLines={2} style={[textStyle('bodySmall', { fontFamily: 'Inter-SemiBold' }), s.caption]}>
         {result.title}
       </Text>
     </Pressable>
@@ -93,6 +100,49 @@ export default function DailyLogScreen() {
   const [rating, setRating] = useState<Rating | null>(null);
   const [saving, setSaving] = useState(false);
   const { status, results, retry } = useDailyLogSearch(query, kind);
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    root: { flex: 1, backgroundColor: c.bg },
+    flex: { flex: 1 },
+    column: { flex: 1, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' as const },
+    header: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'space-between' as const,
+      paddingHorizontal: H_PADDING,
+      paddingTop: 16,
+    },
+    title: { color: c.ink },
+    closeBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.card,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    search: { paddingHorizontal: H_PADDING, marginTop: 20 },
+    pills: { paddingHorizontal: H_PADDING, marginTop: 16 },
+    results: { paddingHorizontal: H_PADDING, paddingTop: 20, paddingBottom: 40 },
+    grid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: GAP, rowGap: 16 },
+    tile: {
+      borderRadius: 12,
+      overflow: 'hidden' as const,
+      justifyContent: 'flex-end' as const,
+      borderWidth: 3,
+      borderColor: 'transparent',
+    },
+    tileSelected: { borderColor: c.acc },
+    badge: { position: 'absolute' as const, top: 8, left: 8 },
+    tileTitle: { paddingHorizontal: 8, paddingBottom: 8 },
+    caption: { color: c.ink, marginTop: 8 },
+    source: { color: c.textSecondary, marginTop: 24 },
+    sheet: { gap: 16 },
+    sheetHeader: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: 12 },
+    sheetTitle: { color: c.ink },
+    sheetSubtitle: { color: c.textSecondary, marginTop: 2 },
+    stars: { paddingHorizontal: 12 },
+  }));
 
   const contentWidth = Math.min(windowWidth, MAX_CONTENT_WIDTH) - H_PADDING * 2;
   const tileWidth = Math.floor((contentWidth - GAP * (COLUMNS - 1)) / COLUMNS);
@@ -124,7 +174,7 @@ export default function DailyLogScreen() {
       <Screen>
         <View style={styles.column}>
           <View style={styles.header}>
-            <Text accessibilityRole="header" style={[textStyle('screenTitle', { fontSize: 32 }), styles.title]}>
+            <Text accessibilityRole="header" style={[textStyle('screenTitle'), styles.title]}>
               Diario rápido
             </Text>
             <Pressable
@@ -133,7 +183,7 @@ export default function DailyLogScreen() {
               accessibilityLabel="Cerrar"
               style={[styles.closeBtn, SHADOWS.card]}
             >
-              <X size={22} color={COLORS.textPrimary} strokeWidth={2.5} />
+              <X size={22} color={colors.ink} strokeWidth={2.5} />
             </Pressable>
           </View>
 
@@ -143,7 +193,7 @@ export default function DailyLogScreen() {
 
           <View style={styles.pills}>
             <PillGroup
-              activeColor={COLORS.textPrimary}
+              activeColor={colors.ink}
               items={FILTERS}
               selected={[kind]}
               onChange={(sel) => setKind((sel[0] as SearchKind | undefined) ?? 'all')}
@@ -194,6 +244,7 @@ export default function DailyLogScreen() {
                       width={tileWidth}
                       selected={resultKey(r) === selectedKey}
                       onPress={() => select(r)}
+                      s={styles}
                     />
                   ))}
                 </View>
@@ -227,45 +278,3 @@ export default function DailyLogScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.screenBg },
-  flex: { flex: 1 },
-  column: { flex: 1, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: H_PADDING,
-    paddingTop: 16,
-  },
-  title: { color: COLORS.textPrimary },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  search: { paddingHorizontal: H_PADDING, marginTop: 20 },
-  pills: { paddingHorizontal: H_PADDING, marginTop: 16 },
-  results: { paddingHorizontal: H_PADDING, paddingTop: 20, paddingBottom: 40 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP, rowGap: 16 },
-  tile: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    borderWidth: 3,
-    borderColor: 'transparent',
-  },
-  tileSelected: { borderColor: COLORS.accent },
-  badge: { position: 'absolute', top: 8, left: 8 },
-  tileTitle: { paddingHorizontal: 8, paddingBottom: 8 },
-  caption: { color: COLORS.textPrimary, marginTop: 8 },
-  source: { color: COLORS.textSecondary, marginTop: 24 },
-  sheet: { gap: 16 },
-  sheetHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  sheetTitle: { color: COLORS.textPrimary },
-  sheetSubtitle: { color: COLORS.textSecondary, marginTop: 2 },
-  stars: { paddingHorizontal: 12 },
-});

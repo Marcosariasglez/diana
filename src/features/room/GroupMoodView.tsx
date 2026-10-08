@@ -4,7 +4,7 @@ import { AnswerTile } from '@/components/features/AnswerTile';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 import type { MoodQuestion } from '@/types/mood';
@@ -21,17 +21,6 @@ export interface GroupMoodViewProps {
   onBack: () => void;
 }
 
-function QuestionHeader({ index, total, title }: { index: number; total: number; title: string }) {
-  return (
-    <View style={styles.qHeader}>
-      <Text style={textStyle('label', { color: COLORS.textSecondary })}>{`PREGUNTA ${index} DE ${total}`}</Text>
-      <Text accessibilityRole="header" style={textStyle('body', { fontWeight: '800', fontSize: 20, color: COLORS.textPrimary })}>
-        {title}
-      </Text>
-    </View>
-  );
-}
-
 export function GroupMoodView({
   questions,
   answers,
@@ -42,6 +31,40 @@ export function GroupMoodView({
   onConfirm,
   onBack,
 }: GroupMoodViewProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    root: { flex: 1 },
+    header: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 16, paddingHorizontal: 20, paddingTop: 12 },
+    back: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.card,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    title: { color: c.ink },
+    scroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24, gap: 28 },
+    section: { gap: 12 },
+    qHeader: { gap: 4 },
+    grid: { gap: 14 },
+    gridRow: { flexDirection: 'row' as const, gap: 14 },
+    filler: { flex: 1 },
+    chips: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8 },
+    waiting: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 12 },
+    footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 24 },
+    note: { textAlign: 'center' as const, paddingVertical: 18 },
+  }));
+
+  const QuestionHeader = ({ index, total, title }: { index: number; total: number; title: string }) => (
+    <View style={styles.qHeader}>
+      <Text style={textStyle('label', { color: colors.textSecondary })}>{`PREGUNTA ${index} DE ${total}`}</Text>
+      <Text accessibilityRole="header" style={textStyle('sectionTitle', { color: colors.ink })}>
+        {title}
+      </Text>
+    </View>
+  );
+
   return (
     <View style={styles.root}>
       <View style={styles.header}>
@@ -51,7 +74,7 @@ export function GroupMoodView({
           accessibilityLabel="Volver"
           style={[styles.back, SHADOWS.card]}
         >
-          <ChevronLeft size={24} color={COLORS.textPrimary} strokeWidth={2.25} />
+          <ChevronLeft size={20} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text accessibilityRole="header" style={[textStyle('screenTitle'), styles.title]}>
           Filtros del grupo
@@ -96,7 +119,7 @@ export function GroupMoodView({
               ) : (
                 <View style={styles.waiting} accessible accessibilityLabel={`${q.title} Esperando...`}>
                   <Skeleton width={96} height={28} radius={14} />
-                  <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>Esperando...</Text>
+                  <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>Esperando...</Text>
                 </View>
               )}
             </View>
@@ -108,7 +131,7 @@ export function GroupMoodView({
         {isHost ? (
           <Button label="Confirmar filtros" onPress={onConfirm} disabled={!moodComplete} loading={confirming} />
         ) : (
-          <Text style={[textStyle('body', { fontWeight: '600', color: COLORS.textSecondary }), styles.note]}>
+          <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-SemiBold', color: colors.textSecondary }), styles.note]}>
             El anfitrión está eligiendo los filtros
           </Text>
         )}
@@ -117,26 +140,3 @@ export function GroupMoodView({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingTop: 12 },
-  back: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: { color: COLORS.textPrimary },
-  scroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24, gap: 28 },
-  section: { gap: 12 },
-  qHeader: { gap: 4 },
-  grid: { gap: 14 },
-  gridRow: { flexDirection: 'row', gap: 14 },
-  filler: { flex: 1 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  waiting: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 24 },
-  note: { textAlign: 'center', paddingVertical: 18 },
-});

@@ -1,7 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { COLORS } from '@/theme/colors';
-import { SHADOWS } from '@/theme/shadows';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
 export interface AnswerTileProps {
@@ -22,22 +21,27 @@ export function AnswerTile({
   onPress,
   multiple = false,
 }: AnswerTileProps) {
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole={multiple ? 'checkbox' : 'button'}
       accessibilityLabel={`${title}. ${subtitle}`}
       accessibilityState={multiple ? { checked: selected } : { selected }}
-      style={[styles.tile, SHADOWS.card, selected && styles.selected]}
+      style={[
+        styles.tile,
+        { backgroundColor: colors.card },
+        selected && { backgroundColor: colors.ink },
+      ]}
     >
-      <View style={styles.iconCircle}>
-        <Icon size={24} color={COLORS.accent} strokeWidth={2} />
+      <View style={[styles.iconCircle, { backgroundColor: selected ? 'transparent' : colors.accSoft }]}>
+        <Icon size={24} color={selected ? colors.onInk : colors.acc} strokeWidth={2} />
       </View>
       <View style={styles.texts}>
-        <Text style={textStyle('body', { fontWeight: '700', color: COLORS.textPrimary })}>
+        <Text style={textStyle('body', { fontFamily: 'Manrope-Bold', color: selected ? colors.onInk : colors.ink })}>
           {title}
         </Text>
-        <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>{subtitle}</Text>
+        <Text style={textStyle('bodySmall', { color: selected ? colors.onInk : colors.textSecondary })}>{subtitle}</Text>
       </View>
     </Pressable>
   );
@@ -48,26 +52,18 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 150,
     minWidth: 44,
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
+    borderRadius: 24,
     padding: 16,
     justifyContent: 'space-between',
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  selected: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentSoft,
-  },
   iconCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLORS.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  texts: {
-    gap: 2,
-  },
+  texts: { gap: 2 },
 });

@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { COLORS } from '@/theme/colors';
-import { SHADOWS } from '@/theme/shadows';
+import { useThemedStyles } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
 export interface SegmentedOption {
@@ -12,9 +11,40 @@ export interface SegmentedControlProps {
   options: SegmentedOption[];
   selected: string;
   onChange: (value: string) => void;
+  /** Variante compacta (13/600, ancho automático). */
+  sm?: boolean;
 }
 
-export function SegmentedControl({ options, selected, onChange }: SegmentedControlProps) {
+/** Segmentos X2: pista chip píldora padding 3; opción 14/600 mut; activa fondo ink, texto onInk. */
+export function SegmentedControl({ options, selected, onChange, sm = false }: SegmentedControlProps) {
+  const styles = useThemedStyles((c) =>
+    StyleSheet.create({
+      track: {
+        flexDirection: 'row',
+        backgroundColor: c.chip,
+        borderRadius: 99,
+        padding: 3,
+        gap: 2,
+        width: sm ? 'auto' : '100%',
+        alignSelf: sm ? 'flex-start' : 'stretch',
+      },
+      segment: {
+        flex: sm ? 0 : 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 99,
+        paddingVertical: sm ? 6 : 8,
+        paddingHorizontal: sm ? 12 : 6,
+        minHeight: 44,
+      },
+      active: {
+        backgroundColor: c.ink,
+      },
+      textActive: { color: c.onInk },
+      textInactive: { color: c.mut },
+    }),
+  );
+
   return (
     <View accessibilityRole="tablist" style={styles.track}>
       {options.map((o) => {
@@ -30,8 +60,11 @@ export function SegmentedControl({ options, selected, onChange }: SegmentedContr
           >
             <Text
               style={[
-                textStyle('bodySmall', { fontWeight: '600' }),
-                { color: active ? COLORS.textPrimary : COLORS.textSecondary },
+                sm
+                  ? textStyle('link', { fontSize: 13 })
+                  : textStyle('bodySmall', { fontSize: 14 }),
+                { fontFamily: 'Inter-SemiBold' },
+                active ? styles.textActive : styles.textInactive,
               ]}
             >
               {o.label}
@@ -42,21 +75,3 @@ export function SegmentedControl({ options, selected, onChange }: SegmentedContr
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  track: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surfaceNeutral,
-    borderRadius: 24,
-    padding: 3,
-  },
-  segment: {
-    flex: 1,
-    minHeight: 44,
-    minWidth: 44,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  active: { backgroundColor: COLORS.card, ...SHADOWS.card },
-});

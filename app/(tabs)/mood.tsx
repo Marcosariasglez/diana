@@ -5,7 +5,7 @@ import { Button, Screen, SegmentedControl, useToast } from '@/components/ui';
 import type { Complexity } from '@/types/mood';
 import { useMoodStore } from '@/store/useMoodStore';
 import { useRoomStore } from '@/store/useRoomStore';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 
@@ -46,11 +46,32 @@ export default function MoodScreen() {
     }
   };
 
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    root: { flex: 1 },
+    scroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16 },
+    title: { color: c.ink, marginBottom: 20 },
+    eyebrow: { marginTop: 28, marginBottom: 14, letterSpacing: 0.5 },
+    cards: { flexDirection: 'row' as const, gap: 10 },
+    card: {
+      flex: 1,
+      minHeight: 112,
+      backgroundColor: c.card,
+      borderRadius: 20,
+      paddingHorizontal: 14,
+      paddingBottom: 18,
+      justifyContent: 'flex-end' as const,
+      gap: 4,
+    },
+    cardSelected: { backgroundColor: c.ink },
+    footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36 },
+  }));
+
   return (
     <Screen>
       <View style={styles.root}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <Text accessibilityRole="header" style={[textStyle('screenTitle', { fontSize: 36 }), styles.title]}>
+          <Text accessibilityRole="header" style={[textStyle('screenTitle'), styles.title]}>
             Mood
           </Text>
           <SegmentedControl
@@ -60,7 +81,7 @@ export default function MoodScreen() {
           />
           {group ? null : (
             <>
-              <Text style={[textStyle('body', { fontWeight: '600', color: COLORS.textSecondary }), styles.eyebrow]}>
+              <Text style={[textStyle('label'), { color: colors.textSecondary }, styles.eyebrow]}>
                 ¿CUÁNTO QUIERES AFINAR?
               </Text>
               <View style={styles.cards} accessibilityRole="radiogroup">
@@ -77,16 +98,16 @@ export default function MoodScreen() {
                     >
                       <Text
                         style={textStyle('body', {
-                          fontWeight: '800',
+                          fontFamily: 'Manrope-ExtraBold',
                           fontSize: 18,
-                          color: selected ? '#FFFFFF' : COLORS.textPrimary,
+                          color: selected ? colors.onInk : colors.ink,
                         })}
                       >
                         {c.title}
                       </Text>
                       <Text
                         style={textStyle('bodySmall', {
-                          color: selected ? '#D5D8DC' : COLORS.textSecondary,
+                          color: selected ? colors.mut : colors.textSecondary,
                         })}
                       >
                         {c.subtitle}
@@ -109,23 +130,3 @@ export default function MoodScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  scroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16 },
-  title: { color: COLORS.textPrimary, marginBottom: 20 },
-  eyebrow: { marginTop: 28, marginBottom: 14, letterSpacing: 0.5 },
-  cards: { flexDirection: 'row', gap: 10 },
-  card: {
-    flex: 1,
-    minHeight: 112,
-    backgroundColor: COLORS.card,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingBottom: 18,
-    justifyContent: 'flex-end',
-    gap: 4,
-  },
-  cardSelected: { backgroundColor: COLORS.textPrimary },
-  footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36 },
-});

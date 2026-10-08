@@ -33,6 +33,7 @@ function PosterBase({ media, size, onPress }: PosterProps) {
     <View
       style={[
         styles.poster,
+        big ? { borderRadius: 24 } : null,
         SHADOWS.poster,
         { width, height, backgroundColor: posterColor(media.id) },
       ]}
@@ -92,7 +93,7 @@ export const Poster = memo(
 
 const styles = StyleSheet.create({
   poster: {
-    borderRadius: 12,
+    borderRadius: 20,
     overflow: 'hidden',
     justifyContent: 'flex-end',
   },
@@ -107,11 +108,12 @@ const styles = StyleSheet.create({
   titleBig: {
     fontSize: 28,
     lineHeight: 30,
-    fontWeight: '800',
+    fontFamily: 'Manrope-ExtraBold',
   },
   titleGiant: {
     fontSize: 40,
     lineHeight: 42,
+    fontFamily: 'Manrope-ExtraBold',
     paddingHorizontal: 20,
     paddingBottom: 20,
   },

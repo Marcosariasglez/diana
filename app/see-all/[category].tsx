@@ -9,7 +9,7 @@ import { EmptyState, ErrorState, LockedAffinityChip, Screen, Skeleton } from '@/
 import { catalogRepository } from '@/services';
 import { getRankingContext } from '@/store/rankingContext';
 import { useProfileStore } from '@/store/useProfileStore';
-import { COLORS } from '@/theme/colors';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 import type { Media, MediaWithAffinity } from '@/types/media';
@@ -106,6 +106,33 @@ export default function SeeAllScreen() {
     [openDetail],
   );
 
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    header: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 12,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 12,
+    },
+    back: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.card,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    center: { flex: 1, justifyContent: 'center' as const },
+    grid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 12, paddingHorizontal: 20 },
+    list: { paddingHorizontal: 12, paddingBottom: 32 },
+    cell: { alignItems: 'center' as const, gap: 6, paddingVertical: 8, paddingHorizontal: 4 },
+    caption: { fontFamily: 'Inter-SemiBold' as const, color: c.ink, width: 96 },
+    footer: { paddingVertical: 16 },
+    retry: { minHeight: 44, alignItems: 'center' as const, justifyContent: 'center' as const },
+  }));
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -115,9 +142,9 @@ export default function SeeAllScreen() {
           accessibilityLabel="Volver"
           style={[styles.back, SHADOWS.card]}
         >
-          <ArrowLeft size={22} color={COLORS.textPrimary} />
+          <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text accessibilityRole="header" style={textStyle('screenTitle', { color: COLORS.textPrimary })}>
+        <Text accessibilityRole="header" style={textStyle('screenTitle', { color: colors.ink })}>
           {category ? TITLES[category] : 'Ver todo'}
         </Text>
       </View>
@@ -152,7 +179,7 @@ export default function SeeAllScreen() {
           showsVerticalScrollIndicator={false}
           ListFooterComponent={
             loadingMore ? (
-              <ActivityIndicator color={COLORS.accent} accessibilityLabel="Cargando más títulos" style={styles.footer} />
+              <ActivityIndicator color={colors.acc} accessibilityLabel="Cargando más títulos" style={styles.footer} />
             ) : status === 'error' ? (
               <Pressable
                 onPress={loadMore}
@@ -160,7 +187,7 @@ export default function SeeAllScreen() {
                 accessibilityLabel="Reintentar"
                 style={styles.retry}
               >
-                <Text style={textStyle('bodySmall', { fontWeight: '700', color: COLORS.accent })}>Reintentar</Text>
+                <Text style={textStyle('bodySmall', { fontFamily: 'Inter-Bold', color: colors.acc })}>Reintentar</Text>
               </Pressable>
             ) : null
           }
@@ -169,29 +196,3 @@ export default function SeeAllScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  back: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  center: { flex: 1, justifyContent: 'center' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 20 },
-  list: { paddingHorizontal: 12, paddingBottom: 32 },
-  cell: { alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 4 },
-  caption: textStyle('bodySmall', { fontWeight: '600', color: COLORS.textPrimary, width: 96 }),
-  footer: { paddingVertical: 16 },
-  retry: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-});
