@@ -77,6 +77,41 @@ try {
   const hits = await a.client.rpc('bump_api_hits', { p_user: a.id });
   check('bump_api_hits no es llamable por el cliente', !!hits.error);
 
+  // Resto de tablas del usuario: A escribe lo suyo, B no toca nada de A.
+  const irA = await a.client.from('initial_ratings').upsert(
+    { user_id: a.id, media_id: 100, value: 'like', genre_ids: [1] },
+    { onConflict: 'user_id,media_id' },
+  );
+  check('A inserta initial_ratings', !irA.error, irA.error?.message);
+  const irB = await b.client.from('initial_ratings').select('media_id').eq('user_id', a.id);
+  check('B no lee initial_ratings de A', (irB.data ?? []).length === 0);
+  const irForged = await b.client.from('initial_ratings').upsert(
+    { user_id: a.id, media_id: 101, value: 'skip', genre_ids: [] },
+    { onConflict: 'user_id,media_id' },
+  );
+  check('B no inserta initial_ratings en nombre de A', !!irForged.error);
+
+  const wA = await a.client.from('watched').insert({ user_id: a.id, key: 'movie:1' });
+  check('A inserta watched', !wA.error, wA.error?.message);
+  const wB = await b.client.from('watched').select('key').eq('user_id', a.id);
+  check('B no lee watched de A', (wB.data ?? []).length === 0);
+  const wForged = await b.client.from('watched').insert({ user_id: a.id, key: 'movie:2' });
+  check('B no inserta watched en nombre de A', !!wForged.error);
+
+  const profRead = await a.client.from('profiles').select('display_name').eq('id', a.id).single();
+  check('A lee su propio perfil', !profRead.error && typeof profRead.data?.display_name === 'string');
+  const profOther = await b.client.from('profiles').select('display_name').eq('id', a.id).single();
+  check('B no lee el perfil de A', !!profOther.error);
+  const profUpdate = await b.client.from('profiles').update({ display_name: 'hack' }).eq('id', a.id).select();
+  check('B no modifica el perfil de A', (profUpdate.data ?? []).length === 0);
+
+  // delete_user_data: RPC security definer REVOKE a public/anon/authenticated.
+  const delClient = await a.client.rpc('delete_user_data', { target_user_id: a.id });
+  check('delete_user_data no es llamable por el cliente (solo service_role)', !!delClient.error);
+  // ...y A sigue intacto tras el intento.
+  const profStill = await a.client.from('profiles').select('id').eq('id', a.id).single();
+  check('A sigue vivo tras el intento de borrado', !profStill.error);
+
   // Salas.
   const created = await a.client.rpc('create_room', { p_name: 'Ana' });
   check('A crea sala', !created.error && /^[A-HJ-NP-Z2-9]{4}$/.test(created.data ?? ''), created.error?.message);
