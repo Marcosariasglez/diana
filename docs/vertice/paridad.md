@@ -29,7 +29,7 @@ Leyenda: ✓ cumplido y verificado · ⚠️ código listo y probado, pero requi
 |---|---|---|
 | Entrar con Google y código por correo en las dos apps, también en la PWA de iPhone | ⚠️ | Implementado y probado con mocks ([`useAuthStore.test.ts`](../../src/store/useAuthStore.test.ts), [`login.test.tsx`](../../src/__tests__/login.test.tsx), 12 estados); requiere despliegue + prueba real (PWA en iPhone) por el dueño |
 | Cerrar sesión / en todos / exportar / borrar funcionan **de verdad** (verificable en BD) | ⚠️ | Lógica lista y probada: `signOut` (`resetLocalStores`), `signOutEverywhere` (`scope:'global'`), [`export.ts`](../../src/services/export.ts) (JSON + `expo-sharing`), Edge Function [`delete-account`](../../supabase/functions/delete-account/index.ts) + RPC [`0005_delete_user_data.sql`](../../supabase/migrations/0005_delete_user_data.sql) (tests Deno: only-Diana vs `everywhere:true`, 401/405, CORS). Queda: `db push` 0005 + `functions deploy` + comprobación en BD por el dueño |
-| Un usuario nunca ve datos de otro (Diana: `npm run rls`) | ✓ (local) ⚠️ (producción) | [`rls-check.mjs`](../../scripts/rls-check.mjs) extendido: `initial_ratings`, `watched`, `profiles` (lectura/escritura cruzada bloqueada) + intento de `delete_user_data` como cliente; paso en el proyecto de pruebas. Repetir en producción tras el `db push` (pendiente dueño) |
+| Un usuario nunca ve datos de otro (Diana: `npm run rls`) | ⚠️ (producción) | [`rls-check.mjs`](../../scripts/rls-check.mjs) extendido: `initial_ratings`, `watched`, `profiles` (lectura/escritura cruzada bloqueada) + `delete_user_data` bloqueado **por permisos** (revoke; el error debe ser «permission denied»). El script apunta al proyecto de `.env.local` —hoy producción, **no existe proyecto de pruebas**— y crea/borra 3 usuarios temporales: es seguro ejecutarlo con 0005 desplegada y respaldo reciente (ver [seguridad.md](./seguridad.md)). Pendiente: re-ejecución en producción tras el `db push` (dueño) |
 | Mismo texto en cada error de A4 | ✓ | [`authMessages.ts`](../../src/constants/authMessages.ts) literales A4; mapeo de códigos en [`useAuthStore.ts`](../../src/store/useAuthStore.ts); test de cada estado en [`login.test.tsx`](../../src/__tests__/login.test.tsx) |
 
 ### Calidad
@@ -80,9 +80,10 @@ Todo lo marcado ⚠️ requiere producción (sin tocar nada desde el repo, por r
 
 1. **Migración 0005** (RPC `delete_user_data`): backup y luego
    `npx supabase db push --project-ref hvjmewokgxgrshtzhdjq`
-2. **Edge Function delete-account** (reescrita, Q2): probar en proyecto de pruebas y
-   `npx supabase functions deploy delete-account --project-ref hvjmewokgxgrshtzhdjq`
-   y `npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY=... --project-ref hvjmewokgxgrshtzhdjq` (si no está)
-3. **`npm run rls` en producción** tras el `db push` (revalidar RLS real).
+2. **Edge Function delete-account** (reescrita, Q2): `npx supabase functions deploy delete-account --project-ref hvjmewokgxgrshtzhdjq`
+   y `npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY=... --project-ref hvjmewokgxgrshtzhdjq` (si no está).
+   No existe proyecto de pruebas: se despliega en este proyecto, tras el paso 1.
+3. **`npm run rls` en producción** tras el `db push` (revalidar RLS real; crea y borra 3
+   usuarios temporales — ver [seguridad.md](./seguridad.md) para cuándo es seguro ejecutarlo).
 4. **Supabase Auth**: Redirect URLs de producción, plantillas «Magic Link»/«Confirm signup» con `{{ .Token }}` y SMTP propio.
 5. **Prueba real en iPhone/PWA**: Google + código por correo, cerrar en todos, exportar y borrar (verificar después en la BD).

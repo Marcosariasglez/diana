@@ -72,10 +72,23 @@ Modos: con `BACKEND=mock` la app no pide inicio de sesión y todo es local; con
 GitHub Pages en `/diana` (`.github/workflows/deploy.yml`: verify + build + 404 fallback).
 Keepalive de Supabase cada 3 días (`.github/workflows/keepalive.yml`, consulta anon a Postgres).
 
-### Pendientes del dueño (el agente no toca producción)
+### Cuándo es seguro ejecutar `npm run rls`
 
-1. `npx supabase db push` — aplica la migración `0005_delete_user_data.sql` (copia de seguridad previa)
-2. `npx supabase functions deploy delete-account --project-ref hvjmewokgxgrshtzhdjq` (primero en proyecto de pruebas)
-3. Re-ejecutar `npm run rls` en producción
-4. Supabase → Authentication: Redirect URLs reales + plantillas «Magic Link» y «Confirm signup» con `{{ .Token }}` + SMTP propio (Resend/Brevo)
-5. Prueba real del guion D5 (PC, iPhone, PWA instalada)
+El script (`scripts/rls-check.mjs`) lee `.env.local` y apunta al proyecto de producción
+(**no existe proyecto de pruebas de Supabase**). Crea 3 usuarios temporales
+(`diana-rls-*@example.com`), comprueba RLS y los borra al terminar. Solo ejecutarlo:
+
+- **con la migración 0005 desplegada** (el check de `delete_user_data` exige denegación
+  por permisos; si la función no existe, falla) y
+- **con un respaldo reciente** de la base de datos.
+
+### Pendientes del dueño (el agente no toca producción), en este orden
+
+1. Copia de seguridad de la base de Supabase
+2. `npx supabase db push` — aplica la migración `0005_delete_user_data.sql`
+3. `npx supabase functions deploy delete-account --project-ref hvjmewokgxgrshtzhdjq`
+   (+ `npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...` si no está)
+4. `git push` (CI: verify + build + Pages en `/diana`)
+5. Supabase → Authentication: Redirect URLs reales + plantillas «Magic Link» y «Confirm signup» con `{{ .Token }}` + SMTP propio (Resend/Brevo)
+6. Prueba real del guion D5 (PC, iPhone, PWA instalada)
+7. Re-ejecutar `npm run rls` en producción (ver arriba cuándo es seguro)

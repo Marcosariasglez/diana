@@ -1,13 +1,31 @@
 # Seguridad VERTICE · Diana
 
-> Actualizado 2026-10-08 (fase D5). Lo que queda marcado ⚠️ exige el proyecto de Supabase
-> o una prueba manual del dueño; no se toca producción desde el repo.
+> Actualizado 2026-10-08 (corrección de cierre). Lo que queda marcado ⚠️ exige una acción
+> del dueño en producción (db push, deploy, plantillas) o una prueba manual; el agente no
+> toca producción desde el repo.
 
 ## RLS (Row Level Security)
 
 **Estado:** ✅ Verificado localmente · ⚠️ Ampliación pendiente de ejecutar en Supabase
 
-`npm run rls` (`scripts/rls-check.mjs`) crea 3 usuarios reales de prueba (A, B, C) y comprueba:
+`npm run rls` (`scripts/rls-check.mjs`) lee `.env.local` y crea **3 usuarios temporales**
+(`diana-rls-*@example.com`, contraseña aleatoria) en el proyecto al que apunta ese fichero
+**— hoy es el proyecto de PRODUCCIÓN; no existe proyecto de pruebas de Supabase** —,
+comprueba los permisos y **borra los usuarios al terminar** (la función `delete_user_data`
+no se toca en el script: solo verifica que un cliente no autenticado como service_role no
+puede invocarla). Es seguro ejecutarlo cuando:
+
+1. La migración `0005_delete_user_data.sql` esté desplegada (`npx supabase db push`), porque
+   la comprobación de `delete_user_data` ahora exige **denegación por permisos** (revoke);
+   si la función no existe, el check falla (antes pasaba por "función inexistente", que no
+   probaba el revoke).
+2. Se haya hecho un respaldo reciente (Dashboard → Database → Backups o `pg_dump`): el
+   script inserta y borra filas reales de `history_entries`, `initial_ratings`, `watched`,
+   `room_members`, `rooms` y `room_decisions` con datos de prueba propios de los usuarios
+   temporales (nunca de usuarios existentes).
+
+> ⚠️ **No ejecutar en paralelo con otras escrituras de prueba ni mientras se hace el
+> despliegue de 0005:** el script asume el estado de la BD entre comprobaciones.
 
 - El trigger `handle_new_user` crea el perfil automáticamente
 - A inserta/lee/modifica su historial; **B no lo lee, modifica ni inserta en su nombre**
@@ -16,7 +34,7 @@
 - **`profiles`:** A lee el suyo; **B no lee ni modifica el de A** *(nuevo en D5)*
 - La nota debe ir en pasos de 0.5
 - `tmdb_cache` no es legible por el cliente; `bump_api_hits` no es llamable
-- **`delete_user_data` no es invocable por el cliente** (solo service_role) y A sigue vivo tras el intento *(nuevo en D5)*
+- **`delete_user_data` está bloqueado por permisos (revoke)** para clientes —el error debe ser «permission denied», no «función inexistente»— y A sigue vivo tras el intento *(D5; afinado en la corrección de cierre: antes el check daba positivo también cuando la función no existía)*
 - Salas: solo el host empieza; no-miembro no ve la sala ni decide; `group_seen_keys` solo para miembros
 
 Resultado de la última ejecución:
@@ -82,8 +100,9 @@ aunque comparten origen. Cambiarla desloguea a quien esté dentro.
 
 1. `npx supabase db push` (migración 0005) — con copia de seguridad previa
 2. `npx supabase functions deploy delete-account --project-ref hvjmewokgxgrshtzhdjq`
-   (primero en un proyecto de pruebas)
-3. Re-ejecutar `npm run rls` en producción (incluye ahora las tablas nuevas)
+   (no existe proyecto de pruebas: se despliega directamente en este proyecto, tras el
+   paso 1; la función valida el JWT y solo borra datos de Diana)
+3. `npm run rls` en producción (incluye las tablas nuevas; ver arriba cuándo es seguro ejecutarlo)
 
 ## Summary
 
