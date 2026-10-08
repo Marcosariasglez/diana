@@ -48,6 +48,7 @@ function AppContent() {
           options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
         />
         <Stack.Screen name="mood-results" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="account" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="daily-log" options={{ presentation: 'modal' }} />
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="see-all/[category]" options={{ animation: 'slide_from_right' }} />

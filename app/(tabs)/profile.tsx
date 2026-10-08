@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { AlertCircle, CheckCircle2, Settings2, User } from 'lucide-react-native';
+import { AlertCircle, CheckCircle2, User } from 'lucide-react-native';
 import { MetricCard } from '@/components/features/MetricCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -19,6 +20,7 @@ import {
   useHistoryStore,
 } from '@/store/useHistoryStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useProfileStore } from '@/store/useProfileStore';
 import { useSettingsStore, type ReducedMotionOverride } from '@/store/useSettingsStore';
 import { BACKEND } from '@/lib/env';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -36,6 +38,7 @@ export default function ProfileScreen() {
   const entries = useHistoryStore((s) => s.entries);
   const watched = useHistoryStore((s) => s.watched);
   const email = useAuthStore((s) => s.email);
+  const displayName = useProfileStore((s) => s.profile.displayName);
   const appearance = useSettingsStore((s) => s.appearance);
   const setAppearance = useSettingsStore((s) => s.setAppearance);
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
@@ -98,6 +101,7 @@ export default function ProfileScreen() {
   const seenText = empty ? '—' : String(seen);
   const avgText = formatRating(average);
   const isMock = BACKEND === 'mock';
+  const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
   return (
     <Screen>
@@ -111,9 +115,9 @@ export default function ProfileScreen() {
         </Text>
 
         <ProfileCard
-          name={email ?? 'Usuario'}
+          name={displayName || (email ? email.split('@')[0] : 'Usuario')}
           subtitle={email ?? ''}
-          initial={(email ?? 'U').charAt(0).toUpperCase()}
+          initial={(displayName || email || 'U').charAt(0).toUpperCase()}
         />
 
         <View style={styles.metrics}>
@@ -208,10 +212,8 @@ export default function ProfileScreen() {
           <ListRow
             first
             title="Apariencia"
-            icon={Settings2}
-            onPress={() => {}}
-          >
-          </ListRow>
+            value={appearance === 'light' ? 'Claro' : appearance === 'dark' ? 'Oscuro' : 'Auto'}
+          />
           <SegmentedControl
             options={APPEARANCE_OPTIONS}
             selected={appearance}
@@ -252,7 +254,7 @@ export default function ProfileScreen() {
         {/* Pie */}
         <View style={styles.footer}>
           <Text style={[textStyle('bodySmall'), styles.footerText]}>
-            Una app de VERTICE
+            Diana {APP_VERSION} · Una app de VERTICE
           </Text>
         </View>
       </ScrollView>

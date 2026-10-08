@@ -3,6 +3,7 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleNameMapper: {
+    '^npm:@supabase/supabase-js@2$': '<rootDir>/node_modules/@supabase/supabase-js',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^lucide-react-native$': '<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js',
   },

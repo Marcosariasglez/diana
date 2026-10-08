@@ -1,17 +1,22 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { ArrowLeft, Trash2, Download, LogOut } from 'lucide-react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Constants from 'expo-constants';
+import { router } from 'expo-router';
+import { ArrowLeft, Download, Globe, LogOut, Trash2 } from 'lucide-react-native';
 import { Card } from '@/components/ui/Card';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ListRow } from '@/components/ui/ListRow';
 import { ProfileCard } from '@/components/ui/ProfileCard';
-import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Screen } from '@/components/ui/Screen';
-import { useAuthStore } from '@/store/useAuthStore';
-import { useSettingsStore } from '@/store/useSettingsStore';
-import { getSupabase } from '@/lib/supabase';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { TextField } from '@/components/ui/TextField';
+import { useToast } from '@/components/ui/Toast';
 import { BACKEND } from '@/lib/env';
+import { getSupabase } from '@/lib/supabase';
+import { exportMyData } from '@/services/export';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useProfileStore } from '@/store/useProfileStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
@@ -21,116 +26,161 @@ const APPEARANCE_OPTIONS = [
   { label: 'Auto', value: 'auto' },
 ];
 
+const MAX_NAME = 40;
+
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
+
+type Sheet = 'none' | 'everywhere' | 'delete' | 'deleteEverywhere';
+
+/**
+ * Pantalla «Cuenta» (A5): correo, nombre editable, apariencia, exportar,
+ * cerrar sesión (1 / todos), borrar cuenta (frase BORRAR MI CUENTA) y el
+ * enlace de borrado global de la identidad VERTICE. En modo mock muestra
+ * «Modo demostración» y oculta las acciones de cuenta.
+ */
 export default function AccountScreen() {
   const email = useAuthStore((s) => s.email);
+  const provider = useAuthStore((s) => s.provider);
   const signOut = useAuthStore((s) => s.signOut);
+  const signOutEverywhere = useAuthStore((s) => s.signOutEverywhere);
+  const displayName = useProfileStore((s) => s.profile.displayName);
+  const setDisplayName = useProfileStore((s) => s.setDisplayName);
   const appearance = useSettingsStore((s) => s.appearance);
   const setAppearance = useSettingsStore((s) => s.setAppearance);
-  const [showDelete, setShowDelete] = useState(false);
+  const toast = useToast();
+
+  const [nameDraft, setNameDraft] = useState(displayName);
+  const [exporting, setExporting] = useState(false);
+  const [sheet, setSheet] = useState<Sheet>('none');
   const isMock = BACKEND === 'mock';
+
   const { colors } = useTheme();
   const styles = useThemedStyles((c) => StyleSheet.create({
-    content: { paddingHorizontal: 20, paddingTop: 80, paddingBottom: 40, gap: 14 },
-    groupLabel: { color: c.mut, marginTop: 8 },
-    footer: { marginTop: 24, alignItems: 'center' as const, gap: 4 },
-    footerText: { color: c.mut },
-    demoBadge: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 99,
-      backgroundColor: c.chip,
-      alignSelf: 'center',
-      marginBottom: 8,
-    },
-    demoText: { color: c.mut },
-    sectionGap: { gap: 0 },
+    content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40, gap: 14 },
+    headerRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 12 },
     backButton: {
-      position: 'absolute' as const,
-      top: 60,
-      left: 20,
       width: 40,
       height: 40,
       borderRadius: 20,
       backgroundColor: c.card,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      zIndex: 5,
     },
+    title: { color: c.ink, flex: 1 },
+    groupLabel: { color: c.mut, marginTop: 8 },
+    nameRow: { paddingVertical: 12, gap: 8 },
+    demoBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 99,
+      backgroundColor: c.chip,
+      alignSelf: 'flex-start',
+    },
+    demoText: { color: c.mut },
+    footer: { marginTop: 24, alignItems: 'center' as const, gap: 4 },
+    footerText: { color: c.mut },
+    legal: { color: c.acc },
   }));
+
+  const providerLabel = provider === 'google' ? 'Entras con Google' : 'Entras con código por correo';
+
+  const saveName = useCallback(() => {
+    const trimmed = nameDraft.trim();
+    if (!trimmed || trimmed === displayName) {
+      setNameDraft(displayName);
+      return;
+    }
+    setDisplayName(trimmed.slice(0, MAX_NAME));
+    toast.show('Nombre guardado');
+  }, [nameDraft, displayName, setDisplayName, toast]);
+
+  const handleExport = useCallback(async () => {
+    if (exporting) return;
+    setExporting(true);
+    const res = await exportMyData();
+    setExporting(false);
+    toast.show(res.message, 3000, !res.ok);
+  }, [exporting, toast]);
 
   const handleSignOut = useCallback(async () => {
     await signOut();
     router.replace('/login');
   }, [signOut]);
 
-  const handleSignOutEverywhere = useCallback(async () => {
-    try {
-      await getSupabase().auth.signOut({ scope: 'global' });
-      router.replace('/login');
-    } catch {
-      await signOut();
-      router.replace('/login');
-    }
-  }, [signOut]);
+  const confirmSignOutEverywhere = useCallback(async () => {
+    setSheet('none');
+    await signOutEverywhere();
+    router.replace('/login');
+  }, [signOutEverywhere]);
 
-  const handleDeleteAccount = useCallback(async () => {
-    try {
-      await getSupabase().functions.invoke('delete-account', {
-        body: { everywhere: false },
-      });
-      await signOut();
-      router.replace('/login');
-    } catch {
-      Alert.alert('Error', 'No se pudo borrar la cuenta. Inténtalo de nuevo.');
-    }
-    setShowDelete(false);
-  }, [signOut]);
-
-  const provider = 'Google';
-
-  useFocusEffect(
-    useCallback(() => {}, []),
+  const runDelete = useCallback(
+    async (everywhere: boolean) => {
+      setSheet('none');
+      try {
+        const { error } = await getSupabase().functions.invoke('delete-account', {
+          body: { everywhere },
+        });
+        if (error) throw error;
+        await signOut();
+        router.replace('/login');
+      } catch {
+        toast.show('No se pudo borrar la cuenta. Inténtalo de nuevo.', 4000, true);
+      }
+    },
+    [signOut, toast],
   );
 
   return (
     <Screen safe={false}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Atrás"
-        onPress={() => router.back()}
-        style={styles.backButton}
-      >
-        <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
-      </Pressable>
-
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text accessibilityRole="header" style={[textStyle('screenTitle'), { marginBottom: 8 }]}>
-          Cuenta
-        </Text>
+        <View style={styles.headerRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Atrás"
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
+          </Pressable>
+          <Text accessibilityRole="header" style={[textStyle('screenTitle'), styles.title]}>
+            Cuenta
+          </Text>
+          <View style={{ width: 40, height: 40 }} />
+        </View>
 
-        <ProfileCard
-          name={email?.split('@')[0] ?? 'Usuario'}
-          subtitle={email ?? ''}
-          initial={(email ?? 'U').charAt(0).toUpperCase()}
-        />
-
-        {/* Información */}
-        <Text style={[textStyle('label'), styles.groupLabel]}>INFORMACIÓN</Text>
-        <Card style={styles.sectionGap}>
-          <ListRow
-            first
-            title="Correo"
-            subtitle={`Entras con ${provider}`}
-            value={email ?? ''}
+        <Card>
+          <ProfileCard
+            name={displayName || (email ? email.split('@')[0] : 'Usuario')}
+            subtitle={email ?? ''}
+            initial={(displayName || email || 'U').charAt(0).toUpperCase()}
           />
         </Card>
 
-        {/* Apariencia */}
-        <Text style={[textStyle('label'), styles.groupLabel]}>APARIENCIA</Text>
-        <Card style={styles.sectionGap}>
+        {/* Información */}
+        <Text style={[textStyle('label'), styles.groupLabel]}>INFORMACIÓN</Text>
+        <Card>
+          <ListRow first title="Correo" subtitle={providerLabel} value={email ?? ''} />
+          <View style={styles.nameRow}>
+            <TextField
+              label="Nombre visible"
+              value={nameDraft}
+              onChangeText={(t) => setNameDraft(t.slice(0, MAX_NAME))}
+              onBlur={saveName}
+              onSubmitEditing={saveName}
+              placeholder="Tu nombre"
+              maxLength={MAX_NAME}
+              testID="account-name-input"
+            />
+          </View>
+        </Card>
+
+        {/* Aplicación */}
+        <Text style={[textStyle('label'), styles.groupLabel]}>APARICENCIA</Text>
+        <Card>
           <SegmentedControl
             options={APPEARANCE_OPTIONS}
             selected={appearance}
@@ -144,39 +194,43 @@ export default function AccountScreen() {
           </View>
         ) : (
           <>
-            {/* Acciones */}
-            <Text style={[textStyle('label'), styles.groupLabel]}>ACCIONES</Text>
-            <Card style={styles.sectionGap}>
+            {/* Cuenta */}
+            <Text style={[textStyle('label'), styles.groupLabel]}>CUENTA</Text>
+            <Card>
               <ListRow
                 first
                 title="Exportar mis datos"
-                subtitle="Descarga un JSON con todos tus datos"
+                subtitle="Descarga un JSON con todo lo tuyo en Diana"
                 icon={Download}
-                onPress={() => Alert.alert('Próximamente', 'Exportar datos estará disponible pronto.')}
+                onPress={() => void handleExport()}
               />
               <ListRow
                 title="Cerrar sesión"
                 subtitle="Solo este dispositivo"
                 icon={LogOut}
-                onPress={handleSignOut}
+                onPress={() => void handleSignOut()}
               />
               <ListRow
                 title="Cerrar en todos los dispositivos"
-                icon={LogOut}
-                onPress={() => Alert.alert(
-                  'Cerrar en todos los dispositivos',
-                  'Se cerrará la sesión en todos los dispositivos.',
-                  [
-                    { text: 'Cancelar', style: 'cancel' },
-                    { text: 'Cerrar', onPress: handleSignOutEverywhere },
-                  ],
-                )}
+                icon={Globe}
+                onPress={() => setSheet('everywhere')}
               />
               <ListRow
                 title="Borrar mi cuenta"
-                subtitle="Acción irreversible"
+                subtitle="Borra tus datos de Diana"
                 icon={Trash2}
-                onPress={() => setShowDelete(true)}
+                onPress={() => setSheet('delete')}
+              />
+            </Card>
+
+            <Card>
+              <ListRow
+                first
+                title="Borrar también mi acceso a todas las apps de VERTICE"
+                subtitle="Elimina además la cuenta compartida: afectará a Diana y a las demás apps"
+                icon={Trash2}
+                iconColor={colors.neg}
+                onPress={() => setSheet('deleteEverywhere')}
               />
             </Card>
           </>
@@ -185,24 +239,45 @@ export default function AccountScreen() {
         {/* Pie */}
         <View style={styles.footer}>
           <Text style={[textStyle('bodySmall'), styles.footerText]}>
-            Política de privacidad · Términos de uso
+            <Text style={styles.legal}>Política de privacidad</Text>
+            {'  ·  '}
+            <Text style={styles.legal}>Términos</Text>
           </Text>
           <Text style={[textStyle('bodySmall'), styles.footerText]}>
-            Una app de VERTICE
+            Diana {APP_VERSION} · Una app de VERTICE
           </Text>
         </View>
       </ScrollView>
 
       <ConfirmSheet
-        visible={showDelete}
+        visible={sheet === 'everywhere'}
+        title="Cerrar en todos los dispositivos"
+        message="Se cerrará la sesión de Diana en todos tus dispositivos. Volverás a entrar cuando quieras."
+        confirmLabel="Cerrar"
+        onConfirm={() => void confirmSignOutEverywhere()}
+        onCancel={() => setSheet('none')}
+      />
+      <ConfirmSheet
+        visible={sheet === 'delete'}
         title="Borrar mi cuenta"
-        message="Se borrarán todos tus datos de Diana. Esta acción no se puede deshacer."
+        message="Se borrarán todos tus datos de Diana (perfil, historial, salas). Esta acción no se puede deshacer."
         requirePhrase="BORRAR MI CUENTA"
+        phraseHint="Escribe BORRAR MI CUENTA para confirmar"
         confirmLabel="Borrar"
         destructive
-        onConfirm={handleDeleteAccount}
-        onCancel={() => setShowDelete(false)}
+        onConfirm={() => void runDelete(false)}
+        onCancel={() => setSheet('none')}
+      />
+      <ConfirmSheet
+        visible={sheet === 'deleteEverywhere'}
+        title="Borrar mi acceso a VERTICE"
+        message="Se borrarán tus datos de Diana y además tu cuenta compartida de VERTICE. Perderás el acceso a todas las apps del grupo. Esta acción no se puede deshacer."
+        requirePhrase="BORRAR MI CUENTA"
         phraseHint="Escribe BORRAR MI CUENTA para confirmar"
+        confirmLabel="Borrar todo"
+        destructive
+        onConfirm={() => void runDelete(true)}
+        onCancel={() => setSheet('none')}
       />
     </Screen>
   );
