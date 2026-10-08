@@ -1,5 +1,11 @@
 # Diana Movie - Documentación de Servicios y Credenciales
 
+> **Documento histórico** (movido de la raíz el 2026-10-08, turno nocturno VERTICE).
+> El estado actual está en `docs/vertice/ESTADO.md`. **Purga de datos sensibles
+> (2026-10-08):** se eliminaron dos correos personales de las tablas de
+> Supabase y GitHub (el repo es público en GitHub; ver informe en
+> `docs/vertice/noche/INFORME.md`). No contiene claves.
+
 ## 🔐 Credenciales y Acceso
 
 ### Supabase
@@ -10,7 +16,7 @@
 | **URL** | `https://hvjmewokgxgrshtzhdjq.supabase.co` |
 | **Region** | West EU (Ireland) |
 | **Plan** | Free |
-| **Email** | marcosariasgonzalez00@gmail.com |
+| **Email** | [PURGADO en el turno nocturno 2026-10-08: dato personal, no se versiona] |
 | **Anon Key** | Guardada en `.env.local` y GitHub Variables |
 | **Service Role** | Solo en `.env.local` (NO subirla a GitHub) |
 
@@ -32,7 +38,7 @@
 | **Repo** | https://github.com/marcosariasglez/diana |
 | **Pages URL** | https://marcosariasglez.github.io/diana/ |
 | **Branch** | `main` |
-| **GitHub Email** | marcosusal@usal.es |
+| **GitHub Email** | [PURGADO en el turno nocturno 2026-10-08: dato personal, no se versiona] |
 
 ### Variables de GitHub Actions
 Estas variables están configuradas en: https://github.com/marcosariasglez/diana/settings/variables/actions

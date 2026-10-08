@@ -29,6 +29,10 @@ yarn-error.*
 # logs de build/servidor locales
 *.log
 
+# tests (Playwright E2E)
+test-results/
+playwright-report/
+
 # macOS
 .DS_Store
 *.pem
@@ -44,4 +48,4 @@ example
 # generated native folders
 /ios
 /android
-jest-out.txt 
+jest-out.txt

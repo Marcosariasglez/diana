@@ -9,10 +9,12 @@ wizard, salas de amigos en tiempo real e importación Letterboxd.
 - **Estado real del proyecto:** [`docs/vertice/ESTADO.md`](docs/vertice/ESTADO.md)
 - **Paridad con Norte:** [`docs/vertice/paridad.md`](docs/vertice/paridad.md)
 - **Seguridad (RLS, service_role, keepalive):** [`docs/vertice/seguridad.md`](docs/vertice/seguridad.md)
+- **Despliegue de Supabase (migraciones + funciones):** [`supabase/README.md`](supabase/README.md)
 
 > Fuente única de verdad del estado: [`docs/vertice/ESTADO.md`](docs/vertice/ESTADO.md)
 > (incluye el registro histórico de las fases B0–B7; los antiguos `PROGRESS.md`,
 > `BACKEND_PROGRESS.md` e `IMPLEMENTATION_STATUS.md` se eliminaron el 2026-10-08).
+> Documentación histórica previa en [`docs/vertice/historico/`](docs/vertice/historico/).
 
 ## Arranque local
 
@@ -38,11 +40,18 @@ Modos: con `BACKEND=mock` la app no pide inicio de sesión y todo es local; con
 |---------|----------|
 | `npm run verify` | typecheck + lint (0 warnings) + tests |
 | `npm run build:web` | `expo export --platform web` + postbuild PWA |
+| `npm run e2e` | Suite E2E Playwright (requiere `npm run build:web` antes). **No** está en `verify` ni en el CI de despliegue: es una verificación aparte |
 | `npm run rls` | Prueba de aislamiento RLS con usuarios reales (lee `.env.local`) |
 | `npm run scan:secrets` | Comprobar que `service_role` no filtra en `app/ src/ public/ dist/` |
 | `npm run icons` | Regenerar iconos PWA |
 | `node scripts/auditoria-estilos.mjs` | Auditoría de estilo X6 (sin hex sueltos, radios, pesos) |
+| `node scripts/contraste.mjs` | Contraste WCAG AA de todos los pares texto/fondo de `tokens.ts` (claro y oscuro) |
 | `node scripts/capturas.mjs [--despues]` | Capturas 390×844 claro/oscuro (Playwright + `dist` servido) |
+
+**Ejecución de la batería de pruebas:** `npm run verify` se ejecuta **una sola vez y sin
+otras ejecuciones en paralelo** (en paralelo se agotan los tiempos y salen fallos falsos
+de suites). La auditoría de estilos (`node scripts/auditoria-estilos.mjs`) va justo después,
+en la misma secuencia, no al mismo tiempo.
 
 ## Variables de entorno
 
@@ -59,13 +68,43 @@ Modos: con `BACKEND=mock` la app no pide inicio de sesión y todo es local; con
 
 ## Estructura
 
-- `app/` — rutas (expo-router): `(tabs)` Inicio/Mood/Match/Perfil, `login`, `account`, `mood-wizard`, `mood-results`, `daily-log`, `notifications`, `see-all`, `room/*`, `(onboarding)`
-- `src/theme/` — tokens VERTICE (`tokens.ts`), `ThemeProvider`/`useTheme`, tipografía X3, sombras, `alpha.ts`
-- `src/components/ui/` — componentes del contrato A3.4 (Button, Card, BottomNav, FabButton, SegmentedControl, ListRow, ProfileCard, TextField, ConfirmSheet, GoogleButton, …)
-- `src/components/features/` — componentes de cine (Poster, SwipeDeck, SlotReveal, …)
-- `src/store/` — Zustand (auth, perfil, historial, mood, salas, ajustes)
-- `src/services/` — repositorios mock/Supabase + export
-- `supabase/` — migraciones `0001`–`0005` y Edge Functions `tmdb`, `delete-account`
+```
+app/                      rutas (expo-router)
+  (tabs)/                 Inicio · Mood · Match · Perfil + FAB
+  (onboarding)/           bienvenida y swipe de 20 pelis
+  account.tsx             pantalla Cuenta (A5)
+  login.tsx               pantalla de acceso (A4)
+  detail/ room/ see-all/  ficha, salas, categorías
+  daily-log mood-wizard mood-results notifications
+src/
+  theme/                  tokens VERTICE (tokens.ts), ThemeProvider/useTheme,
+                          tipografía X3, sombras, alpha.ts
+  components/ui/          componentes del contrato A3.4 (Button, Card, BottomNav,
+                          FabButton, SegmentedControl, ListRow, ProfileCard,
+                          TextField, ConfirmSheet, GoogleButton, …)
+  components/features/    componentes de cine (Poster, SwipeDeck, SlotReveal, …)
+  store/                  Zustand (auth, perfil, historial, mood, salas, ajustes)
+  services/               repositorios mock/Supabase + export + tmdb
+  features/ room/         lógica de salas en tiempo real
+  lib/                    env, cliente Supabase
+public/                   assets estáticos (iconos PWA, páginas legales)
+supabase/
+  migrations/             0001–0005 (esquema, RLS, RPC, realtime, delete_user_data)
+  functions/              Edge Functions tmdb, delete-account
+scripts/                  capturas, auditoría de estilos, contraste, PWA, secretos, rls-check
+docs/vertice/             ESTADO, paridad, seguridad, contrato, capturas, histórico
+```
+
+## E2E (Playwright)
+
+`npm run e2e` sirve `dist/` (generado con `npm run build:web` y `BACKEND=supabase`) y
+**simula las llamadas HTTP de Supabase** con `page.route` (`/auth/v1/*`, `/rest/v1/*`,
+`/functions/v1/*`) con respuestas de la forma que devuelve GoTrue de verdad. Cubre:
+redirección de acceso, vuelta de Google con `?code=…&state=…` (canje y limpieza de la
+URL), código por correo (enviar, error, correcto), cierre de sesión (local y global)
+con limpieza de storage, borrado de cuenta (frase `BORRAR MI CUENTA` y cuerpo
+`{ everywhere }`), exportar (JSON válido), persistencia de Apariencia y ausencia de
+errores de consola. Es una suite **separada** de `verify` y del CI de despliegue.
 
 ## Deploy
 
