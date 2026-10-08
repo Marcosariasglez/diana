@@ -37,7 +37,7 @@ Leyenda: ✓ cumplido y verificado · ⚠️ código listo y probado, pero requi
 | Criterio | Estado | Evidencia |
 |---|---|---|
 | Batería de pruebas en verde (`npm run verify`) | ✓ | typecheck + lint + test (línea final en [ESTADO.md](./ESTADO.md) y en el informe de cierre de D6) |
-| README del repo actualizado y sin info obsoleta | ✓ | [`README.md`](../../README.md) nuevo (portada, arranque, variables, comandos, enlaces a docs); `PROGRESS.md`, `BACKEND_PROGRESS.md` e `IMPLEMENTATION_STATUS.md` marcados como históricos → [`ESTADO.md`](./ESTADO.md) |
+| README del repo actualizado y sin info obsoleta | ✓ | [`README.md`](../../README.md) nuevo (portada, arranque, variables, comandos, enlaces a docs); docs de estado unificadas en [`ESTADO.md`](./ESTADO.md) (los tres históricos se eliminaron el 2026-10-08, absorbiendo lo útil sin credenciales) |
 
 ## X6 · Lista de comprobación por pantalla
 

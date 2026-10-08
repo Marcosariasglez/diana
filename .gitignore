@@ -26,6 +26,9 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# logs de build/servidor locales
+*.log
+
 # macOS
 .DS_Store
 *.pem

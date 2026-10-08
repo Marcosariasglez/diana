@@ -10,9 +10,9 @@ wizard, salas de amigos en tiempo real e importación Letterboxd.
 - **Paridad con Norte:** [`docs/vertice/paridad.md`](docs/vertice/paridad.md)
 - **Seguridad (RLS, service_role, keepalive):** [`docs/vertice/seguridad.md`](docs/vertice/seguridad.md)
 
-> Los archivos `PROGRESS.md`, `BACKEND_PROGRESS.md` e `IMPLEMENTATION_STATUS.md` están
-> **obsoletos** (registro histórico de las fases B0–B5). La fuente de verdad es
-> [`docs/vertice/ESTADO.md`](docs/vertice/ESTADO.md).
+> Fuente única de verdad del estado: [`docs/vertice/ESTADO.md`](docs/vertice/ESTADO.md)
+> (incluye el registro histórico de las fases B0–B7; los antiguos `PROGRESS.md`,
+> `BACKEND_PROGRESS.md` e `IMPLEMENTATION_STATUS.md` se eliminaron el 2026-10-08).
 
 ## Arranque local
 
