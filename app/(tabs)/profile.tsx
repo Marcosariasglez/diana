@@ -1,42 +1,94 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AlertCircle, CheckCircle2 } from 'lucide-react-native';
+import { AlertCircle, CheckCircle2, Settings2, User } from 'lucide-react-native';
 import { MetricCard } from '@/components/features/MetricCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { HistoryRow } from '@/components/ui/HistoryRow';
+import { ListRow } from '@/components/ui/ListRow';
+import { ProfileCard } from '@/components/ui/ProfileCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { HISTORY_PAGE_SIZE, detailHref, paginateHistory } from '@/features/profile/profileLogic';
-import { resetPrototype } from '@/features/profile/resetPrototype';
 import { useProfileImport } from '@/features/profile/useProfileImport';
 import {
   selectAverageRating,
   selectSeenCount,
   useHistoryStore,
 } from '@/store/useHistoryStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useSettingsStore, type ReducedMotionOverride } from '@/store/useSettingsStore';
-import { COLORS } from '@/theme/colors';
+import { BACKEND } from '@/lib/env';
+import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import { formatRating } from '@/utils/format';
 
-const MOTION_OPTIONS = [
-  { label: 'Sistema', value: 'system' },
-  { label: 'Sí', value: 'on' },
-  { label: 'No', value: 'off' },
+const APPEARANCE_OPTIONS = [
+  { label: 'Claro', value: 'light' },
+  { label: 'Oscuro', value: 'dark' },
+  { label: 'Auto', value: 'auto' },
 ];
 
 export default function ProfileScreen() {
   const router = useRouter();
   const entries = useHistoryStore((s) => s.entries);
   const watched = useHistoryStore((s) => s.watched);
+  const email = useAuthStore((s) => s.email);
+  const appearance = useSettingsStore((s) => s.appearance);
+  const setAppearance = useSettingsStore((s) => s.setAppearance);
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
   const setReducedMotion = useSettingsStore((s) => s.setReducedMotion);
   const imp = useProfileImport();
   const [pages, setPages] = useState(1);
-  const [confirmReset, setConfirmReset] = useState(false);
+  const { colors } = useTheme();
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    content: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 84 + 24 + 24, gap: 14 },
+    title: { color: c.ink, marginBottom: 8 },
+    metrics: { flexDirection: 'row' as const, gap: 10 },
+    card: { padding: 20, gap: 8 },
+    cardTitle: { color: c.ink },
+    cardText: { color: c.textSecondary, lineHeight: 24 },
+    upload: { marginTop: 8 },
+    progress: { gap: 8, marginTop: 8 },
+    phase: { color: c.textSecondary },
+    banner: {
+      flexDirection: 'row' as const,
+      alignItems: 'flex-start' as const,
+      gap: 8,
+      padding: 12,
+      borderRadius: 12,
+      marginTop: 8,
+    },
+    bannerError: { backgroundColor: c.negBg },
+    bannerErrorText: { flex: 1, color: c.neg },
+    bannerOk: { backgroundColor: c.accSoft },
+    bannerOkText: { flex: 1, color: c.acc },
+    historyHeader: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'space-between' as const,
+      marginBottom: 8,
+    },
+    legend: { color: c.textSecondary },
+    emptyText: { color: c.textSecondary, paddingVertical: 12 },
+    separator: { borderTopWidth: 1, borderTopColor: c.line },
+    more: { marginTop: 12, minHeight: 48 },
+    sectionGap: { gap: 0 },
+    groupLabel: { color: c.mut, marginTop: 14, marginBottom: 2 },
+    footer: { marginTop: 24, alignItems: 'center' as const, gap: 4 },
+    footerText: { color: c.mut },
+    demoBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 99,
+      backgroundColor: c.chip,
+      alignSelf: 'center',
+      marginBottom: 8,
+    },
+    demoText: { color: c.mut },
+  }));
 
   const seen = useMemo(() => selectSeenCount({ entries, watched }), [entries, watched]);
   const average = useMemo(() => selectAverageRating({ entries }), [entries]);
@@ -45,13 +97,7 @@ export default function ProfileScreen() {
   const empty = seen === 0;
   const seenText = empty ? '—' : String(seen);
   const avgText = formatRating(average);
-
-  const onReset = async () => {
-    await resetPrototype();
-    setConfirmReset(false);
-    setPages(1);
-    router.replace('/welcome');
-  };
+  const isMock = BACKEND === 'mock';
 
   return (
     <Screen>
@@ -64,23 +110,29 @@ export default function ProfileScreen() {
           Perfil
         </Text>
 
+        <ProfileCard
+          name={email ?? 'Usuario'}
+          subtitle={email ?? ''}
+          initial={(email ?? 'U').charAt(0).toUpperCase()}
+        />
+
         <View style={styles.metrics}>
           <MetricCard
             testID="metric-seen"
             title="Vistas"
             value={seenText}
-            valueColor={empty ? COLORS.accent : COLORS.textPrimary}
+            valueColor={empty ? colors.acc : colors.ink}
           />
           <MetricCard
             testID="metric-average"
             title="Tu nota media"
             value={avgText}
-            valueColor={average === null ? COLORS.accent : COLORS.textPrimary}
+            valueColor={average === null ? colors.acc : colors.ink}
           />
         </View>
 
         <Card style={styles.card}>
-          <Text style={[textStyle('body', { fontWeight: '800', fontSize: 20 }), styles.cardTitle]}>
+          <Text style={[textStyle('body', { fontFamily: 'Manrope-ExtraBold', fontSize: 20 }), styles.cardTitle]}>
             Importa tu historial
           </Text>
           <Text style={[textStyle('body'), styles.cardText]}>
@@ -100,20 +152,20 @@ export default function ProfileScreen() {
 
           {imp.error ? (
             <View accessibilityRole="alert" style={[styles.banner, styles.bannerError]}>
-              <AlertCircle size={20} color="#B3261E" />
+              <AlertCircle size={20} color={colors.neg} />
               <Text style={[textStyle('bodySmall'), styles.bannerErrorText]}>{imp.error}</Text>
             </View>
           ) : null}
 
           {imp.summary ? (
             <View accessibilityLiveRegion="polite" style={[styles.banner, styles.bannerOk]}>
-              <CheckCircle2 size={20} color={COLORS.accentSoftText} />
+              <CheckCircle2 size={20} color={colors.acc} />
               <Text style={[textStyle('bodySmall'), styles.bannerOkText]}>{imp.summary}</Text>
             </View>
           ) : null}
 
           <Button
-            variant="dark"
+            variant="primary"
             label="Subir archivo Letterboxd"
             onPress={() => void imp.pickAndImport()}
             disabled={imp.importing}
@@ -123,7 +175,7 @@ export default function ProfileScreen() {
 
         <Card style={styles.card}>
           <View style={styles.historyHeader}>
-            <Text style={[textStyle('body', { fontWeight: '800', fontSize: 20 }), styles.cardTitle]}>
+            <Text style={[textStyle('body', { fontFamily: 'Manrope-ExtraBold', fontSize: 20 }), styles.cardTitle]}>
               Historial
             </Text>
             <Text style={[textStyle('bodySmall'), styles.legend]}>Tu nota · IA</Text>
@@ -150,86 +202,62 @@ export default function ProfileScreen() {
           )}
         </Card>
 
-        <Card style={styles.card}>
-          <Text style={[textStyle('body', { fontWeight: '800', fontSize: 20 }), styles.cardTitle]}>
-            Ajustes
-          </Text>
-          <Text style={[textStyle('bodySmall'), styles.settingLabel]}>Reducir movimiento</Text>
+        {/* Grupo Aplicación */}
+        <Text style={[textStyle('label'), styles.groupLabel]}>APLICACIÓN</Text>
+        <Card style={styles.sectionGap}>
+          <ListRow
+            first
+            title="Apariencia"
+            icon={Settings2}
+            onPress={() => {}}
+          >
+          </ListRow>
           <SegmentedControl
-            options={MOTION_OPTIONS}
-            selected={reducedMotion}
-            onChange={(v) => setReducedMotion(v as ReducedMotionOverride)}
+            options={APPEARANCE_OPTIONS}
+            selected={appearance}
+            onChange={(v) => setAppearance(v as 'light' | 'dark' | 'auto')}
           />
-          {confirmReset ? (
-            <View style={styles.confirm}>
-              <Text style={[textStyle('bodySmall'), styles.cardText]}>
-                Se borrarán tu historial y tu perfil, y volverás a la bienvenida. ¿Reiniciar el
-                prototipo?
-              </Text>
-              <View style={styles.confirmRow}>
-                <Button
-                  variant="secondary"
-                  label="Cancelar"
-                  onPress={() => setConfirmReset(false)}
-                  style={styles.flex}
-                />
-                <Button
-                  variant="dark"
-                  label="Reiniciar"
-                  onPress={() => void onReset()}
-                  style={styles.flex}
-                />
-              </View>
+          <View style={{ paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line }}>
+            <Text style={[textStyle('bodyStrong'), { color: colors.ink }]}>Reducir movimiento</Text>
+            <SegmentedControl
+              options={[
+                { label: 'Sistema', value: 'system' },
+                { label: 'Sí', value: 'on' },
+                { label: 'No', value: 'off' },
+              ]}
+              selected={reducedMotion}
+              onChange={(v) => setReducedMotion(v as ReducedMotionOverride)}
+            />
+          </View>
+        </Card>
+
+        {/* Grupo Cuenta */}
+        <Text style={[textStyle('label'), styles.groupLabel]}>CUENTA</Text>
+        <Card style={styles.sectionGap}>
+          {isMock ? (
+            <View style={styles.demoBadge}>
+              <Text style={[textStyle('bodySmall'), styles.demoText]}>Modo demostración</Text>
             </View>
           ) : (
-            <Button
-              variant="secondary"
-              label="Reiniciar prototipo"
-              onPress={() => setConfirmReset(true)}
-              style={styles.reset}
+            <ListRow
+              first
+              title="Gestionar cuenta"
+              subtitle="Cerrar sesión, exportar datos, borrar cuenta"
+              icon={User}
+              onPress={() => router.push('/account')}
             />
           )}
         </Card>
+
+        {/* Pie */}
+        <View style={styles.footer}>
+          <Text style={[textStyle('bodySmall'), styles.footerText]}>
+            Una app de VERTICE
+          </Text>
+        </View>
       </ScrollView>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 84 + 24 + 24, gap: 12 },
-  title: { color: COLORS.textPrimary, marginBottom: 8 },
-  metrics: { flexDirection: 'row', gap: 12 },
-  card: { padding: 20, gap: 8 },
-  cardTitle: { color: COLORS.textPrimary },
-  cardText: { color: COLORS.textSecondary, lineHeight: 24 },
-  upload: { marginTop: 8 },
-  progress: { gap: 8, marginTop: 8 },
-  phase: { color: COLORS.textSecondary },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  bannerError: { backgroundColor: '#FDECEA' },
-  bannerErrorText: { flex: 1, color: '#8C1D18' },
-  bannerOk: { backgroundColor: COLORS.accentSoft },
-  bannerOkText: { flex: 1, color: COLORS.accentSoftText },
-  historyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  legend: { color: COLORS.textSecondary },
-  emptyText: { color: COLORS.textSecondary, paddingVertical: 12 },
-  separator: { borderTopWidth: 1, borderTopColor: COLORS.divider },
-  more: { marginTop: 12, minHeight: 48 },
-  settingLabel: { color: COLORS.textSecondary, marginTop: 4 },
-  reset: { marginTop: 8, minHeight: 48 },
-  confirm: { gap: 12, marginTop: 8 },
-  confirmRow: { flexDirection: 'row', gap: 12 },
-  flex: { flex: 1, paddingHorizontal: 12 },
-});
+

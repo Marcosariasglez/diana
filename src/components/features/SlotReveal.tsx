@@ -17,8 +17,7 @@ import Animated, {
 import { Lock } from 'lucide-react-native';
 import { haptic } from '@/hooks/useHaptics';
 import { useMotionPreference } from '@/hooks/useMotionPreference';
-import { COLORS } from '@/theme/colors';
-import { HALO_RING } from '@/theme/shadows';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import { formatRating } from '@/utils/format';
 import { toJS } from '@/utils/worklets';
@@ -45,10 +44,6 @@ const DEC_DELAY_MS = 200;
 const ROWS_INDEX = Array.from({ length: ROWS }, (_, i) => i);
 const WHITE = '#FFFFFF';
 
-/**
- * Del giro continuo a la parada exacta (10.1, paso 4). Worklet de modulo.
- * `y` esta en unidades de digito; la tira es ciclica con periodo 10.
- */
 function settleColumn(
   y: SharedValue<number>,
   target: number,
@@ -100,6 +95,7 @@ function DigitColumn({ y, color }: { y: SharedValue<number>; color: string }) {
 }
 
 function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: SlotRevealProps) {
+  const { colors } = useTheme();
   const reduced = useMotionPreference();
   const yInt = useSharedValue(0);
   const yDec = useSharedValue(3);
@@ -120,7 +116,6 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
     onRevealedRef.current?.();
   };
 
-  // Entrada en `rolling`: giro continuo (o espera con fundido si se reduce el movimiento).
   useEffect(() => {
     if (state !== 'rolling') return;
     stopStarted.current = false;
@@ -148,7 +143,6 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
     };
   }, [state, reduced, yInt, yDec, gateInt, gateDec, fade]);
 
-  // Llega el valor durante `rolling`: parada en cascada (o fundido de 300 ms).
   useEffect(() => {
     if (state !== 'rolling' || value === null || stopStarted.current) return;
     stopStarted.current = true;
@@ -182,7 +176,6 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
     });
   }, [state, value, reduced]);
 
-  // Transiciones de estado visibles (revealed / vuelta a locked).
   useEffect(() => {
     const prev = prevState.current;
     prevState.current = state;
@@ -208,14 +201,14 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
   }, [state, animated, reduced, progress, chipScale, bodyOpacity]);
 
   const cardStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(progress.value, [0, 1], [COLORS.card, COLORS.accent]),
+    backgroundColor: interpolateColor(progress.value, [0, 1], [colors.card, colors.acc]),
   }));
   const haloStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
   const valueColorStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(progress.value, [0, 1], [COLORS.textPrimary, WHITE]),
+    color: interpolateColor(progress.value, [0, 1], [colors.ink, WHITE]),
   }));
   const titleColorStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(progress.value, [0, 1], [COLORS.textSecondary, 'rgba(255,255,255,0.85)']),
+    color: interpolateColor(progress.value, [0, 1], [colors.textSecondary, 'rgba(255,255,255,0.85)']),
   }));
   const chipStyle = useAnimatedStyle(() => ({
     opacity: chipScale.value,
@@ -245,7 +238,7 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
         accessible
         accessibilityLabel={a11yLabel}
         accessibilityLiveRegion="polite"
-        style={[styles.card, { borderTopColor: COLORS.accent }, cardStyle]}
+        style={[styles.card, { borderTopColor: colors.acc }, cardStyle]}
       >
         <Animated.Text style={[textStyle('label'), styles.title, titleColorStyle]}>
           PREDICCIÓN IA
@@ -255,12 +248,12 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
           {state === 'locked' ? (
             <>
               <View style={styles.lockedRow}>
-                <Lock size={22} color={COLORS.textSecondary} strokeWidth={2} />
-                <Text style={textStyle('predictionRevealed', { color: COLORS.textSecondary })}>
+                <Lock size={22} color={colors.textSecondary} strokeWidth={2} />
+                <Text style={textStyle('predictionRevealed', { color: colors.textSecondary })}>
                   ?,?
                 </Text>
               </View>
-              <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>
+              <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                 {lockedHint ?? 'Guarda tu nota para ver la predicción'}
               </Text>
             </>
@@ -269,13 +262,13 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
           {state === 'rolling' && !reduced ? (
             <>
               <View style={styles.slotRow}>
-                <DigitColumn y={yInt} color={COLORS.accent} />
-                <Text style={[textStyle('predictionRevealed', { color: COLORS.accent }), styles.comma]}>
+                <DigitColumn y={yInt} color={colors.acc} />
+                <Text style={[textStyle('predictionRevealed', { color: colors.acc }), styles.comma]}>
                   ,
                 </Text>
-                <DigitColumn y={yDec} color={COLORS.accent} />
+                <DigitColumn y={yDec} color={colors.acc} />
               </View>
-              <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>
+              <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                 Calculando...
               </Text>
             </>
@@ -284,11 +277,11 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
           {state === 'rolling' && reduced ? (
             <>
               <Animated.View style={fadeStyle}>
-                <Text style={textStyle('predictionRevealed', { color: COLORS.accent })}>
+                <Text style={textStyle('predictionRevealed', { color: colors.acc })}>
                   {value === null ? '' : finalText}
                 </Text>
               </Animated.View>
-              <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>
+              <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                 Calculando...
               </Text>
             </>
@@ -306,7 +299,7 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
                 <Animated.Text style={[textStyle('body'), titleColorStyle]}>/ 5</Animated.Text>
               </View>
               <Animated.View style={[styles.chip, chipStyle]}>
-                <Text style={textStyle('label', { color: COLORS.accentSoftText, letterSpacing: 0 })}>
+                <Text style={textStyle('label', { color: colors.acc, letterSpacing: 0 })}>
                   Desbloqueada
                 </Text>
               </Animated.View>
@@ -321,74 +314,25 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
 export const SlotReveal = memo(SlotRevealBase);
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    minHeight: 148,
-  },
+  wrapper: { flex: 1, minHeight: 148 },
   halo: {
     ...StyleSheet.absoluteFill,
-    top: -4,
-    left: -4,
-    right: -4,
-    bottom: -4,
+    top: -4, left: -4, right: -4, bottom: -4,
     borderRadius: 20,
-    borderWidth: HALO_RING.borderWidth,
-    borderColor: HALO_RING.borderColor,
+    borderWidth: 4,
+    borderColor: 'rgba(11,122,102,0.2)',
   },
-  card: {
-    flex: 1,
-    borderRadius: 16,
-    padding: 16,
-    borderTopWidth: 2,
-    overflow: 'hidden',
-  },
-  title: {
-    marginBottom: 8,
-  },
-  body: {
-    flex: 1,
-    gap: 8,
-  },
-  lockedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  slotRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: ROW_H * 3,
-  },
-  window: {
-    width: 30,
-    height: ROW_H * 3,
-    overflow: 'hidden',
-  },
-  strip: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: ROW_H * ROWS,
-  },
-  row: {
-    height: ROW_H,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  digit: {
-    lineHeight: ROW_H,
-    textAlign: 'center',
-  },
-  comma: {
-    lineHeight: ROW_H,
-    marginHorizontal: 2,
-  },
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-  },
+  card: { flex: 1, borderRadius: 24, padding: 16, borderTopWidth: 2, overflow: 'hidden' },
+  title: { marginBottom: 8 },
+  body: { flex: 1, gap: 8 },
+  lockedRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  slotRow: { flexDirection: 'row', alignItems: 'center', height: ROW_H * 3 },
+  window: { width: 30, height: ROW_H * 3, overflow: 'hidden' },
+  strip: { position: 'absolute', top: 0, left: 0, right: 0, height: ROW_H * ROWS },
+  row: { height: ROW_H, alignItems: 'center', justifyContent: 'center' },
+  digit: { lineHeight: ROW_H, textAlign: 'center' },
+  comma: { lineHeight: ROW_H, marginHorizontal: 2 },
+  valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   chip: {
     alignSelf: 'flex-start',
     backgroundColor: WHITE,

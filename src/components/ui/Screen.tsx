@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export interface ScreenProps {
   children: ReactNode;
@@ -10,15 +10,12 @@ export interface ScreenProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function Screen({ children, safe = true, bg = COLORS.screenBg, style }: ScreenProps) {
+export function Screen({ children, safe = true, bg, style }: ScreenProps) {
+  const { colors } = useTheme();
   const Container = safe ? SafeAreaView : View;
   return (
-    <Container testID="screen" style={[styles.root, { backgroundColor: bg }, style]}>
+    <Container testID="screen" style={[{ flex: 1, backgroundColor: bg ?? colors.bg }, style]}>
       {children}
     </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-});

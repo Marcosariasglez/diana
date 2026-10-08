@@ -2,12 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Simulador de app movil en desktop. En pantalla real ocupa todo. */
+/* Tokens VERTICE — claro (por defecto) */
+:root {
+  --bg: #F4F3EF;
+  --card: #FFFFFF;
+  --ink: #15171A;
+  --onInk: #F4F3EF;
+  --mut: #5A5F68;
+  --textSecondary: #5B6068;
+  --line: #ECEAE4;
+  --lineStrong: #DAD7CE;
+  --chip: #EAE8E2;
+  --acc: #0B7A66;
+  --accHover: #096653;
+  --accSoft: #DDF0EA;
+  --onAcc: #FFFFFF;
+  --neg: #CF4640;
+  --negBg: rgba(207, 70, 64, 0.09);
+  --warn: #B7791F;
+  --warnBg: rgba(183, 121, 31, 0.09);
+  --overlay: rgba(10, 12, 15, 0.35);
+}
+
+/* Tokens VERTICE — oscuro */
+[data-theme="dark"] {
+  --bg: #0A0C0F;
+  --card: #14171B;
+  --ink: #F2F3F5;
+  --onInk: #0A0C0F;
+  --mut: #8C939C;
+  --textSecondary: #B3B9C1;
+  --line: #22262C;
+  --lineStrong: #2E333A;
+  --chip: #1E2227;
+  --acc: #37D6A4;
+  --accHover: #5CE3B8;
+  --accSoft: #0F3129;
+  --onAcc: #03140E;
+  --neg: #FF7168;
+  --negBg: rgba(255, 113, 104, 0.12);
+  --warn: #F2B85B;
+  --warnBg: rgba(242, 184, 91, 0.12);
+  --overlay: rgba(0, 0, 0, 0.6);
+}
+
+/* Simulador movil en desktop */
 @media (min-width: 430px) {
   #__next {
     max-width: 390px;
     margin: 0 auto;
     min-height: 100vh;
+    background: var(--bg);
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 }

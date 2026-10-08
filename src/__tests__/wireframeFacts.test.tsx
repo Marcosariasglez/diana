@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react-native';
 import { FeaturedMatchCard } from '@/components/features/FeaturedMatchCard';
 import { MetricCard } from '@/components/features/MetricCard';
 import { MOVIES } from '@/mocks/data/catalog';
-import { COLORS } from '@/theme/colors';
+import { light } from '@/theme/tokens';
 
 describe('Detalles de wireframe (parte Inicio)', () => {
   it('FeaturedMatchCard muestra "MEJOR MATCH ESTA NOCHE" y el badge "Recomendación Top"', async () => {
@@ -21,10 +21,10 @@ describe('Detalles de wireframe (parte Inicio)', () => {
   });
 
   it('MetricCard no pinta subrayado y respeta el color del valor', async () => {
-    await render(<MetricCard title="Nota media" value="—" valueColor={COLORS.accent} />);
+    await render(<MetricCard title="Nota media" value="—" valueColor={light.acc} />);
     expect(screen.queryByTestId('metric-underline')).toBeNull();
     const value = screen.getByText('—');
     const style = Array.isArray(value.props.style) ? Object.assign({}, ...value.props.style.flat()) : value.props.style;
-    expect(style.color).toBe(COLORS.accent);
+    expect(style.color).toBe(light.acc);
   });
 });

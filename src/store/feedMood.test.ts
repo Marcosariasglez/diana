@@ -114,7 +114,7 @@ describe('useMoodStore', () => {
 
 describe('manifiesto de rutas (5.1)', () => {
   it('lista las 18 filas y solo 5 con bottom nav (4 pestañas y la Ficha)', () => {
-    expect(ROUTES).toHaveLength(18);
+    expect(ROUTES).toHaveLength(19);
     expect(ROUTES.filter((r) => r.bottomNav).map((r) => r.url)).toEqual([
       '/',
       '/mood',

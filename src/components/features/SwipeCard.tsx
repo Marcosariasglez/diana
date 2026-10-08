@@ -12,7 +12,7 @@ import Animated, {
 import { haptic } from '@/hooks/useHaptics';
 import { useMotionPreference } from '@/hooks/useMotionPreference';
 import { resolveDirection, type SwipeDir } from '@/features/swipe/direction';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import type { Media } from '@/types/media';
 import { toJS } from '@/utils/worklets';
@@ -37,6 +37,7 @@ const SPRING = { damping: 15, stiffness: 120 };
 const UNSEEN_BLUE = '#2E5E7A';
 
 export function SwipeCard({ media, isTop, onDecide, allowUnseen = true, ref }: SwipeCardProps) {
+  const { colors } = useTheme();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const rotation = useSharedValue(0);
@@ -129,22 +130,22 @@ export function SwipeCard({ media, isTop, onDecide, allowUnseen = true, ref }: S
         <Poster media={media} size="giant" />
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           <Animated.View
-            style={[styles.stamp, styles.stampLike, { borderColor: COLORS.accent }, likeStampStyle]}
+            style={[styles.stamp, styles.stampLike, { borderColor: colors.acc, backgroundColor: colors.card }, likeStampStyle]}
           >
-            <Text style={[styles.stampText, { color: COLORS.accent }]}>ME GUSTA</Text>
+            <Text style={[styles.stampText, { color: colors.acc }]}>ME GUSTA</Text>
           </Animated.View>
           <Animated.View
             style={[
               styles.stamp,
               styles.stampSkip,
-              { borderColor: COLORS.textSecondary },
+              { borderColor: colors.textSecondary, backgroundColor: colors.card },
               skipStampStyle,
             ]}
           >
-            <Text style={[styles.stampText, { color: COLORS.textSecondary }]}>Paso</Text>
+            <Text style={[styles.stampText, { color: colors.textSecondary }]}>Paso</Text>
           </Animated.View>
           <Animated.View
-            style={[styles.stamp, styles.stampUnseen, { borderColor: UNSEEN_BLUE }, unseenStampStyle]}
+            style={[styles.stamp, styles.stampUnseen, { borderColor: UNSEEN_BLUE, backgroundColor: colors.card }, unseenStampStyle]}
           >
             <Text style={[styles.stampText, { color: UNSEEN_BLUE }]}>No la he visto</Text>
           </Animated.View>
@@ -155,12 +156,9 @@ export function SwipeCard({ media, isTop, onDecide, allowUnseen = true, ref }: S
 }
 
 const styles = StyleSheet.create({
-  card: {
-    alignSelf: 'center',
-  },
+  card: { alignSelf: 'center' },
   stamp: {
     position: 'absolute',
-    backgroundColor: COLORS.card,
     borderWidth: 3,
     borderRadius: 12,
     paddingHorizontal: 12,

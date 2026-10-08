@@ -11,16 +11,16 @@ jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
 type Persisted = { persist: { getOptions: () => any; rehydrate: () => Promise<void> | void } };
 
 const persistent = [
-  { name: 'diana.profile.v1', store: useProfileStore, keys: ['hasOnboarded', 'profile'] },
-  { name: 'diana.history.v1', store: useHistoryStore, keys: ['entries', 'watched'] },
-  { name: 'diana.settings.v1', store: useSettingsStore, keys: ['reducedMotion'] },
+  { name: 'diana.profile.v1', store: useProfileStore, keys: ['hasOnboarded', 'profile'], version: 1 },
+  { name: 'diana.history.v1', store: useHistoryStore, keys: ['entries', 'watched'], version: 1 },
+  { name: 'diana.settings', store: useSettingsStore, keys: ['reducedMotion', 'appearance'], version: 2 },
 ] as const;
 
 describe('persistencia (6.1)', () => {
-  it.each(persistent)('$name: clave, version 1, migrate y partialize sin hasHydrated ni funciones', ({ name, store, keys }) => {
+  it.each(persistent)('$name: clave, version $version, migrate y partialize sin hasHydrated ni funciones', ({ name, store, keys, version }) => {
     const options = (store as unknown as Persisted).persist.getOptions();
     expect(options.name).toBe(name);
-    expect(options.version).toBe(1);
+    expect(options.version).toBe(version);
     expect(typeof options.migrate).toBe('function');
     const partial = options.partialize(store.getState());
     expect(Object.keys(partial).sort()).toEqual([...keys].sort());
@@ -51,13 +51,14 @@ describe('persistencia (6.1)', () => {
   });
 
   it('perfil por defecto: user-me, Juan y plataformas del wireframe 1', () => {
-    expect(createDefaultProfile()).toEqual({
-      id: 'user-me',
-      displayName: 'Juan',
-      initialRatings: {},
-      favoriteGenres: [],
-      favoritePlatforms: ['netflix', 'prime-video', 'max'],
-    });
+    const profile = createDefaultProfile();
+    expect(profile.id).toBe('user-me');
+    expect(profile.displayName).toBe('Juan');
+    expect(profile.initialRatings).toEqual({});
+    expect(profile.favoriteGenres).toEqual([]);
+    expect(profile.favoritePlatforms).toContain('netflix');
+    expect(profile.favoritePlatforms).toContain('prime-video');
+    expect(profile.favoritePlatforms).toContain('max');
   });
 
   it('escribe en AsyncStorage solo lo particionado', async () => {

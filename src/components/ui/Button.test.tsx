@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Button } from './Button';
 
 describe('Button', () => {
-  it.each(['primary', 'secondary', 'dark'] as const)('variante %s', async (variant) => {
+  it.each(['primary', 'secondary', 'google', 'destructive'] as const)('variante %s', async (variant) => {
     const onPress = jest.fn();
     await render(<Button label="Seguir" variant={variant} onPress={onPress} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Seguir' }));

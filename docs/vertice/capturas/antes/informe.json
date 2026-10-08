@@ -1,0 +1,52 @@
+[
+  {
+    "screen": "login",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "inicio",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "mood",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "match",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "perfil",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "login",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "inicio",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "mood",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "match",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "perfil",
+    "theme": "dark",
+    "ok": true
+  }
+]

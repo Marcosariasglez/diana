@@ -1,10 +1,8 @@
 import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@/constants/room';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
-
-export const CODE_ERROR_COLOR = '#B42318';
 
 export interface CodeInputProps {
   length?: number;
@@ -24,6 +22,7 @@ export function sanitizeRoomCode(text: string, length: number = ROOM_CODE_LENGTH
 }
 
 export function CodeInput({ length = ROOM_CODE_LENGTH, value, onChange, error = false }: CodeInputProps) {
+  const { colors } = useTheme();
   const inputRef = useRef<TextInput>(null);
   const chars = value.split('');
   const activeIndex = Math.min(chars.length, length - 1);
@@ -39,11 +38,12 @@ export function CodeInput({ length = ROOM_CODE_LENGTH, value, onChange, error = 
           testID="code-tile"
           style={[
             styles.tile,
-            i === activeIndex && !error && styles.tileActive,
-            error && styles.tileError,
+            { backgroundColor: colors.card, borderColor: colors.line },
+            i === activeIndex && !error && { borderColor: colors.acc },
+            error && { borderColor: colors.neg },
           ]}
         >
-          <Text style={[textStyle('roomCode', { fontSize: 32 }), styles.char]}>{chars[i] ?? ''}</Text>
+          <Text style={[textStyle('roomCode', { fontSize: 32 }), { color: colors.ink }]}>{chars[i] ?? ''}</Text>
         </View>
       ))}
       <TextInput
@@ -69,14 +69,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 80,
     borderRadius: 12,
-    backgroundColor: COLORS.card,
     borderWidth: 2,
-    borderColor: COLORS.divider,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tileActive: { borderColor: COLORS.accent },
-  tileError: { borderColor: CODE_ERROR_COLOR },
-  char: { color: COLORS.textPrimary },
   hidden: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.02, color: 'transparent' },
 });

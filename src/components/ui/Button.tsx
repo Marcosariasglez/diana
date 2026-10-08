@@ -1,16 +1,14 @@
 import {
   ActivityIndicator,
   Pressable,
-  StyleSheet,
   Text,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { COLORS } from '@/theme/colors';
-import { SHADOWS } from '@/theme/shadows';
+import { useThemedStyles, useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'dark';
+export type ButtonVariant = 'primary' | 'secondary' | 'google' | 'destructive';
 
 export interface ButtonProps {
   label: string;
@@ -22,12 +20,6 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const VARIANTS = {
-  primary: { bg: COLORS.accent, fg: '#FFFFFF', shadow: SHADOWS.buttonPrimary },
-  secondary: { bg: COLORS.card, fg: COLORS.textPrimary, shadow: SHADOWS.card },
-  dark: { bg: COLORS.textPrimary, fg: '#FFFFFF', shadow: SHADOWS.card },
-} as const;
-
 export function Button({
   label,
   variant = 'primary',
@@ -37,8 +29,37 @@ export function Button({
   accessibilityLabel,
   style,
 }: ButtonProps) {
-  const v = VARIANTS[variant];
+  const { colors: c } = useTheme();
+  const styles = useThemedStyles((c) => ({
+    primary: {
+      bg: c.ink,
+      fg: c.onInk,
+      disabledBg: c.chip,
+      disabledFg: c.mut,
+    },
+    secondary: {
+      bg: c.chip,
+      fg: c.ink,
+      disabledBg: c.chip,
+      disabledFg: c.mut,
+    },
+    google: {
+      bg: c.card,
+      fg: c.ink,
+      disabledBg: c.chip,
+      disabledFg: c.mut,
+    },
+    destructive: {
+      bg: 'transparent',
+      fg: c.neg,
+      disabledBg: 'transparent',
+      disabledFg: c.mut,
+    },
+  }));
+
+  const v = styles[variant];
   const inactive = disabled || loading;
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -47,10 +68,19 @@ export function Button({
       disabled={inactive}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.base,
-        v.shadow,
-        { backgroundColor: disabled ? COLORS.disabled : v.bg },
-        pressed && styles.pressed,
+        {
+          minHeight: 52,
+          minWidth: 44,
+          borderRadius: 99,
+          paddingHorizontal: variant === 'secondary' ? 12 : 16,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          backgroundColor: disabled ? v.disabledBg : v.bg,
+          opacity: pressed && !disabled ? 0.88 : 1,
+          borderWidth: variant === 'google' ? 1 : 0,
+          borderColor: variant === 'google' ? c.lineStrong : 'transparent',
+        },
         style,
       ]}
     >
@@ -59,8 +89,8 @@ export function Button({
       ) : (
         <Text
           style={[
-            textStyle('body', { fontWeight: '700' }),
-            { color: disabled ? COLORS.textSecondary : v.fg },
+            textStyle('button'),
+            { color: disabled ? v.disabledFg : v.fg },
           ]}
         >
           {label}
@@ -69,15 +99,3 @@ export function Button({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    minHeight: 60,
-    minWidth: 44,
-    borderRadius: 30,
-    paddingHorizontal: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressed: { opacity: 0.88 },
-});

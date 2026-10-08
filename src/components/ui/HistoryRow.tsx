@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Lock } from 'lucide-react-native';
 import type { HistoryEntry } from '@/types/rating';
 import { formatRating } from '@/utils/format';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
 export interface HistoryRowProps {
@@ -11,6 +11,7 @@ export interface HistoryRowProps {
 }
 
 export function HistoryRow({ entry, onPress }: HistoryRowProps) {
+  const { colors } = useTheme();
   const rating = formatRating(entry.userRating);
   const ai = formatRating(entry.aiPrediction);
   const aiLabel = entry.predictionSeen ? `Predicción de IA ${ai}` : 'Predicción bloqueada';
@@ -23,21 +24,21 @@ export function HistoryRow({ entry, onPress }: HistoryRowProps) {
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <View style={[styles.poster, { backgroundColor: entry.posterColor }]} />
-      <Text numberOfLines={1} style={[textStyle('body', { fontWeight: '600' }), styles.title]}>
+      <Text numberOfLines={1} style={[textStyle('body', { fontFamily: 'Inter-SemiBold' }), { color: colors.ink }]}>
         {entry.title}
       </Text>
       <View
         accessible
         accessibilityLabel={`Tu nota ${rating}`}
-        style={[styles.chip, styles.userChip]}
+        style={[styles.chip, { backgroundColor: colors.chip }]}
       >
-        <Text style={[textStyle('bodySmall', { fontWeight: '700' }), styles.userText]}>{rating}</Text>
+        <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-Bold' }), { color: colors.ink }]}>{rating}</Text>
       </View>
-      <View accessible accessibilityLabel={aiLabel} style={[styles.chip, styles.ai]}>
+      <View accessible accessibilityLabel={aiLabel} style={[styles.chip, { backgroundColor: colors.accSoft }]}>
         {entry.predictionSeen ? (
-          <Text style={[textStyle('bodySmall', { fontWeight: '700' }), styles.aiText]}>{ai}</Text>
+          <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-Bold' }), { color: colors.acc }]}>{ai}</Text>
         ) : (
-          <Lock testID="history-lock" size={14} color={COLORS.accentSoftText} strokeWidth={2.5} />
+          <Lock testID="history-lock" size={14} color={colors.acc} strokeWidth={2.5} />
         )}
       </View>
     </Pressable>
@@ -54,17 +55,12 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.85 },
   poster: { width: 40, height: 58, borderRadius: 10 },
-  title: { flex: 1, color: COLORS.textPrimary },
   chip: {
     minWidth: 44,
     height: 36,
     paddingHorizontal: 12,
-    borderRadius: 18,
+    borderRadius: 99,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  userChip: { backgroundColor: COLORS.surfaceNeutral },
-  userText: { color: COLORS.textPrimary },
-  ai: { backgroundColor: COLORS.accentSoft },
-  aiText: { color: COLORS.accentSoftText },
 });

@@ -1,0 +1,313 @@
+/* ====================================================
+   NORTE - SISTEMA DE TEMA DUAL
+   ====================================================
+   Variables CSS para los temas oscuro y claro.
+   Este fichero va PRIMERO en la cascada.
+
+   Paleta Fase 1 — "Norte" rediseño visual.
+   Claro por defecto. Verde-acento = marca y positivo;
+   rojo = negativo. Categorias --c1..--c6 sin verde/rojo.
+
+   Regla de color:
+     - Verde-acento (--accent) = marca Y positivo.
+     - Rojo (--danger/--neg) = negativo, avisos.
+     - Importes negativos normales van en --text-primary,
+       NO en rojo (solo bajadas de rentabilidad y avisos).
+     - Ingresos positivos en --accent.
+     - Traspasos en --text-muted.
+   ==================================================== */
+
+/* ============================================================
+   FUENTES — Inter + Manrope, auto-alojadas (woff2, OFL)
+   ============================================================ */
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../assets/fonts/Inter-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../assets/fonts/Inter-Medium.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../assets/fonts/Inter-SemiBold.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../assets/fonts/Inter-Bold.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../assets/fonts/Manrope-SemiBold.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../assets/fonts/Manrope-Bold.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('../assets/fonts/Manrope-ExtraBold.woff2') format('woff2');
+}
+
+/* ============================================================
+   TOKENS GLOBALES (no dependen de tema)
+   ============================================================ */
+:root {
+    /* Tipografia */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-display: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+    /* Escala tipografica */
+    --font-size-tiny:   0.5625rem;  /*  9px  */
+    --font-size-xs:     0.625rem;   /* 10px  */
+    --font-size-sm:     0.6875rem;  /* 11px  */
+    --font-size-md:     0.75rem;    /* 12px  */
+    --font-size-base:   0.8125rem;  /* 13px  */
+    --font-size-lg:     0.9375rem;  /* 15px  */
+    --font-size-xl:     1.125rem;   /* 18px  */
+    --font-size-2xl:    1.25rem;    /* 20px  */
+    --font-size-3xl:    1.375rem;   /* 22px  */
+    --font-size-4xl:    1.5rem;     /* 24px  */
+    --font-size-5xl:    1.75rem;    /* 28px  */
+    --font-size-6xl:    2.125rem;   /* 34px  */
+    --font-size-7xl:    2.5rem;     /* 40px  */
+
+    /* Degradado de marca — plano (sin aurora) */
+    --brand-gradient: linear-gradient(var(--accent), var(--accent));
+    --brand-gradient-soft: linear-gradient(var(--accent-soft), var(--accent-soft));
+
+    /* Espaciado */
+    --space-0: 0;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 32px;
+    --space-8: 40px;
+
+    /* Radios */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 22px;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================================
+   TEMA CLARO (por defecto)
+   ============================================================ */
+:root,
+[data-theme="light"] {
+    color-scheme: light;
+
+    /* Fondos */
+    --bg-primary: #F4F3EF;
+    --bg-secondary: #F4F3EF;
+    --bg-tertiary: #EAE8E2;
+    --bg-elevated: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #faf9f7;
+    --bg-hover: #EFEDE7;
+    --bg-active: #E3E1DA;
+    --bg-input: #FFFFFF;
+    --bg-overlay: rgba(10, 12, 15, 0.35);
+
+    /* Texto */
+    --text-primary: #15171A;
+    --text-secondary: #5B6068;
+    --text-muted: #5a5f68; /* WCAG AA: ≥ 4.5:1 sobre #FFFFFF */
+    --text-inverse: #F4F3EF;
+
+    /* Acento de marca */
+    --accent: #0B7A66;
+    --accent-hover: #096653;
+    --accent-bg: rgba(11, 122, 102, 0.08);
+    --accent-light: rgba(11, 122, 102, 0.14);
+    --accent-soft: #DDF0EA;
+    --on-accent: #FFFFFF;
+
+    /* Semanticos */
+    --success: #0B7A66;
+    --success-bg: rgba(11, 122, 102, 0.09);
+    --success-light: rgba(11, 122, 102, 0.15);
+    --danger: #CF4640;
+    --danger-bg: rgba(207, 70, 64, 0.09);
+    --danger-light: rgba(207, 70, 64, 0.15);
+    --warning: #B7791F;
+    --warning-bg: rgba(183, 121, 31, 0.09);
+    --warning-light: rgba(183, 121, 31, 0.15);
+    --warning-strong: #B7791F;
+    --info: #0891b2;
+    --info-bg: rgba(8, 145, 178, 0.09);
+    --info-light: rgba(8, 145, 178, 0.15);
+
+    /* Bordes */
+    --border: #ECEAE4;
+    --border-strong: #DAD7CE;
+
+    /* Sombras — con tinte neutro sobre fondo claro */
+    --shadow-sm: 0 1px 2px rgba(20, 20, 20, 0.04);
+    --shadow-md: 0 6px 24px rgba(20, 20, 20, 0.05);
+    --shadow-lg: 0 16px 40px rgba(20, 20, 20, 0.08);
+
+    /* Gráficos */
+    --chart-grid: rgba(21, 23, 26, 0.06);
+    --chart-tick: #6B7079;
+    --chart-tooltip-bg: #FFFFFF;
+    --chart-tooltip-border: #ECEAE4;
+
+    /* Paleta de categorias (--c1..--c6) */
+    --c1: #0B7A66;
+    --c2: #3F5BD8;
+    --c3: #E2A03A;
+    --c4: #C4548D;
+    --c5: #9AA1AB;
+    --c6: #8E5BD9;
+
+    /* Alias compatibilidad con prototipo */
+    --bg: var(--bg-primary);
+    --card: var(--bg-card);
+    --ink: var(--text-primary);
+    --mut: var(--text-muted);
+    --line: var(--border);
+    --acc: var(--accent);
+    --acc-t: var(--accent-soft);
+    --neg: var(--danger);
+    --chip: var(--bg-tertiary);
+    --on-acc: var(--on-accent);
+
+    /* --cat-1..6 = --c1..c6 (mismos valores) */
+    --cat-1: var(--c1);
+    --cat-2: var(--c2);
+    --cat-3: var(--c3);
+    --cat-4: var(--c4);
+    --cat-5: var(--c5);
+    --cat-6: var(--c6);
+
+    /* Sidebar */
+    --sidebar-bg: #F4F3EF;
+    --sidebar-item-hover: #EFEDE7;
+    --sidebar-item-active: rgba(11, 122, 102, 0.08);
+}
+
+/* ============================================================
+   TEMA OSCURO
+   ============================================================ */
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* Fondos */
+    --bg-primary: #0A0C0F;
+    --bg-secondary: #0A0C0F;
+    --bg-tertiary: #1E2227;
+    --bg-elevated: #14171B;
+    --bg-card: #14171B;
+    --bg-card-hover: #1a1e24;
+    --bg-hover: #1A1E23;
+    --bg-active: #252A31;
+    --bg-input: #14171B;
+    --bg-overlay: rgba(0, 0, 0, 0.6);
+
+    /* Texto */
+    --text-primary: #F2F3F5;
+    --text-secondary: #B3B9C1;
+    --text-muted: #8C939C;
+    --text-inverse: #0A0C0F;
+
+    /* Acento de marca */
+    --accent: #37D6A4;
+    --accent-hover: #5CE3B8;
+    --accent-bg: rgba(55, 214, 164, 0.12);
+    --accent-light: rgba(55, 214, 164, 0.20);
+    --accent-soft: #0F3129;
+    --on-accent: #03140E;
+
+    /* Semanticos */
+    --success: #37D6A4;
+    --success-bg: rgba(55, 214, 164, 0.12);
+    --success-light: rgba(55, 214, 164, 0.20);
+    --danger: #FF7168;
+    --danger-bg: rgba(255, 113, 104, 0.12);
+    --danger-light: rgba(255, 113, 104, 0.20);
+    --warning: #F2B85B;
+    --warning-bg: rgba(242, 184, 91, 0.12);
+    --warning-light: rgba(242, 184, 91, 0.20);
+    --warning-strong: #F2B85B;
+    --info: #22a5c0;
+    --info-bg: rgba(34, 165, 192, 0.12);
+    --info-light: rgba(34, 165, 192, 0.20);
+
+    /* Bordes */
+    --border: #22262C;
+    --border-strong: #2E333A;
+
+    /* Sombras — ninguna en oscuro */
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+
+    /* Graficos */
+    --chart-grid: rgba(255, 255, 255, 0.06);
+    --chart-tick: #8C939C;
+    --chart-tooltip-bg: #1E2227;
+    --chart-tooltip-border: #2E333A;
+
+    /* Paleta de categorias */
+    --c1: #37D6A4;
+    --c2: #7C93FF;
+    --c3: #F2B85B;
+    --c4: #E679B0;
+    --c5: #78808B;
+    --c6: #B48CFF;
+
+    /* Alias */
+    --bg: var(--bg-primary);
+    --card: var(--bg-card);
+    --ink: var(--text-primary);
+    --mut: var(--text-muted);
+    --line: var(--border);
+    --acc: var(--accent);
+    --acc-t: var(--accent-soft);
+    --neg: var(--danger);
+    --chip: var(--bg-tertiary);
+    --on-acc: var(--on-accent);
+
+    /* --cat-1..6 */
+    --cat-1: var(--c1);
+    --cat-2: var(--c2);
+    --cat-3: var(--c3);
+    --cat-4: var(--c4);
+    --cat-5: var(--c5);
+    --cat-6: var(--c6);
+
+    /* Sidebar */
+    --sidebar-bg: #0A0C0F;
+    --sidebar-item-hover: #1A1E23;
+    --sidebar-item-active: rgba(55, 214, 164, 0.12);
+}

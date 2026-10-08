@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Lock } from 'lucide-react-native';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
 export interface LockedAffinityChipProps {
@@ -9,9 +9,10 @@ export interface LockedAffinityChipProps {
 }
 
 export function LockedAffinityChip({ bucket, locked = true }: LockedAffinityChipProps) {
+  const { colors } = useTheme();
   const text = bucket === 'alto' ? 'Match alto' : 'Match medio';
-  const fg = bucket === 'alto' ? COLORS.accentSoftText : COLORS.textPrimary;
-  const bg = bucket === 'alto' ? COLORS.accentSoft : COLORS.surfaceNeutral;
+  const fg = bucket === 'alto' ? colors.acc : colors.ink;
+  const bg = bucket === 'alto' ? colors.accSoft : colors.chip;
   return (
     <View
       accessible
@@ -32,6 +33,6 @@ const styles = StyleSheet.create({
     gap: 5,
     height: 24,
     paddingHorizontal: 10,
-    borderRadius: 12,
+    borderRadius: 99,
   },
 });

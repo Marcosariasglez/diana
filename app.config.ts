@@ -13,7 +13,7 @@ export default {
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: '#F8F9FA',
+      backgroundColor: '#F4F3EF',
       foregroundImage: './assets/images/android-icon-foreground.png',
     },
     package: 'com.diana.app',
@@ -24,15 +24,18 @@ export default {
     favicon: './assets/images/favicon.png',
     name: 'Diana',
     shortName: 'Diana',
-    backgroundColor: '#F8F9FA',
-    themeColor: '#008060',
+    backgroundColor: '#F4F3EF',
+    themeColor: '#0B7A66',
   },
   plugins: [
     'expo-router',
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#F4F3EF',
+        dark: {
+          backgroundColor: '#0A0C0F',
+        },
         image: './assets/images/splash-icon.png',
         imageWidth: 76,
       },
@@ -40,7 +43,15 @@ export default {
     [
       'expo-font',
       {
-        fonts: ['./assets/fonts/Manrope-VariableFont.ttf'],
+        fonts: [
+          './assets/fonts/Manrope-SemiBold.ttf',
+          './assets/fonts/Manrope-Bold.ttf',
+          './assets/fonts/Manrope-ExtraBold.ttf',
+          './assets/fonts/Inter-Regular.ttf',
+          './assets/fonts/Inter-Medium.ttf',
+          './assets/fonts/Inter-SemiBold.ttf',
+          './assets/fonts/Inter-Bold.ttf',
+        ],
       },
     ],
   ],

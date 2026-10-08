@@ -12,6 +12,7 @@ import { useHistoryStore } from '@/store/useHistoryStore';
 import { ToastProvider } from '@/components/ui/Toast';
 import { BACKEND } from '@/lib/env';
 import { useAuthStore } from '@/store/useAuthStore';
+import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 import '../global.css';
 
 SplashScreen.preventAutoHideAsync();
@@ -33,9 +34,48 @@ function OnboardingGuard() {
   return null;
 }
 
+function AppContent() {
+  const { scheme } = useTheme();
+  return (
+    <>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="login" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+        <Stack.Screen
+          name="mood-wizard"
+          options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
+        />
+        <Stack.Screen name="mood-results" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="daily-log" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="see-all/[category]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="room/join" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="room/[code]/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen
+          name="room/[code]/mood"
+          options={{ animation: 'slide_from_right', gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="room/[code]/swipe"
+          options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
+        />
+      </Stack>
+      <OnboardingGuard />
+    </>
+  );
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Manrope: require('../assets/fonts/Manrope-VariableFont.ttf'),
+    'Manrope-SemiBold': require('../assets/fonts/Manrope-SemiBold.ttf'),
+    'Manrope-Bold': require('../assets/fonts/Manrope-Bold.ttf'),
+    'Manrope-ExtraBold': require('../assets/fonts/Manrope-ExtraBold.ttf'),
+    'Inter-Regular': require('../assets/fonts/Inter-Regular.ttf'),
+    'Inter-Medium': require('../assets/fonts/Inter-Medium.ttf'),
+    'Inter-SemiBold': require('../assets/fonts/Inter-SemiBold.ttf'),
+    'Inter-Bold': require('../assets/fonts/Inter-Bold.ttf'),
   });
   const storesReady = useStoresHydrated();
   const authStatus = useAuthStore((s) => s.status);
@@ -65,33 +105,11 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ToastProvider>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="login" options={{ animation: 'fade' }} />
-            <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
-            <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-            <Stack.Screen
-              name="mood-wizard"
-              options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
-            />
-            <Stack.Screen name="mood-results" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="daily-log" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="see-all/[category]" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="room/join" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="room/[code]/index" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen
-              name="room/[code]/mood"
-              options={{ animation: 'slide_from_right', gestureEnabled: false }}
-            />
-            <Stack.Screen
-              name="room/[code]/swipe"
-              options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
-            />
-          </Stack>
-          <OnboardingGuard />
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

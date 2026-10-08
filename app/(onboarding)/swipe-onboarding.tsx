@@ -2,12 +2,26 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SwipeDeck } from '@/components/features/SwipeDeck';
 import { ErrorState, ProgressBar, Screen, Skeleton } from '@/components/ui';
 import { useOnboardingSwipe } from '@/features/onboarding/useOnboardingSwipe';
-import { COLORS } from '@/theme/colors';
+import { useThemedStyles } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
 export default function SwipeOnboardingScreen() {
   const { status, cards, decided, total, decide, retry } = useOnboardingSwipe();
   const counter = Math.min(decided + 1, total);
+  const styles = useThemedStyles((c) => StyleSheet.create({
+    header: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 16,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      minHeight: 44,
+    },
+    bar: { flex: 1 },
+    loading: { flex: 1, alignItems: 'center' as const, gap: 12, paddingTop: 8 },
+    center: { flex: 1, justifyContent: 'center' as const },
+    inkText: { color: c.ink },
+  }));
 
   return (
     <Screen>
@@ -17,7 +31,7 @@ export default function SwipeOnboardingScreen() {
         </View>
         <Text
           accessibilityLabel={`Película ${counter} de ${total}`}
-          style={textStyle('body', { fontWeight: '800', color: COLORS.textPrimary })}
+          style={[textStyle('body', { fontFamily: 'Manrope-ExtraBold' }), styles.inkText]}
         >
           {`${counter}/${total}`}
         </Text>
@@ -49,16 +63,3 @@ export default function SwipeOnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    minHeight: 44,
-  },
-  bar: { flex: 1 },
-  loading: { flex: 1, alignItems: 'center', gap: 12, paddingTop: 8 },
-  center: { flex: 1, justifyContent: 'center' },
-});

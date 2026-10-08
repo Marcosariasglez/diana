@@ -1,78 +1,111 @@
-export const TYPOGRAPHY = {
+/**
+ * Tipografia VERTICE — Escala exacta Anexo X3.
+ *
+ * Familias estaticas (no fontWeight suelto):
+ *   Manrope-SemiBold / Manrope-Bold / Manrope-ExtraBold
+ *   Inter-Regular / Inter-Medium / Inter-SemiBold / Inter-Bold
+ *
+ * Cifras con tabular-nums.
+ */
+
+import type { TextStyle } from 'react-native';
+
+// Tabla X3 — nombres de Diana → especificacion Norte
+const TYPOGRAPHY = {
   screenTitle: {
-    fontFamily: 'Manrope',
-    fontWeight: '800',
+    fontFamily: 'Manrope-ExtraBold',
     fontSize: 28,
+    letterSpacing: -0.03,
   },
   heroTitle: {
-    fontFamily: 'Manrope',
-    fontWeight: '800',
+    fontFamily: 'Manrope-ExtraBold',
     fontSize: 32,
+    letterSpacing: -0.03,
   },
   detailTitle: {
-    fontFamily: 'Manrope',
-    fontWeight: '800',
+    fontFamily: 'Manrope-ExtraBold',
     fontSize: 26,
+    letterSpacing: -0.03,
+  },
+  sectionTitle: {
+    fontFamily: 'Manrope-ExtraBold',
+    fontSize: 19,
+    letterSpacing: -0.02,
+  },
+  big: {
+    fontFamily: 'Manrope-ExtraBold',
+    fontSize: 46,
+    letterSpacing: -0.035,
+  },
+  value: {
+    fontFamily: 'Manrope-Bold',
+    fontSize: 15,
   },
   label: {
-    fontFamily: 'Manrope',
-    fontWeight: '600',
-    fontSize: 12,
+    fontFamily: 'Inter-Bold',
+    fontSize: 12.5,
     letterSpacing: 0.06,
   },
   body: {
-    fontFamily: 'Manrope',
-    fontWeight: '500',
-    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    fontSize: 15,
+  },
+  bodyStrong: {
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 15,
   },
   bodySmall: {
-    fontFamily: 'Manrope',
-    fontWeight: '500',
-    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    fontSize: 12.5,
+  },
+  link: {
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 13.5,
+  },
+  button: {
+    fontFamily: 'Manrope-Bold',
+    fontSize: 16,
   },
   posterTitle: {
-    fontFamily: 'Manrope',
-    fontWeight: '700',
+    fontFamily: 'Manrope-Bold',
     fontSize: 13,
   },
   navLabel: {
-    fontFamily: 'Manrope',
-    fontWeight: '500',
-    fontSize: 11,
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 10.5,
   },
   wizardQuestion: {
-    fontFamily: 'Manrope',
-    fontWeight: '800',
+    fontFamily: 'Manrope-ExtraBold',
     fontSize: 34,
+    letterSpacing: -0.03,
   },
   bestMatch: {
-    fontFamily: 'Manrope',
-    fontWeight: '800',
+    fontFamily: 'Manrope-ExtraBold',
     fontSize: 38,
+    letterSpacing: -0.03,
   },
   roomCode: {
-    fontFamily: 'Manrope',
-    fontWeight: '800',
+    fontFamily: 'Manrope-ExtraBold',
     fontSize: 46,
+    letterSpacing: 0.12,
   },
   predictionRevealed: {
-    fontFamily: 'Manrope',
-    fontWeight: '800',
+    fontFamily: 'Manrope-ExtraBold',
     fontSize: 40,
+    letterSpacing: -0.03,
   },
 } as const;
-
-
-import type { TextStyle } from 'react-native';
 
 export type TypographyName = keyof typeof TYPOGRAPHY;
 
 /**
- * Estilo de texto listo para usar. Convierte el tracking de em a px (RN solo
- * admite px). Manrope es una fuente variable: el peso se pide con fontWeight y
- * el plan B (TTF estaticos) se centralizaria aqui.
+ * Estilo de texto listo para usar. Convierte tracking de em a px.
+ * Añade tabular-nums cuando se indique.
  */
-export function textStyle(name: TypographyName, overrides?: TextStyle): TextStyle {
+export function textStyle(
+  name: TypographyName,
+  overrides?: TextStyle,
+): TextStyle {
   const base: TextStyle = { ...TYPOGRAPHY[name] };
   if (base.letterSpacing !== undefined && base.fontSize !== undefined) {
     base.letterSpacing = base.letterSpacing * base.fontSize;

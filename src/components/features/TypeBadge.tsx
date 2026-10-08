@@ -1,29 +1,30 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
-export type TypeBadgeLabel = 'Película' | 'Serie' | 'Capítulo';
+export type TypeBadgeLabel = 'Pelicula' | 'Película' | 'Serie' | 'Capitulo' | 'Capítulo';
 
 export interface TypeBadgeProps {
   label: TypeBadgeLabel;
 }
 
-const PALETTE: Record<TypeBadgeLabel, { bg: string; fg: string }> = {
-  Película: { bg: COLORS.textPrimary, fg: '#FFFFFF' },
-  Serie: { bg: COLORS.accent, fg: '#FFFFFF' },
-  Capítulo: { bg: COLORS.card, fg: COLORS.textPrimary },
+const PALETTE: Record<string, { bg: string; fg: string }> = {
+  Pelicula: { bg: 'ink', fg: 'onInk' },
+  'Película': { bg: 'ink', fg: 'onInk' },
+  Serie: { bg: 'acc', fg: 'onAcc' },
+  Capitulo: { bg: 'card', fg: 'ink' },
+  'Capítulo': { bg: 'card', fg: 'ink' },
 };
 
 export function TypeBadge({ label }: TypeBadgeProps) {
-  const p = PALETTE[label];
+  const { colors } = useTheme();
+  const { bg, fg } = PALETTE[label] ?? PALETTE['Pelicula'];
   return (
-    <View
-      accessible
-      accessibilityRole="text"
-      accessibilityLabel={`Tipo: ${label}`}
-      style={[styles.badge, { backgroundColor: p.bg }]}
-    >
-      <Text style={[textStyle('label', { color: p.fg, letterSpacing: 0 }), styles.text]}>
+    <View style={styles.badge}>
+      <Text style={[
+        textStyle('bodySmall', { fontFamily: 'Inter-SemiBold' }),
+        { backgroundColor: colors[bg as keyof typeof colors], color: colors[fg as keyof typeof colors] },
+      ]}>
         {label}
       </Text>
     </View>
@@ -32,12 +33,10 @@ export function TypeBadge({ label }: TypeBadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  text: {
-    fontSize: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 99,
   },
 });

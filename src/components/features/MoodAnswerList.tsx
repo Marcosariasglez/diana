@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import type { MoodQuestion } from '@/types/mood';
 
@@ -10,6 +10,8 @@ export interface MoodAnswerListProps {
 }
 
 export function MoodAnswerList({ questions, answers }: MoodAnswerListProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.list}>
       {questions.map((q, i) => {
@@ -27,10 +29,10 @@ export function MoodAnswerList({ questions, answers }: MoodAnswerListProps) {
             }
             style={styles.item}
           >
-            <Text style={textStyle('label', { color: COLORS.textSecondary })}>
+            <Text style={textStyle('label', { color: colors.textSecondary })}>
               {`PREGUNTA ${i + 1} DE ${questions.length}`}
             </Text>
-            <Text style={textStyle('body', { fontWeight: '700', color: COLORS.textPrimary })}>
+            <Text style={textStyle('body', { fontFamily: 'Manrope-Bold', color: colors.ink })}>
               {q.title}
             </Text>
             <View style={styles.chips}>
@@ -38,12 +40,12 @@ export function MoodAnswerList({ questions, answers }: MoodAnswerListProps) {
                 chosen.map((c) => {
                   const Icon = c.icon;
                   return (
-                    <View key={c.id} style={styles.chip}>
-                      <Icon size={16} color={COLORS.accentSoftText} strokeWidth={2} />
+                    <View key={c.id} style={[styles.chip, { backgroundColor: colors.accSoft }]}>
+                      <Icon size={16} color={colors.acc} strokeWidth={2} />
                       <Text
                         style={textStyle('bodySmall', {
-                          fontWeight: '700',
-                          color: COLORS.accentSoftText,
+                          fontFamily: 'Inter-Bold',
+                          color: colors.acc,
                         })}
                       >
                         {c.title}
@@ -52,8 +54,8 @@ export function MoodAnswerList({ questions, answers }: MoodAnswerListProps) {
                   );
                 })
               ) : (
-                <View style={[styles.chip, styles.waiting]}>
-                  <Text style={textStyle('bodySmall', { color: COLORS.textSecondary })}>
+                <View style={[styles.chip, styles.waiting, { backgroundColor: colors.chip }]}>
+                  <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                     Esperando...
                   </Text>
                 </View>
@@ -67,12 +69,8 @@ export function MoodAnswerList({ questions, answers }: MoodAnswerListProps) {
 }
 
 const styles = StyleSheet.create({
-  list: {
-    gap: 20,
-  },
-  item: {
-    gap: 6,
-  },
+  list: { gap: 20 },
+  item: { gap: 6 },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -84,10 +82,7 @@ const styles = StyleSheet.create({
     gap: 6,
     minHeight: 36,
     paddingHorizontal: 12,
-    borderRadius: 18,
-    backgroundColor: COLORS.accentSoft,
+    borderRadius: 99,
   },
-  waiting: {
-    backgroundColor: COLORS.surfaceNeutral,
-  },
+  waiting: {},
 });

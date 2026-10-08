@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Check, ChevronDown } from 'lucide-react-native';
-import { COLORS } from '@/theme/colors';
-import { SHADOWS } from '@/theme/shadows';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import type { TVSeason } from '@/types/media';
 
@@ -21,6 +20,7 @@ export interface EpisodePickerProps {
 }
 
 export function EpisodePicker({ seasons, season, episode, onChange }: EpisodePickerProps) {
+  const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   if (seasons.length === 0) return null;
 
@@ -42,12 +42,12 @@ export function EpisodePicker({ seasons, season, episode, onChange }: EpisodePic
             current ? `Temporada ${current.season_number}, cambiar temporada` : 'Elegir temporada'
           }
           accessibilityState={{ expanded: open }}
-          style={[styles.pill, styles.dark]}
+          style={[styles.pill, { backgroundColor: colors.ink }]}
         >
-          <Text style={textStyle('body', { fontWeight: '700', color: '#FFFFFF' })}>
+          <Text style={textStyle('body', { fontFamily: 'Manrope-Bold', color: colors.onInk })}>
             {current ? `Temporada ${current.season_number}` : 'Temporada'}
           </Text>
-          <ChevronDown size={16} color="#FFFFFF" strokeWidth={2.5} />
+          <ChevronDown size={16} color={colors.onInk} strokeWidth={2.5} />
         </Pressable>
         {episodes.map((ep) => {
           const selected = ep.episode_number === episode;
@@ -60,12 +60,12 @@ export function EpisodePicker({ seasons, season, episode, onChange }: EpisodePic
               accessibilityRole="button"
               accessibilityLabel={`Capítulo ${ep.episode_number}: ${ep.name}`}
               accessibilityState={{ selected }}
-              style={[styles.pill, selected ? styles.dark : styles.light, !selected && SHADOWS.card]}
+              style={[styles.pill, { backgroundColor: selected ? colors.ink : colors.card }]}
             >
               <Text
                 style={textStyle('body', {
-                  fontWeight: '700',
-                  color: selected ? '#FFFFFF' : COLORS.textPrimary,
+                  fontFamily: 'Manrope-Bold',
+                  color: selected ? colors.onInk : colors.ink,
                 })}
               >
                 {`E${ep.episode_number}`}
@@ -75,7 +75,7 @@ export function EpisodePicker({ seasons, season, episode, onChange }: EpisodePic
         })}
       </ScrollView>
       {open ? (
-        <View style={[styles.menu, SHADOWS.card]}>
+        <View style={[styles.menu, { backgroundColor: colors.card }]}>
           <Pressable
             onPress={() => {
               setOpen(false);
@@ -86,8 +86,8 @@ export function EpisodePicker({ seasons, season, episode, onChange }: EpisodePic
             accessibilityState={{ selected: season === null }}
             style={styles.menuItem}
           >
-            <Text style={textStyle('body', { color: COLORS.textPrimary })}>Serie completa</Text>
-            {season === null ? <Check size={18} color={COLORS.accent} strokeWidth={2.5} /> : null}
+            <Text style={textStyle('body', { color: colors.ink })}>Serie completa</Text>
+            {season === null ? <Check size={18} color={colors.acc} strokeWidth={2.5} /> : null}
           </Pressable>
           {seasons.map((s) => (
             <Pressable
@@ -101,11 +101,11 @@ export function EpisodePicker({ seasons, season, episode, onChange }: EpisodePic
               accessibilityState={{ selected: s.season_number === season }}
               style={styles.menuItem}
             >
-              <Text style={textStyle('body', { color: COLORS.textPrimary })}>
+              <Text style={textStyle('body', { color: colors.ink })}>
                 {`Temporada ${s.season_number}`}
               </Text>
               {s.season_number === season ? (
-                <Check size={18} color={COLORS.accent} strokeWidth={2.5} />
+                <Check size={18} color={colors.acc} strokeWidth={2.5} />
               ) : null}
             </Pressable>
           ))}
@@ -116,9 +116,7 @@ export function EpisodePicker({ seasons, season, episode, onChange }: EpisodePic
 }
 
 const styles = StyleSheet.create({
-  root: {
-    gap: 8,
-  },
+  root: { gap: 8 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -130,22 +128,15 @@ const styles = StyleSheet.create({
     minHeight: 44,
     minWidth: 44,
     paddingHorizontal: 18,
-    borderRadius: 22,
+    borderRadius: 99,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  dark: {
-    backgroundColor: COLORS.textPrimary,
-  },
-  light: {
-    backgroundColor: COLORS.card,
-  },
   menu: {
     marginHorizontal: 20,
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   menuItem: {

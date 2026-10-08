@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { RATING_MAX, RATING_MIN, RATING_STEP } from '@/constants/rating';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { Rating } from '@/types/rating';
 import { formatRating } from '@/utils/format';
 
@@ -42,6 +42,7 @@ const ACTIONS = [
 ];
 
 export function StarRating({ value, onChange, size = 36, readOnly = false, compact = false }: StarRatingProps) {
+  const { colors } = useTheme();
   const interactive = !readOnly && onChange !== undefined;
   const current = value ?? 0;
 
@@ -75,7 +76,7 @@ export function StarRating({ value, onChange, size = 36, readOnly = false, compa
             style={[styles.cell, { minHeight: compact ? size : Math.max(44, size) }, compact && styles.cellCompact]}
           >
             <View style={{ width: size, height: size }}>
-              <Star size={size} color={COLORS.accent} strokeWidth={2} />
+              <Star size={size} color={colors.acc} strokeWidth={2} />
               {fill !== 'empty' ? (
                 <View
                   pointerEvents="none"
@@ -84,7 +85,7 @@ export function StarRating({ value, onChange, size = 36, readOnly = false, compa
                     { width: fill === 'half' ? size / 2 : size, height: size },
                   ]}
                 >
-                  <Star size={size} color={COLORS.accent} fill={COLORS.accent} strokeWidth={2} />
+                  <Star size={size} color={colors.acc} fill={colors.acc} strokeWidth={2} />
                 </View>
               ) : null}
             </View>

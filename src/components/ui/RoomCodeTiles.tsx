@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Copy } from 'lucide-react-native';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
 export interface RoomCodeTilesProps {
@@ -11,6 +11,7 @@ export interface RoomCodeTilesProps {
 }
 
 export function RoomCodeTiles({ code, onCopy, tone = 'accent' }: RoomCodeTilesProps) {
+  const { colors } = useTheme();
   const neutral = tone === 'neutral';
   return (
     <View style={styles.wrap}>
@@ -24,9 +25,9 @@ export function RoomCodeTiles({ code, onCopy, tone = 'accent' }: RoomCodeTilesPr
           <View
             key={i}
             testID="room-code-tile"
-            style={[styles.tile, neutral && styles.tileNeutral]}
+            style={[styles.tile, { backgroundColor: neutral ? colors.chip : colors.accSoft }]}
           >
-            <Text style={[textStyle('roomCode'), styles.char, neutral && styles.charNeutral]}>{c}</Text>
+            <Text style={[textStyle('roomCode'), { color: neutral ? colors.ink : colors.acc }]}>{c}</Text>
           </View>
         ))}
       </View>
@@ -35,13 +36,13 @@ export function RoomCodeTiles({ code, onCopy, tone = 'accent' }: RoomCodeTilesPr
           accessibilityRole="button"
           accessibilityLabel="Copiar código de sala"
           onPress={onCopy}
-          style={[styles.copy, neutral && styles.copyChip]}
+          style={[styles.copy, neutral && { backgroundColor: colors.accSoft, borderRadius: 99, paddingHorizontal: 20 }]}
         >
-          {neutral ? null : <Copy size={20} color={COLORS.accent} />}
+          {neutral ? null : <Copy size={20} color={colors.acc} />}
           <Text
             style={[
-              textStyle('bodySmall', { fontWeight: '700' }),
-              { color: neutral ? COLORS.accentSoftText : COLORS.accent },
+              textStyle('bodySmall', { fontFamily: 'Inter-Bold' }),
+              { color: colors.acc },
             ]}
           >
             Copiar código
@@ -59,14 +60,9 @@ const styles = StyleSheet.create({
     width: 72,
     height: 80,
     borderRadius: 12,
-    backgroundColor: COLORS.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tileNeutral: { width: 66, backgroundColor: COLORS.surfaceNeutral },
-  char: { color: COLORS.accentSoftText },
-  charNeutral: { color: COLORS.textPrimary },
-  copyChip: { backgroundColor: COLORS.accentSoft, borderRadius: 22, paddingHorizontal: 20 },
   copy: {
     minHeight: 44,
     minWidth: 44,

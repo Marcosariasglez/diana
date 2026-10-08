@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export interface ProgressBarProps {
   value: number;
@@ -8,9 +8,11 @@ export interface ProgressBarProps {
   color?: string;
 }
 
-export function ProgressBar({ value, max, segments, color = COLORS.accent }: ProgressBarProps) {
+export function ProgressBar({ value, max, segments, color }: ProgressBarProps) {
+  const { colors } = useTheme();
   const safeMax = max > 0 ? max : 1;
   const ratio = Math.min(1, Math.max(0, value / safeMax));
+  const trackColor = color ?? colors.acc;
   return (
     <View
       accessible
@@ -23,14 +25,14 @@ export function ProgressBar({ value, max, segments, color = COLORS.accent }: Pro
         Array.from({ length: segments }, (_, i) => {
           const fill = Math.min(1, Math.max(0, ratio * segments - i));
           return (
-            <View key={i} testID="progress-segment" style={styles.track}>
-              <View style={[styles.fill, { width: `${fill * 100}%`, backgroundColor: color }]} />
+            <View key={i} testID="progress-segment" style={[styles.track, { backgroundColor: colors.chip }]}>
+              <View style={[styles.fill, { width: `${fill * 100}%`, backgroundColor: trackColor }]} />
             </View>
           );
         })
       ) : (
-        <View testID="progress-segment" style={styles.track}>
-          <View style={[styles.fill, { width: `${ratio * 100}%`, backgroundColor: color }]} />
+        <View testID="progress-segment" style={[styles.track, { backgroundColor: colors.chip }]}>
+          <View style={[styles.fill, { width: `${ratio * 100}%`, backgroundColor: trackColor }]} />
         </View>
       )}
     </View>
@@ -38,7 +40,7 @@ export function ProgressBar({ value, max, segments, color = COLORS.accent }: Pro
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 4, height: 6 },
-  track: { flex: 1, height: 6, borderRadius: 3, backgroundColor: COLORS.divider, overflow: 'hidden' },
-  fill: { height: 6, borderRadius: 3 },
+  row: { flexDirection: 'row', gap: 4, height: 8 },
+  track: { flex: 1, height: 8, borderRadius: 99, overflow: 'hidden' },
+  fill: { height: 8, borderRadius: 99 },
 });

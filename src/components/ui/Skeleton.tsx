@@ -7,7 +7,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export interface SkeletonProps {
   width: DimensionValue;
@@ -16,6 +16,7 @@ export interface SkeletonProps {
 }
 
 export function Skeleton({ width, height, radius = 8 }: SkeletonProps) {
+  const { colors } = useTheme();
   const opacity = useSharedValue(1);
   const reduced = useReducedMotion();
   useEffect(() => {
@@ -30,7 +31,7 @@ export function Skeleton({ width, height, radius = 8 }: SkeletonProps) {
     <Animated.View
       testID="skeleton"
       style={[
-        { width, height, borderRadius: radius, backgroundColor: COLORS.divider },
+        { width, height, borderRadius: radius, backgroundColor: colors.chip },
         animated,
       ]}
     />

@@ -48,9 +48,12 @@ describe('Project structure', () => {
   });
 
   it('theme files exist', () => {
-    expect(fs.existsSync(path.join(root, 'src', 'theme', 'colors.ts'))).toBe(
+    expect(fs.existsSync(path.join(root, 'src', 'theme', 'tokens.ts'))).toBe(
       true,
     );
+    expect(
+      fs.existsSync(path.join(root, 'src', 'theme', 'ThemeProvider.tsx')),
+    ).toBe(true);
     expect(fs.existsSync(path.join(root, 'src', 'theme', 'spacing.ts'))).toBe(
       true,
     );

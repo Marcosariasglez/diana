@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Film, Heart } from 'lucide-react-native';
 import type { HistoryEntry } from '@/types/rating';
-import { COLORS } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import { AvatarSlot } from './AvatarSlot';
 import { BottomNav, type BottomNavProps } from './BottomNav';
@@ -52,9 +52,10 @@ const NAV_PROPS = {
 } as unknown as BottomNavProps;
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.section}>
-      <Text accessibilityRole="header" style={[textStyle('label'), styles.sectionTitle]}>
+      <Text accessibilityRole="header" style={[textStyle('label'), { color: colors.textSecondary, textTransform: 'uppercase' }]}>
         {title.toUpperCase()}
       </Text>
       {children}
@@ -63,6 +64,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function GalleryBody() {
+  const { colors } = useTheme();
   const toast = useToast();
   const [sheet, setSheet] = useState(false);
   const [search, setSearch] = useState('');
@@ -79,14 +81,14 @@ function GalleryBody() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={[textStyle('screenTitle'), styles.title]}>
+        <Text accessibilityRole="header" style={[textStyle('screenTitle'), { color: colors.ink }]}>
           Galería de componentes
         </Text>
 
         <Section title="Button">
           <Button label="Primario" onPress={() => toast.show('Botón primario')} />
           <Button label="Secundario" variant="secondary" onPress={() => undefined} />
-          <Button label="Oscuro" variant="dark" onPress={() => undefined} />
+          <Button label="Principal" variant="primary" onPress={() => undefined} />
           <Button label="Cargando" loading onPress={() => undefined} />
           <Button label="Deshabilitado" disabled onPress={() => undefined} />
         </Section>
@@ -200,7 +202,7 @@ function GalleryBody() {
         </Section>
       </ScrollView>
       <BottomSheet visible={sheet} onClose={() => setSheet(false)}>
-        <Text style={[textStyle('detailTitle'), styles.title]}>Diario rápido</Text>
+        <Text style={[textStyle('detailTitle'), { color: colors.ink }]}>Diario rápido</Text>
         <Button label="Cerrar" onPress={() => setSheet(false)} />
       </BottomSheet>
     </Screen>
@@ -217,8 +219,6 @@ export function Gallery() {
 
 const styles = StyleSheet.create({
   content: { padding: 16, gap: 24, paddingBottom: 120 },
-  title: { color: COLORS.textPrimary },
   section: { gap: 12 },
-  sectionTitle: { color: COLORS.textSecondary },
   row: { flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' },
 });

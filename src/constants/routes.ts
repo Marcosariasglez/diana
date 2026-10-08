@@ -45,6 +45,7 @@ export const ROUTES: ReadonlyArray<RouteEntry> = [
     bottomNav: false,
   },
   { url: '/login', file: 'app/login.tsx', presentation: 'stack-fade', bottomNav: false },
+  { url: '/account', file: 'app/account.tsx', presentation: 'slide_from_right', bottomNav: false },
   { url: '(cualquier otra)', file: 'app/+not-found.tsx', presentation: 'stack', bottomNav: false },
 ];
 
