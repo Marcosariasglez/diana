@@ -12,12 +12,33 @@ const MAX_SEASONS = 12;
 
 // provider_id de TMDB (region ES) -> id de src/constants/platforms.ts. Verificar con action 'providers'.
 const PROVIDER_MAP: Record<number, string> = {
+  // Plataformas principales (flatrate)
   8: 'netflix',
   119: 'prime-video',
   9: 'prime-video',
   1899: 'max',
   384: 'max',
   337: 'disney-plus',
+  531: 'apple-tv',
+  386: 'paramount-plus',
+  275: 'filmin',
+  387: 'mubi',
+  197: 'mitele',
+  332: 'discovery-plus',
+  216: 'britbox',
+  // Plataformas adicionales
+  362: 'pluto-tv',
+  179: 'rtve-play',
+  444: 'starzplay',
+  586: 'hbo-es',
+  350: 'rakuten-tv',
+  255: 'nova-play',
+  110: 'zee5',
+  294: 'hotstar',
+  443: 'vidAngel',
+  // Servicios de pago adicionales
+  155: 'peacock',
+  17: 'criterion',
 };
 const PROVIDER_FILTER = Object.keys(PROVIDER_MAP).join('|');
 
@@ -132,7 +153,7 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R
 }
 
 async function fetchMedia(type: 'movie' | 'tv', id: number, withEpisodes: boolean) {
-  const d = await tmdb(`/${type}/${id}`, { append_to_response: 'watch/providers' });
+  const d = await tmdb(`/${type}/${id}`, { append_to_response: 'watch/providers', watch_region: REGION });
   if (type === 'movie') return normalizeMovie(d);
   let seasons: Any[] = [];
   if (withEpisodes) {
@@ -151,7 +172,7 @@ async function fetchMedia(type: 'movie' | 'tv', id: number, withEpisodes: boolea
   return normalizeTv(d, seasons);
 }
 
-// Pool de candidatos para feed, mood, mazo de onboarding y mazo de grupo (~150 titulos de las 4 plataformas en ES).
+// Pool de candidatos para feed, mood, mazo de onboarding y mazo de grupo (~300+ títulos de todas las plataformas en ES).
 async function buildPool() {
   const common = {
     watch_region: REGION,
@@ -159,17 +180,48 @@ async function buildPool() {
     with_watch_monetization_types: 'flatrate',
   };
   const jobs: Array<{ type: 'movie' | 'tv'; params: Record<string, string | number> }> = [];
+
+  // Películas populares (más páginas para mayor cobertura)
+  for (const page of [1, 2, 3, 4, 5]) {
+    jobs.push({ type: 'movie', params: { ...common, sort_by: 'popularity.desc', 'vote_count.gte': 100, page } });
+  }
+  // Películas mejor valoradas
   for (const page of [1, 2, 3]) {
-    jobs.push({ type: 'movie', params: { ...common, sort_by: 'popularity.desc', 'vote_count.gte': 200, page } });
     jobs.push({
       type: 'movie',
-      params: { ...common, sort_by: 'vote_average.desc', 'vote_count.gte': 150, 'vote_count.lte': 5000, 'vote_average.gte': 7, page },
+      params: { ...common, sort_by: 'vote_average.desc', 'vote_count.gte': 100, 'vote_average.gte': 6.5, page },
     });
   }
+  // Películas recientes (últimos 2 años)
   for (const page of [1, 2]) {
-    jobs.push({ type: 'tv', params: { ...common, sort_by: 'popularity.desc', 'vote_count.gte': 200, page } });
+    jobs.push({ type: 'movie', params: { ...common, sort_by: 'primary_release_date.desc', 'vote_count.gte': 50, 'primary_release_date.gte': '2024-01-01', page } });
   }
-  const pages = await mapLimit(jobs, 5, async (j) => ({ type: j.type, res: await tmdb(`/discover/${j.type}`, j.params) }));
+  // Películas por género
+  for (const genreId of [28, 35, 80, 18, 53, 10749, 16, 10752, 99, 14, 10402]) {
+    jobs.push({ type: 'movie', params: { ...common, sort_by: 'popularity.desc', 'with_genres': genreId, 'vote_count.gte': 50, page: 1 } });
+  }
+
+  // Series populares
+  for (const page of [1, 2, 3, 4]) {
+    jobs.push({ type: 'tv', params: { ...common, sort_by: 'popularity.desc', 'vote_count.gte': 100, page } });
+  }
+  // Series mejor valoradas
+  for (const page of [1, 2]) {
+    jobs.push({
+      type: 'tv',
+      params: { ...common, sort_by: 'vote_average.desc', 'vote_count.gte': 100, 'vote_average.gte': 7, page },
+    });
+  }
+  // Series recientes
+  for (const page of [1, 2]) {
+    jobs.push({ type: 'tv', params: { ...common, sort_by: 'first_air_date.desc', 'vote_count.gte': 50, 'first_air_date.gte': '2024-01-01', page } });
+  }
+  // Series por género
+  for (const genreId of [10759, 16, 35, 80, 18, 9648, 10765, 10767, 10768, 10762, 10770]) {
+    jobs.push({ type: 'tv', params: { ...common, sort_by: 'popularity.desc', 'with_genres': genreId, 'vote_count.gte': 50, page: 1 } });
+  }
+
+  const pages = await mapLimit(jobs, 8, async (j) => ({ type: j.type, res: await tmdb(`/discover/${j.type}`, j.params) }));
   const seen = new Set<string>();
   const ids: Array<{ type: 'movie' | 'tv'; id: number }> = [];
   for (const p of pages) {
@@ -181,7 +233,7 @@ async function buildPool() {
       }
     }
   }
-  const media = await mapLimit(ids, 10, async (x) => fetchMedia(x.type, x.id, false));
+  const media = await mapLimit(ids, 15, async (x) => fetchMedia(x.type, x.id, false));
   return media.filter((m) => m.platforms.length > 0 && m.genres.length > 0);
 }
 
