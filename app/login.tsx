@@ -48,10 +48,12 @@ export default function Login() {
       alignSelf: 'center',
       gap: 16,
     },
+    // Logotipo A3.4: cuadrado de esquinas redondeadas (34 px radio 11; a 56 px, radio 18),
+    // fondo acc + glifo onAcc. No es un círculo.
     logo: {
       width: 56,
       height: 56,
-      borderRadius: 28,
+      borderRadius: 18,
       backgroundColor: c.acc,
       alignSelf: 'center',
       alignItems: 'center',

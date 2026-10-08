@@ -5,6 +5,11 @@
     "ok": true
   },
   {
+    "screen": "welcome",
+    "theme": "light",
+    "ok": true
+  },
+  {
     "screen": "inicio",
     "theme": "light",
     "ok": true
@@ -31,6 +36,11 @@
   },
   {
     "screen": "login",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "welcome",
     "theme": "dark",
     "ok": true
   },

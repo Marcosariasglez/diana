@@ -24,13 +24,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
 // Pantallas a capturar (rutas relativas a la app servida)
+// `welcome` se siembra con hasOnboarded=false (el guard la redirige a / si ya
+// hay onboarding); el resto, con hasOnboarded=true.
 const SCREENS = [
-  { name: 'login', path: '/login' },
-  { name: 'inicio', path: '/' },
-  { name: 'mood', path: '/mood' },
-  { name: 'match', path: '/match' },
-  { name: 'perfil', path: '/profile' },
-  { name: 'cuenta', path: '/account' },
+  { name: 'login', path: '/login', onboarded: true },
+  { name: 'welcome', path: '/welcome', onboarded: false },
+  { name: 'inicio', path: '/', onboarded: true },
+  { name: 'mood', path: '/mood', onboarded: true },
+  { name: 'match', path: '/match', onboarded: true },
+  { name: 'perfil', path: '/profile', onboarded: true },
+  { name: 'cuenta', path: '/account', onboarded: true },
 ];
 
 const WIDTH = 390;
@@ -68,8 +71,9 @@ async function capture() {
         }
 
         try {
-          // Sembrar storage (mock): usuario con onboarding completado para ver la app real.
-          await page.addInitScript(() => {
+          // Sembrar storage (mock): usuario con onboarding completado para ver la
+          // app real (o sin onboarding, para poder ver la bienvenida).
+          await page.addInitScript(({ onboarded }) => {
             try {
               const profile = {
                 state: {
@@ -80,7 +84,7 @@ async function capture() {
                     favoriteGenres: [1, 2, 3],
                     favoritePlatforms: ['netflix', 'prime-video', 'max', 'disney-plus'],
                   },
-                  hasOnboarded: true,
+                  hasOnboarded: onboarded,
                 },
                 version: 1,
               };
@@ -88,7 +92,7 @@ async function capture() {
             } catch {
               // sin storage disponible: se captura igual
             }
-          });
+          }, { onboarded: screen.onboarded });
 
           await page.goto(`${BASE_URL}${screen.path}`, {
             waitUntil: 'networkidle',

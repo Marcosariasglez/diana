@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Rect } from 'react-native-svg';
 import { Button, Screen } from '@/components/ui';
 import { importRepository, ImportError, IMPORT_ERROR_MESSAGES } from '@/services';
 import { useHistoryStore } from '@/store/useHistoryStore';
@@ -18,10 +18,12 @@ const FAN = [
 ] as const;
 
 function DianaLogo({ accent }: { accent: string }) {
+  // Logotipo A3.4: cuadrado de esquinas redondeadas (34 px radio 11; a 56 px, radio 18),
+  // fondo acc + glifo onAcc. En viewBox 64, radio 18/56*64 = 20.6.
   return (
     <View accessible accessibilityRole="image" accessibilityLabel="Logo de Diana" style={{ width: 56, height: 56 }}>
       <Svg width={56} height={56} viewBox="0 0 64 64">
-        <Circle cx={32} cy={32} r={32} fill={accent} />
+        <Rect x={0} y={0} width={64} height={64} rx={20.6} fill={accent} />
         <Circle cx={32} cy={32} r={16} fill="none" stroke="#FFFFFF" strokeWidth={3} />
         <Circle cx={32} cy={32} r={9} fill="none" stroke="#FFFFFF" strokeWidth={3} />
         <Circle cx={32} cy={32} r={3} fill="#FFFFFF" />
