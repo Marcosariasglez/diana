@@ -32,11 +32,11 @@ export function HistoryRow({ entry, onPress }: HistoryRowProps) {
         accessibilityLabel={`Tu nota ${rating}`}
         style={[styles.chip, { backgroundColor: colors.chip }]}
       >
-        <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-Bold' }), { color: colors.ink }]}>{rating}</Text>
+        <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-Bold', fontVariant: ['tabular-nums'] }), { color: colors.ink }]}>{rating}</Text>
       </View>
       <View accessible accessibilityLabel={aiLabel} style={[styles.chip, { backgroundColor: colors.accSoft }]}>
         {entry.predictionSeen ? (
-          <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-Bold' }), { color: colors.acc }]}>{ai}</Text>
+          <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-Bold', fontVariant: ['tabular-nums'] }), { color: colors.acc }]}>{ai}</Text>
         ) : (
           <Lock testID="history-lock" size={14} color={colors.acc} strokeWidth={2.5} />
         )}

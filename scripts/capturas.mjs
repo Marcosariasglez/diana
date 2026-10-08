@@ -30,6 +30,7 @@ const SCREENS = [
   { name: 'mood', path: '/mood' },
   { name: 'match', path: '/match' },
   { name: 'perfil', path: '/profile' },
+  { name: 'cuenta', path: '/account' },
 ];
 
 const WIDTH = 390;
@@ -67,6 +68,28 @@ async function capture() {
         }
 
         try {
+          // Sembrar storage (mock): usuario con onboarding completado para ver la app real.
+          await page.addInitScript(() => {
+            try {
+              const profile = {
+                state: {
+                  profile: {
+                    id: 'user-me',
+                    displayName: 'Marcos',
+                    initialRatings: {},
+                    favoriteGenres: [1, 2, 3],
+                    favoritePlatforms: ['netflix', 'prime-video', 'max', 'disney-plus'],
+                  },
+                  hasOnboarded: true,
+                },
+                version: 1,
+              };
+              window.localStorage.setItem('diana.profile.v1', JSON.stringify(profile));
+            } catch {
+              // sin storage disponible: se captura igual
+            }
+          });
+
           await page.goto(`${BASE_URL}${screen.path}`, {
             waitUntil: 'networkidle',
             timeout: 15000,

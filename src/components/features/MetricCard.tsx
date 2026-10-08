@@ -45,7 +45,7 @@ export function MetricCard({
         gap: 6,
         marginBottom: 8,
       },
-      value: { color: vc, fontFamily: 'Manrope-ExtraBold' as const, fontSize: 20, letterSpacing: -0.4 },
+      value: { color: vc, fontFamily: 'Manrope-ExtraBold' as const, fontSize: 20, letterSpacing: -0.4, fontVariant: ['tabular-nums'] as const },
       unit: { color: c.mut },
     }),
   );

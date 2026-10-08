@@ -36,10 +36,12 @@ const TYPOGRAPHY = {
     fontFamily: 'Manrope-ExtraBold',
     fontSize: 46,
     letterSpacing: -0.035,
+    fontVariant: ['tabular-nums'],
   },
   value: {
     fontFamily: 'Manrope-Bold',
     fontSize: 15,
+    fontVariant: ['tabular-nums'],
   },
   label: {
     fontFamily: 'Inter-Bold',
@@ -88,11 +90,13 @@ const TYPOGRAPHY = {
     fontFamily: 'Manrope-ExtraBold',
     fontSize: 46,
     letterSpacing: 0.12,
+    fontVariant: ['tabular-nums'],
   },
   predictionRevealed: {
     fontFamily: 'Manrope-ExtraBold',
     fontSize: 40,
     letterSpacing: -0.03,
+    fontVariant: ['tabular-nums'],
   },
 } as const;
 
@@ -106,7 +110,7 @@ export function textStyle(
   name: TypographyName,
   overrides?: TextStyle,
 ): TextStyle {
-  const base: TextStyle = { ...TYPOGRAPHY[name] };
+  const base = { ...TYPOGRAPHY[name] } as TextStyle;
   if (base.letterSpacing !== undefined && base.fontSize !== undefined) {
     base.letterSpacing = base.letterSpacing * base.fontSize;
   }

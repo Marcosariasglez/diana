@@ -1,3 +1,7 @@
+> ⚠️ **OBSOLETO (VERTICE).** Este documento se congeló antes del plan VERTICE (61 tests, fases B0–B5).
+> **Fuente de verdad del estado: [`docs/vertice/ESTADO.md`](docs/vertice/ESTADO.md).**
+> Se conserva como registro histórico. Lo de B6 (exportar y borrar cuenta) se cumplió en VERTICE D3/D5.
+
 # Diana Movie - Estado de Implementación
 
 ## ✅ COMPLETADO
@@ -48,19 +52,22 @@
   - BACKEND: supabase
   - CATALOG: tmdb
 
-## 🔄 EN PROGRESO
+## 🔧 EN PROGRESO (al congelarse)
 
-- [ ] B6 - Exportar datos y borrar cuenta
-- [ ] B7 - Letterboxd import
+- [x] B6 - Exportar datos y borrar cuenta → **VERTICE D3** (exportMyData + delete-account)
+- [x] B7 - Letterboxd import
 
 ## 📚 Documentación
 
-- [x] SERVICES_DOCS.md - Servicios y credenciales
-- [x] BACKEND_PROGRESS.md - Progreso por fases
-- [x] PROGRESS.md - Resumen rápido
+- [x] SERVICES_DOCS.md - Servicios y credenciales (uso propio, repo privado)
+- [x] BACKEND_PROGRESS.md - Progreso por fases (obsoleto)
+- [x] PROGRESS.md - Resumen rápido (obsoleto)
 - [x] IMPLEMENTATION_STATUS.md - Este archivo
+- [x] docs/vertice/ESTADO.md - **Estado real (VERTICE)**
 
-## 🔐 Credenciales
+## 🔑 Credenciales
+
+> Solo para uso propio del dueño (repo privado). Nunca se imprimen en el repo ni en logs.
 
 ### Supabase
 - Dashboard: https://supabase.com/dashboard/project/hvjmewokgxgrshtzhdjq

@@ -18,8 +18,8 @@ const manifest = {
   scope: `${base}/`,
   display: 'standalone',
   orientation: 'portrait',
-  background_color: '#F8F9FA',
-  theme_color: '#008060',
+  background_color: '#F4F3EF',
+  theme_color: '#0B7A66',
   icons: [
     { src: `${base}/icon-192.png`, sizes: '192x192', type: 'image/png' },
     { src: `${base}/icon-512.png`, sizes: '512x512', type: 'image/png' },
@@ -35,7 +35,7 @@ const tags = [
   '<meta name="mobile-web-app-capable" content="yes" />',
   '<meta name="apple-mobile-web-app-status-bar-style" content="default" />',
   '<meta name="apple-mobile-web-app-title" content="Diana" />',
-  '<meta name="theme-color" content="#008060" />',
+  '<meta name="theme-color" content="#0B7A66" />',
 ]
   .filter((t) => !(t.includes('name="theme-color"') && html.includes('name="theme-color"'))) // Expo ya lo pone con web.themeColor
   .join('\n    ');

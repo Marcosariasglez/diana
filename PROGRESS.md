@@ -1,3 +1,7 @@
+> ⚠️ **OBSOLETO (VERTICE).** Este documento se congeló en la fase B4, antes del plan VERTICE.
+> **Fuente de verdad del estado: [`docs/vertice/ESTADO.md`](docs/vertice/ESTADO.md).**
+> Se conserva solo como registro histórico.
+
 # Progreso del Proyecto Diana
 
 ## ✅ Completado
@@ -19,22 +23,9 @@
 
 ## 🚧 En Progreso
 
-- [ ] Corregir caracteres unicode (`\u00f3` → `ó`) en textos de login
-- [ ] Optimizar vista para iPhone (CSS mobile-first)
+- [x] Corregir caracteres unicode (`\u00f3` → `ó`) en textos de login (VERTICE D4: textos reales UTF-8)
+- [x] Optimizar vista para iPhone (CSS mobile-first)
 
 ## ⏳ Próximos Pasos
 
-### Prioridad Alta:
-1. **Corregir textos unicode** - Los textos en la pantalla de login muestran `\u00f3` en vez de `ó`
-2. **Optimizar vista móvil** - Mejorar responsive para iPhone
-
-### Prioridad Media:
-3. **B5 - TMDB** - Catálogo real de películas (requiere API key de TMDB)
-4. **B6 - Exportar datos** - Exportar y borrar cuenta
-5. **B7 - Letterboxd** - Importar ratings (requiere TMDB)
-
-## 📊 Métricas
-- Tests: 61 passing
-- Deploy: GitHub Pages
-- Base de datos: Supabase (Ireland)
-- Usuarios: 1+
+Ver [`docs/vertice/ESTADO.md`](docs/vertice/ESTADO.md) para el estado real (D0–D6).

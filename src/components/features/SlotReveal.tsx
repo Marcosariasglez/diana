@@ -296,7 +296,7 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
                 >
                   {finalText}
                 </Animated.Text>
-                <Animated.Text style={[textStyle('body'), titleColorStyle]}>/ 5</Animated.Text>
+                <Animated.Text style={[textStyle('body', { fontVariant: ['tabular-nums'] }), titleColorStyle]}>/ 5</Animated.Text>
               </View>
               <Animated.View style={[styles.chip, chipStyle]}>
                 <Text style={textStyle('label', { color: colors.acc, letterSpacing: 0 })}>
