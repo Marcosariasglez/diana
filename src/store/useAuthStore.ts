@@ -102,7 +102,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       set({ error: null });
       const { error } = await getSupabase().auth.signInWithOtp({
         email: email.trim(),
-        options: { shouldCreateUser: true },
+        // Si el correo llega con enlace (plantilla por defecto), que lleve a ESTA app y no al Site URL
+        // del proyecto, que comparten Diana y Norte.
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: Platform.OS === 'web' ? `${window.location.origin}${BASE_URL}/` : undefined,
+        },
       });
       if (error) {
         set({ error: otpErrorCode(error) });
