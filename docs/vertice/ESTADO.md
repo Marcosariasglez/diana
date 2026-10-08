@@ -8,14 +8,19 @@
 > `BACKEND_PROGRESS.md` e `IMPLEMENTATION_STATUS.md` se eliminaron el 2026-10-08: lo útil
 > quedó absorbido en «Registro histórico (B0–B7)» al final de este documento.
 
-## Último verify (tras D6)
+## Último verify (tras las correcciones de cierre, 2026-10-08)
 
 ```
 Test Suites: 72 passed, 72 total
-Tests:       417 passed, 417 total
+Tests:       418 passed, 418 total
 ```
 
 **Auditoría de estilos:** `✓ Auditoría de estilos: todo limpio.` (0 problemas)
+**Build web (producción, base `/diana`):** `Exported: dist` · `PWA lista (base "/diana")`
+**Escáner de secretos:** `✓ service_role no filtrada: 242 ficheros revisados en [app, src, public, dist]`
+
+> Línea base previa (tras D6): `72 passed / 417 passed` (+1 test: comparación del parámetro
+> del RPC con la firma de la migración).
 
 ## Correcciones de cierre (2026-10-08, post-D6)
 
@@ -23,9 +28,9 @@ Tests:       417 passed, 417 total
 |---|------------|-----------|
 | 1 | El RPC `delete_user_data` se llamaba con `{ target_user_id }` en la Edge Function y en `rls-check`, pero la migración 0005 declara `p_target_user_id`: en Supabase real era "function not found" y el borrado fallaba. Unificado en las llamadas (sin tocar la migración) + prueba nueva que compara el parámetro de `index.ts` con la firma SQL leyendo ambos ficheros. `rls-check` ahora exige denegación **por permisos** (revoke), no "función inexistente" | 7/7 tests en `delete-account.test.ts`; commit `ef5d901` |
 | 2 | La 0005 borraba **todas** las salas huérfanas del sistema. Ahora el borrado de `room_decisions`, `room_members` y `rooms` está restringido a las salas en las que participaba el usuario (miembro o anfitrión), calculadas antes de borrar sus filas. Se editó la 0005 directamente (aún no desplegada): una sola versión canónica, sin 0006 | commit `1e72777` |
-| 3 | Limpieza: borrados `build-*.log`, `build2.log`, `serve-3001.log`; `*.log` en `.gitignore`; docs de estado unificadas aquí | commit de limpieza |
-| 4 | Logotipo del login/bienvenida: era un círculo (radio 28); el contrato A3.4 dice cuadrado de esquinas redondeadas (34 px radio 11; a 56 px radio 18). Corregido en `login.tsx` y `welcome.tsx` + capturas rehechas | commit del logotipo |
-| 5 | `seguridad.md`/`paridad.md`/`README.md`: corregida la afirmación de que `rls-check` se ejecutaba «en un proyecto de pruebas» (no existe); el script apunta a producción vía `.env.local`. Ahora queda documentado cuándo es seguro ejecutarlo (0005 desplegada + respaldo reciente) | commit de docs |
+| 3 | Limpieza: borrados `build-*.log`, `build2.log`, `serve-3001.log`; `*.log` en `.gitignore`; docs de estado unificadas aquí (se eliminaron `PROGRESS.md`, `BACKEND_PROGRESS.md` e `IMPLEMENTATION_STATUS.md` absorbiendo lo útil sin credenciales) | commit `d7c2cc4` |
+| 4 | Logotipo del login/bienvenida: era un círculo (radio 28); el contrato A3.4 dice cuadrado de esquinas redondeadas (34 px radio 11; a 56 px radio 18). Corregido en `login.tsx` y `welcome.tsx` + capturas «después» rehechas (14 PNG: 7 pantallas × claro/oscuro, ahora incluye bienvenida) | commit `826495a` |
+| 5 | `seguridad.md`/`paridad.md`/`README.md`: corregida la afirmación de que `rls-check` se ejecutaba «en un proyecto de pruebas» (no existe); el script apunta a producción vía `.env.local` y crea/borra 3 usuarios temporales. Documentado cuándo es seguro ejecutarlo (0005 desplegada + respaldo reciente, sin escrituras en paralelo) | commit `22e0f37` |
 
 ## Tabla de fases D0 → D6
 
