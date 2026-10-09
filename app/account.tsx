@@ -3,6 +3,7 @@ import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { ArrowLeft, Download, Globe, LogOut, Trash2 } from 'lucide-react-native';
+import { TmdbAttribution } from '@/components/features/Attribution';
 import { Card } from '@/components/ui/Card';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ListRow } from '@/components/ui/ListRow';
@@ -256,6 +257,7 @@ export default function AccountScreen() {
               }}>Términos</Text>
             </Text>
           </Pressable>
+          <TmdbAttribution />
           <Text style={[textStyle('bodySmall'), styles.footerText]}>
             Diana {APP_VERSION} · Una app de VERTICE
           </Text>

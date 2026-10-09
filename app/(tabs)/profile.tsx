@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { AlertCircle, CheckCircle2, User } from 'lucide-react-native';
+import { TmdbAttribution } from '@/components/features/Attribution';
 import { MetricCard } from '@/components/features/MetricCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -253,6 +254,7 @@ export default function ProfileScreen() {
 
         {/* Pie */}
         <View style={styles.footer}>
+          <TmdbAttribution />
           <Text style={[textStyle('bodySmall'), styles.footerText]}>
             Diana {APP_VERSION} · Una app de VERTICE
           </Text>
