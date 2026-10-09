@@ -78,10 +78,13 @@ describe('useAuthStore (A4/D3)', () => {
     expect(useAuthStore.getState().error).toBeNull();
   });
 
-  it('signOut: limpia estado local y llama a resetLocalStores', async () => {
+  it('signOut: solo este dispositivo (scope local, A5) y limpia estado local', async () => {
     const { resetLocalStores } = require('./bootstrapUserData');
     await useAuthStore.getState().signOut();
     expect(mockSignOut).toHaveBeenCalledTimes(1);
+    // A5: «Cerrar sesión» cierra SOLO este dispositivo; el scope por defecto
+    // de auth-js es 'global' (cerraría todos), así que debe ir explícito.
+    expect(mockSignOut).toHaveBeenCalledWith({ scope: 'local' });
     expect(resetLocalStores).toHaveBeenCalled();
     const s = useAuthStore.getState();
     expect(s.status).toBe('signedOut');

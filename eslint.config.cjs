@@ -77,6 +77,7 @@ module.exports = [
       '.expo/',
       'supabase/',
       'scripts/',
+      'e2e/',
       'eslint.config.cjs',
       'babel.config.js',
       'jest.config.js',

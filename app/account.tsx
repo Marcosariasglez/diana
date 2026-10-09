@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { ArrowLeft, Download, Globe, LogOut, Trash2 } from 'lucide-react-native';
@@ -238,11 +238,24 @@ export default function AccountScreen() {
 
         {/* Pie */}
         <View style={styles.footer}>
-          <Text style={[textStyle('bodySmall'), styles.footerText]}>
-            <Text style={styles.legal}>Política de privacidad</Text>
-            {'  ·  '}
-            <Text style={styles.legal}>Términos</Text>
-          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Política de privacidad"
+            onPress={() => {
+              if (Platform.OS === 'web') window.open('/privacidad.html', '_blank');
+              else Linking.openURL('https://marcosariasglez.github.io/diana/privacidad.html');
+            }}
+            style={{ minHeight: 44, justifyContent: 'center' }}
+          >
+            <Text style={[textStyle('bodySmall'), styles.footerText]}>
+              <Text style={styles.legal}>Política de privacidad</Text>
+              {'  ·  '}
+              <Text style={styles.legal} onPress={() => {
+                if (Platform.OS === 'web') window.open('/terminos.html', '_blank');
+                else Linking.openURL('https://marcosariasglez.github.io/diana/terminos.html');
+              }}>Términos</Text>
+            </Text>
+          </Pressable>
           <Text style={[textStyle('bodySmall'), styles.footerText]}>
             Diana {APP_VERSION} · Una app de VERTICE
           </Text>

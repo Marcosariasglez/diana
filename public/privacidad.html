@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de privacidad · Diana</title>
+  <style>
+    :root { --bg: #F4F3EF; --card: #FFFFFF; --ink: #15171A; --mut: #5A5F68; --line: #ECEAE4; --acc: #0B7A66; --neg: #CF4640; --negBg: rgba(207,70,64,.09); }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0A0C0F; --card: #14171B; --ink: #F2F3F5; --mut: #8C939C; --line: #22262C; --acc: #37D6A4; --neg: #FF7168; --negBg: rgba(255,113,104,.12); } }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; padding: 20px; max-width: 680px; margin: 0 auto; }
+    .badge { display: inline-block; background: var(--negBg); color: var(--neg); padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; margin-bottom: 24px; }
+    h1 { font-family: 'Manrope', system-ui, sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
+    h2 { font-family: 'Manrope', system-ui, sans-serif; font-size: 19px; font-weight: 800; letter-spacing: -0.02em; margin: 32px 0 8px; }
+    p { margin-bottom: 12px; font-size: 15px; }
+    a { color: var(--acc); }
+    footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--mut); }
+  </style>
+</head>
+<body>
+  <div class="badge">⚠ BORRADOR pendiente de revisión por el responsable</div>
+  <h1>Política de privacidad</h1>
+  <p><strong>Diana</strong> es una aplicación de cine desarrollada por [RELLENAR: nombre del responsable]. Última actualización: [RELLENAR: fecha].</p>
+
+  <h2>1. Datos que recogemos</h2>
+  <p>Al usar Diana, se recogen los siguientes datos:</p>
+  <ul style="margin: 0 0 12px 20px; font-size: 15px;">
+    <li><strong>Identidad:</strong> correo electrónico y nombre visible (provenientes de Google o del código por correo).</li>
+    <li><strong>Actividad:</strong> valoraciones de películas y series, historial de visionado, preferencias de género y plataforma, estados de ánimo y respuestas del wizard.</li>
+    <li><strong>Salas:</strong> participación en salas de amigos en tiempo real (código de sala, decisiones de voto).</li>
+    <li><strong>Técnico:</strong> token de sesión de Supabase y datos mínimos de almacenamiento local para el funcionamiento de la app.</li>
+  </ul>
+
+  <h2>2. Finalidad</h2>
+  <p>Los datos se usan exclusivamente para:</p>
+  <ul style="margin: 0 0 12px 20px; font-size: 15px;">
+    <li>Proporcionar las funciones de la app (recomendaciones personalizadas, historial, salas en grupo).</li>
+    <li>Mantener la sesión de usuario activa y segura.</li>
+    <li>Mejorar la calidad del servicio mediante análisis agregados y anónimos.</li>
+  </ul>
+
+  <h2>3. Servicios de terceros</h2>
+  <p>Diana utiliza estos servicios externos:</p>
+  <ul style="margin: 0 0 12px 20px; font-size: 15px;">
+    <li><strong>Supabase</strong> (supabase.com): autenticación de usuarios, base de datos Postgres y funciones en la nube. Consultar su política de privacidad: <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a>.</li>
+    <li><strong>TMDB</strong> (themoviedb.org): catálogo de películas y series (títulos, géneros, plataformas, carátulas). Los datos de TMDB son de uso público bajo licencia CC BY-NC.</li>
+    <li><strong>Google</strong>: inicio de sesión con Google (cuando el usuario elige esta opción). Google trata los datos según su propia política.</li>
+  </ul>
+
+  <h2>4. Cuenta compartida VERTICE</h2>
+  <p>Diana y la app <strong>Norte</strong> comparten una identidad común (proyecto de Supabase Auth). El mismo correo permite acceder a ambas apps, pero los datos de cada app se almacenan de forma separada. Borrar la cuenta de Diana no afecta automáticamente a Norte y viceversa (a menos que se borre la identidad VERTICE completa).</p>
+
+  <h2>5. Tus derechos</h2>
+  <p>Puedes ejercer los siguientes derechos desde la pantalla «Cuenta» de la app o contactando con el responsable:</p>
+  <ul style="margin: 0 0 12px 20px; font-size: 15px;">
+    <li><strong>Acceso:</strong> exportar todos tus datos como JSON (función «Exportar mis datos»).</li>
+    <li><strong>Rectificación:</strong> editar tu nombre visible.</li>
+    <li><strong>Supresión:</strong> borrar tu cuenta y todos tus datos de Diana.</li>
+    <li><strong>Portabilidad:</strong> los datos exportados están en formato JSON abierto.</li>
+  </ul>
+
+  <h2>6. Conservación</h2>
+  <p>Los datos se conservan mientras la cuenta esté activa. Tras borrar la cuenta, se eliminan en un plazo máximo de 30 días (los respaldos de Supabase pueden retener datos cifrados hasta su rotación).</p>
+
+  <h2>7. Contacto</h2>
+  <p>Para ejercer tus derechos o resolver dudas: [RELLENAR: correo de contacto del responsable].</p>
+
+  <footer>
+    <p>Diana · Una app de VERTICE</p>
+  </footer>
+</body>
+</html>

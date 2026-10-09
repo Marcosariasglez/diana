@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoogleButton } from '@/components/ui/GoogleButton';
 import { Button } from '@/components/ui/Button';
@@ -285,8 +286,27 @@ export default function Login() {
 
           <View style={styles.footer}>
             <Text style={[textStyle('bodySmall'), styles.footerText]}>
-              Al continuar aceptas la <Text style={styles.link}>Política de privacidad</Text> y los{' '}
-              <Text style={styles.link}>Términos</Text>.
+              Al continuar aceptas la{' '}
+              <Text
+                style={styles.link}
+                onPress={() => {
+                  if (Platform.OS === 'web') window.open('/privacidad.html', '_blank');
+                  else void Linking.openURL('https://marcosariasglez.github.io/diana/privacidad.html');
+                }}
+              >
+                Política de privacidad
+              </Text>{' '}
+              y los{' '}
+              <Text
+                style={styles.link}
+                onPress={() => {
+                  if (Platform.OS === 'web') window.open('/terminos.html', '_blank');
+                  else void Linking.openURL('https://marcosariasglez.github.io/diana/terminos.html');
+                }}
+              >
+                Términos
+              </Text>
+              .
             </Text>
             <Text style={[textStyle('bodySmall'), styles.footerText]}>Una app de VERTICE</Text>
           </View>

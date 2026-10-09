@@ -13,6 +13,7 @@
     "test": "jest --ci",
     "verify": "npm run typecheck && npm run lint && npm run test",
     "build:web": "expo export --platform web && node scripts/postbuild-pwa.mjs",
+    "e2e": "node e2e/ensure-dist.mjs && playwright test --config playwright.config.ts",
     "icons": "node scripts/make-icons.mjs",
     "rls": "node scripts/rls-check.mjs",
     "scan:secrets": "node scripts/secret-scan.mjs",

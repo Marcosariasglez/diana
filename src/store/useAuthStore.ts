@@ -129,7 +129,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       return true;
     },
     signOut: async () => {
-      await getSupabase().auth.signOut().catch(() => undefined);
+      // A5: «Cerrar sesión» cierra solo este dispositivo. El scope por defecto
+      // de auth-js es 'global' (invalida todas las sesiones), así que va explícito.
+      await getSupabase().auth.signOut({ scope: 'local' }).catch(() => undefined);
       resetLocalStores();
       set({ status: 'signedOut', userId: null, email: null, provider: null, error: null });
     },

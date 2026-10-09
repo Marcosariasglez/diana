@@ -20,8 +20,8 @@ Plan VERTICE D0→D6 ya terminado (ver `docs/vertice/ESTADO.md`).
 
 | Tarea | Estado | Commits | Evidencia (líneas finales) | Qué no se pudo comprobar |
 |-------|--------|---------|---------------------------|--------------------------|
-| D-1 · Higiene y limpieza | pendiente | | | |
-| D-2 · E2E Playwright | pendiente | | | |
+| D-1 · Higiene y limpieza | hecha | 35a2e8a | (previo a este turno) | |
+| D-2 · E2E Playwright | en progreso | | | |
 | D-3 · Auditoría visual completa | pendiente | | | |
 | D-4 · Pulido Perfil y Cuenta | pendiente | | | |
 | D-5 · Robustez de flujos | pendiente | | | |
