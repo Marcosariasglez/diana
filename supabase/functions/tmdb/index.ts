@@ -10,37 +10,27 @@ const HOUR = 3600 * 1000;
 const MAX_HITS_PER_MINUTE = 60;
 const MAX_SEASONS = 12;
 
-// provider_id de TMDB (region ES) -> id de src/constants/platforms.ts. Verificar con action 'providers'.
-const PROVIDER_MAP: Record<number, string> = {
-  // Plataformas principales (flatrate)
-  8: 'netflix',
+// provider_id de TMDB -> id de Diana (VERTICE-PLAN-2 D2-1.1).
+// UNICAMENTE se deriva de src/constants/providers.ts (único origen de verdad,
+// compartido por la app y la función). Los ids `tmdbProviderId: null` (pendientes
+// de verificación) NO entran aquí hasta que el dueño confirme el id con la acción
+// `providers` (scripts/verify-catalog.mjs lo hace si existe TMDB_READ_TOKEN).
+// IMPORT: relativo porque Deno no resuelve el alias `@/` de la app.
+import { PROVIDER_BY_TMDB_ID, PROVIDER_FILTER as PROVIDER_FILTER_ES } from '../../../src/constants/providers.ts';
+
+// Alias TMDB -> id Diana para ids alternativos de la misma plataforma
+// (Amazon=119 además de Prime Video=9; HBO Max=1899 además de Max=384).
+const PROVIDER_ALIASES: Record<number, string> = {
   119: 'prime-video',
-  9: 'prime-video',
   1899: 'max',
-  384: 'max',
-  337: 'disney-plus',
-  531: 'apple-tv',
-  386: 'paramount-plus',
-  275: 'filmin',
-  387: 'mubi',
-  197: 'mitele',
-  332: 'discovery-plus',
-  216: 'britbox',
-  // Plataformas adicionales
-  362: 'pluto-tv',
-  179: 'rtve-play',
-  444: 'starzplay',
-  586: 'hbo-es',
-  350: 'rakuten-tv',
-  255: 'nova-play',
-  110: 'zee5',
-  294: 'hotstar',
-  443: 'vidAngel',
-  // Servicios de pago adicionales
-  155: 'peacock',
-  17: 'criterion',
 };
-const PROVIDER_FILTER = Object.keys(PROVIDER_MAP).join('|');
+const PROVIDER_MAP: Record<number, string> = {
+  ...Object.fromEntries(PROVIDER_BY_TMDB_ID.entries()),
+  ...PROVIDER_ALIASES,
+};
+// Filtro `with_watch_providers`: solo proveedores ACTIVOS EN ESPAÑA (no los
+// desactualizados que se conservan solo para no romper datos guardados).
+const PROVIDER_FILTER = PROVIDER_FILTER_ES;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
