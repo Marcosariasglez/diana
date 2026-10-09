@@ -11,16 +11,43 @@
 `app/account.tsx` con una corrección sin commitear (rótulo «APARICENCIA» → «APARIENCIA»), que se
 commiteó primero en la rama (commit `06fa791`).
 
+**Línea base del reanudado (2026-10-09, después de D2-1):**
+
+`npm run verify`:
+```
+Test Suites: 79 passed, 79 total
+Tests:       482 passed, 482 total
+```
+`node scripts/auditoria-estilos.mjs`:
+```
+✓ Auditoría de estilos: todo limpio.
+```
+
 ## Estado por tarea
 
 | Tarea | Estado | Commits | Evidencia / líneas finales | Qué no se pudo comprobar |
 |-------|--------|---------|-----------------------------|--------------------------|
-| D2-0 · Deuda inmediata | **hecha** | ver abajo | verify + auditoría + e2e account-desktop (abajo) | Integración real con Supabase/iPhone |
-| D2-1 · Catálogo completo ES | pendiente | — | — | — |
-| D2-2 · Recomendador real | pendiente | — | — | — |
+| D2-0 · Deuda inmediata | **hecha** | `b7c5d43` | verify + auditoría + e2e account-desktop (abajo) | Integración real con Supabase/iPhone |
+| D2-1 · Catálogo completo ES | **hecha** (pendiente dueño: despliegue + token TMDB) | `8700e02` `10a40b8` `2758c6b` `b3b18d4` `056b29b` `28b86ac` `ce83aa1` | verify (79 suites / 482 tests) + auditoría + capturas `docs/vertice/capturas/plan2/` | No se pudo verificar contra la API real de TMDB (sin `TMDB_READ_TOKEN`) ni contra Supabase real (producción intocable); ids TMDB de proveedores sin evidencia en el repo quedaron como `null` (Movistar Plus+, SkyShowtime, Atresplayer, Plex, YouTube) y la sync los salta hasta verificarlos |
+| D2-2 · Recomendador real | en curso | — | — | — |
 | D2-3 · «Quiero ver» y listas | pendiente | — | — | — |
 | D2-4 · Avisos (si queda tiempo) | pendiente | — | — | — |
 | D2-5 · Calidad | pendiente | — | — | — |
+
+## D2-1 · Catálogo completo de España — resumen de lo hecho (commits existentes)
+
+- **D2-1.1** (`8700e02`): origen de verdad único `src/constants/providers.ts` (lo importan la app y la función `tmdb`); los ids sin evidencia en el repo quedaron `tmdbProviderId: null` y la sync los salta; prueba `providers.test.ts` que compara ambos orígenes.
+- **D2-1.2/1.3** (`10a40b8`): migración `supabase/migrations/0006_catalogo.sql` (`catalog_titles` + `catalog_sync_state`, GIN, FTS español + pg_trgm, RLS solo lectura) **solo escrita** + Edge Function `supabase/functions/catalog-sync/index.ts` (protegida por secreto, reanudable por `catalog_sync_state`, presupuesto de tiempo/páginas, rate-limit y reintentos, modos `full`/`delta`) con tests de fixtures (`catalog-sync.test.ts`).
+- **D2-1.4** (`2758c6b`): workflow `.github/workflows/catalog-sync.yml` (cron delta diario + full semanal + `workflow_dispatch`), presupuesto 2 min < 150 s de idle del plan gratuito.
+- **D2-1.5** (`b3b18d4`): repositorio paginado `src/services/supabase/catalog/` (browse/search/byIds/candidates/availableNow; motor puro + builder PostgREST + mock con el mismo motor); feed/mood/grupo dejan de cargar pool fijo.
+- **D2-1.6** (`056b29b`): pantalla `app/explore.tsx` (chips de plataforma/género/década, lista infinita) + bloque «Dónde verla» en la ficha; capturas claro/oscuro en `docs/vertice/capturas/plan2/`.
+- **D2-1.7** (`28b86ac`): atribución obligatoria de TMDB en pie de Cuenta/Perfil y páginas legales; «Datos de disponibilidad por JustWatch» en la ficha.
+- **D2-1.8** (`ce83aa1`): `scripts/verify-catalog.mjs` (compara `total_results` de TMDB vs filas por proveedor, falla si faltan > 5 %) con la lógica pura testeada (`src/lib/catalogCoverage.test.ts`) + estimación de tamaño (~64 MB para ~150 k filas vs 500 MB del plan gratuito).
+
+**Qué NO se pudo comprobar (y por qué):**
+- Ids de watch-provider de TMDB: sin `TMDB_READ_TOKEN` en `.env.local` no se pudo llamar a `/watch/providers`. Los ids de los 11 proveedores activos salen del `PROVIDER_MAP` anterior (evidencia en el repo); los 5 que el plan pide pero no tenían id (`movistar-plus`, `skyshowtime`, `atresplayer`, `plex`, `youtube`) están en `PENDING_VERIFICATION` y la sync los salta. Cuando el dueño ponga el token, `node scripts/verify-catalog.mjs` lo verifica.
+- Formas de respuesta de TMDB (`/discover`): tomadas de la documentación v3, **no verificadas contra la API real**.
+- Supabase real: migración 0006 y función `catalog-sync` no desplegadas (producción intocable); todo probado con fixtures/simulaciones. El dueño aplica 0006 en el SQL Editor (paso 1 de su lista) y despliega la función (paso 3).
 
 ## D2-0 · Deuda inmediata — Reproducción y arreglo de la pantalla Cuenta en escritorio
 
