@@ -6,18 +6,18 @@ import { bucketOfTenths } from '@/mocks/mock-ai/predict';
 import { getOnboardingDeckMovies } from '@/mocks/mock-ai/onboardingDeck';
 import { buildGroupDeckMedia, rankMoodResults } from '@/mocks/mock-ai/moodFilters';
 import { pickCategoryItems, pickFeatured, pickFeedPage } from '@/mocks/mock-ai/hiddenGems';
+import { activeCatalogSource } from '@/services/supabase/catalog/select';
 import { invokeTmdb } from './invoke';
 
-let poolPromise: Promise<Media[]> | null = null;
-/** Pool de candidatos (unos 150 titulos de las 4 plataformas en ES), una sola carga por sesion. */
-export function getPool(): Promise<Media[]> {
-  if (!poolPromise) {
-    poolPromise = invokeTmdb<Media[]>({ action: 'pool' }).catch((e) => {
-      poolPromise = null; // permite reintentar
-      throw e;
-    });
-  }
-  return poolPromise;
+/**
+ * VERTICE-PLAN-2 D2-1.5: ya no hay un «pool fijo» descargado de una vez. El
+ * pool es ahora un conjunto de CANDIDATOS filtrados (300–1000) consultado al
+ * repositorio paginado (`catalog_titles` vía PostgREST en modo tmdb, memoria
+ * en modo mock). Se filtra por las plataformas del usuario cuando se dan.
+ */
+const POOL_SIZE = 600;
+export async function getPool(platforms?: ReadonlyArray<string>): Promise<Media[]> {
+  return activeCatalogSource.candidates(platforms ? [...platforms] : [], undefined, POOL_SIZE);
 }
 
 const mediaCache = new Map<string, Media>();
@@ -25,10 +25,10 @@ const seasonCache = new Map<string, TVSeason>();
 
 export const tmdbCatalogRepository: CatalogRepository = {
   async getOnboardingDeck(count) { return getOnboardingDeckMovies(count, await getPool()); },
-  async getFeatured(platforms, ctx) { return pickFeatured(platforms, ctx, await getPool()); },
-  async getFeedCategories(platforms, ctx, page) { return pickFeedPage(platforms, ctx, page, await getPool()); },
+  async getFeatured(platforms, ctx) { return pickFeatured(platforms, ctx, await getPool(platforms)); },
+  async getFeedCategories(platforms, ctx, page) { return pickFeedPage(platforms, ctx, page, await getPool(platforms)); },
   async getCategoryItems(category, platforms, ctx, page) {
-    return pickCategoryItems(category, platforms, ctx, page, await getPool());
+    return pickCategoryItems(category, platforms, ctx, page, await getPool(platforms));
   },
   async getMediaById(type: MediaType, id: number) {
     const k = `${type}:${id}`;
@@ -58,13 +58,13 @@ export const tmdbCatalogRepository: CatalogRepository = {
     const allowed = new Set<string>(QUESTIONS_BY_COMPLEXITY[input.complexity]);
     const answers: Record<string, string> = {};
     for (const [qid, aid] of Object.entries(input.answers)) if (allowed.has(qid)) answers[qid] = aid;
-    return rankMoodResults({ answers, fallbackPlatforms: input.platforms }, ctx, await getPool()).map((r) => ({
+    return rankMoodResults({ answers, fallbackPlatforms: input.platforms }, ctx, await getPool(input.platforms)).map((r) => ({
       media: r.media,
       bucket: bucketOfTenths(r.tenths),
     }));
   },
   async getGroupDeck({ excludeKeys, filters, count }) {
-    const pool = await getPool();
+    const pool = await getPool(filters.fallbackPlatforms);
     return buildGroupDeckMedia({ code: GROUP_DECK_SEED, filters, excludeKeys, count, catalog: pool }) as Movie[];
   },
 };
