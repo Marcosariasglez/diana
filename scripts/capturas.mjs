@@ -38,6 +38,9 @@ const SCREENS = [
   // Secundarias
   { name: 'daily-log', path: '/daily-log', onboarded: true },
   { name: 'notifications', path: '/notifications', onboarded: true },
+  // Plan 2 (D2-1.6): explorar por plataforma + ficha con «Dónde verla»
+  { name: 'explorar', path: '/explore', onboarded: true },
+  { name: 'ficha-donde-verla', path: '/detail/1?type=movie', onboarded: true },
   { name: 'not-found', path: '/__not-found__', onboarded: true },
   // Estados especiales (se capturan pero pueden redirigir)
   { name: 'room-join', path: '/room/join', onboarded: true },

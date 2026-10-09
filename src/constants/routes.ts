@@ -30,6 +30,7 @@ export const ROUTES: ReadonlyArray<RouteEntry> = [
   { url: '/daily-log', file: 'app/daily-log.tsx', presentation: 'modal', bottomNav: false },
   { url: '/notifications', file: 'app/notifications.tsx', presentation: 'card', bottomNav: false },
   { url: '/see-all/[category]', file: 'app/see-all/[category].tsx', presentation: 'card', bottomNav: false },
+  { url: '/explore', file: 'app/explore.tsx', presentation: 'stack-push', bottomNav: false },
   { url: '/room/join', file: 'app/room/join.tsx', presentation: 'card', bottomNav: false },
   { url: '/room/[code]', file: 'app/room/[code]/index.tsx', presentation: 'card', bottomNav: false },
   {

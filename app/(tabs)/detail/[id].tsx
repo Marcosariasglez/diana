@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Tv } from 'lucide-react-native';
 import { EpisodePicker } from '@/components/features/EpisodePicker';
 import { MetricCard } from '@/components/features/MetricCard';
 import { SlotReveal } from '@/components/features/SlotReveal';
@@ -13,6 +13,8 @@ import { mediaMeta, mediaTitle, mediaYear, posterUri } from '@/components/featur
 import { Button, ErrorState, Screen, Skeleton } from '@/components/ui';
 import { parseDetailParams, valoringLabel, type DetailParams } from '@/features/detail/detailParams';
 import { useDetailData, useDetailMedia } from '@/features/detail/useDetailData';
+import { activeCatalogSource } from '@/services/supabase/catalog/select';
+import type { CatalogRow } from '@/services/supabase/catalog/types';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
@@ -89,6 +91,82 @@ function DetailSkeleton() {
 import { light } from '@/theme/tokens';
 
 const FALLBACK_COLORS = { inkColor: light.ink, cardColor: light.card };
+
+interface WhereToWatchData {
+  flatrate: string[];
+  rent: string[];
+  buy: string[];
+}
+
+function WhereToWatchRow({ label, ids, c }: { label: string; ids: string[]; c: { accSoft: string; acc: string; textSecondary: string } }) {
+  if (ids.length === 0) return null;
+  return (
+    <View style={wttStyles.row} testID={`where-to-watch-${label}`}>
+      <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-SemiBold' }), { color: c.textSecondary, width: 76 }]}>{label}</Text>
+      <View style={wttStyles.chips}>
+        {ids.map((p) => (
+          <View key={p} style={[wttStyles.chip, { backgroundColor: c.accSoft }]}>
+            <Text style={[textStyle('bodySmall', { fontSize: 12, fontFamily: 'Inter-SemiBold' }), { color: c.acc }]}>{platformName(p)}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/**
+ * VERTICE-PLAN-2 D2-1.6: «Dónde verla» de la ficha. Consulta la
+ * disponibilidad POR MODALIDAD (flatrate / alquiler / compra) del repositorio
+ * paginado (catalog_titles en tmdb, memoria en mock). Muestra solo lo que
+ * exista y con el aviso de atribución de JustWatch (D2-1.7).
+ */
+function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
+  const { colors } = useTheme();
+  const [data, setData] = useState<WhereToWatchData | null>(null);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    activeCatalogSource
+      .availability(type, id)
+      .then((row: CatalogRow | null) => {
+        if (!alive.current || !row) return;
+        setData({
+          flatrate: row.platforms_flatrate ?? [],
+          rent: row.platforms_rent ?? [],
+          buy: row.platforms_buy ?? [],
+        });
+      })
+      .catch(() => {
+        /* sin disponibilidad: no se pinta el bloque */
+      });
+    return () => {
+      alive.current = false;
+    };
+  }, [type, id]);
+
+  if (!data) return null;
+  if (data.flatrate.length === 0 && data.rent.length === 0 && data.buy.length === 0) return null;
+  return (
+    <View style={wttStyles.wrap} accessibilityLabel="Dónde verla">
+      <View style={wttStyles.head}>
+        <Tv size={16} color={colors.acc} strokeWidth={2} />
+        <Text style={[textStyle('bodySmall', { fontFamily: 'Manrope-Bold', fontSize: 13 })]}>{'Dónde verla'}</Text>
+      </View>
+      <WhereToWatchRow label="Suscripción" ids={data.flatrate} c={colors} />
+      <WhereToWatchRow label="Alquiler" ids={data.rent} c={colors} />
+      <WhereToWatchRow label="Compra" ids={data.buy} c={colors} />
+      <Text style={[textStyle('bodySmall', { fontSize: 10 })]}>{'Datos de disponibilidad por JustWatch'}</Text>
+    </View>
+  );
+}
+
+const wttStyles = StyleSheet.create({
+  wrap: { gap: 8, marginTop: 16 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1 },
+  chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99 },
+});
 
 function DetailContent({ media, params }: { media: Media; params: DetailParams }) {
   const data = useDetailData(media, params);
@@ -179,6 +257,10 @@ function DetailContent({ media, params }: { media: Media; params: DetailParams }
             {title}
           </Text>
           <Text style={[textStyle('body'), styles.meta]}>{metaLine(media)}</Text>
+        </View>
+
+        <View style={{ paddingHorizontal: 20 }}>
+          <WhereToWatch type={media.media_type} id={media.id} />
         </View>
 
         {isTv ? (

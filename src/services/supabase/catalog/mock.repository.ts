@@ -40,4 +40,7 @@ export const mockCatalogSource: CatalogSource = {
   async availableNow(platforms: string[]): Promise<Media[]> {
     return candidatesRows(allRows(), platforms, undefined, 1000).map(rowToMedia);
   },
+  async availability(type: 'movie' | 'tv', id: number): Promise<CatalogRow | null> {
+    return allRows().find((r) => r.media_type === type && r.tmdb_id === id) ?? null;
+  },
 };

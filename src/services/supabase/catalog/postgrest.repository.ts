@@ -33,6 +33,8 @@ export interface CatalogSource {
   candidates(platforms: string[], type?: 'movie' | 'tv', limit?: number): Promise<Media[]>;
   /** «Disponible ahora en mis plataformas» (para «Quiero ver»). */
   availableNow(platforms: string[]): Promise<Media[]>;
+  /** Disponibilidad por modalidad de un título (para «Dónde verla» en la ficha). */
+  availability(type: 'movie' | 'tv', id: number): Promise<CatalogRow | null>;
 }
 
 // El builder de supabase-js es genérico y también es un thenable (se puede
@@ -102,5 +104,15 @@ export const postgrestCatalogSource: CatalogSource = {
   async availableNow(platforms: string[]): Promise<Media[]> {
     const q = buildCandidatesQuery(platforms, undefined, 1000);
     return toMedia(await runQuery(getSupabase(), q));
+  },
+  async availability(type: 'movie' | 'tv', id: number): Promise<CatalogRow | null> {
+    const { data, error } = await getSupabase()
+      .from('catalog_titles')
+      .select(COLUMNS)
+      .eq('media_type', type)
+      .eq('tmdb_id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as unknown as CatalogRow | null) ?? null;
   },
 };

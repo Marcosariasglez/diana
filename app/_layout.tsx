@@ -52,6 +52,7 @@ function AppContent() {
         <Stack.Screen name="daily-log" options={{ presentation: 'modal' }} />
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="see-all/[category]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="explore" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="room/join" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="room/[code]/index" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen
