@@ -1,0 +1,1471 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/mocks/data/catalog.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/mocks/data</a> catalog.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">77.77% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>28/36</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">55% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>11/20</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">70% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>14/20</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">76.66% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>23/30</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line medium'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a>
+<a name='L302'></a><a href='#L302'>302</a>
+<a name='L303'></a><a href='#L303'>303</a>
+<a name='L304'></a><a href='#L304'>304</a>
+<a name='L305'></a><a href='#L305'>305</a>
+<a name='L306'></a><a href='#L306'>306</a>
+<a name='L307'></a><a href='#L307'>307</a>
+<a name='L308'></a><a href='#L308'>308</a>
+<a name='L309'></a><a href='#L309'>309</a>
+<a name='L310'></a><a href='#L310'>310</a>
+<a name='L311'></a><a href='#L311'>311</a>
+<a name='L312'></a><a href='#L312'>312</a>
+<a name='L313'></a><a href='#L313'>313</a>
+<a name='L314'></a><a href='#L314'>314</a>
+<a name='L315'></a><a href='#L315'>315</a>
+<a name='L316'></a><a href='#L316'>316</a>
+<a name='L317'></a><a href='#L317'>317</a>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a>
+<a name='L322'></a><a href='#L322'>322</a>
+<a name='L323'></a><a href='#L323'>323</a>
+<a name='L324'></a><a href='#L324'>324</a>
+<a name='L325'></a><a href='#L325'>325</a>
+<a name='L326'></a><a href='#L326'>326</a>
+<a name='L327'></a><a href='#L327'>327</a>
+<a name='L328'></a><a href='#L328'>328</a>
+<a name='L329'></a><a href='#L329'>329</a>
+<a name='L330'></a><a href='#L330'>330</a>
+<a name='L331'></a><a href='#L331'>331</a>
+<a name='L332'></a><a href='#L332'>332</a>
+<a name='L333'></a><a href='#L333'>333</a>
+<a name='L334'></a><a href='#L334'>334</a>
+<a name='L335'></a><a href='#L335'>335</a>
+<a name='L336'></a><a href='#L336'>336</a>
+<a name='L337'></a><a href='#L337'>337</a>
+<a name='L338'></a><a href='#L338'>338</a>
+<a name='L339'></a><a href='#L339'>339</a>
+<a name='L340'></a><a href='#L340'>340</a>
+<a name='L341'></a><a href='#L341'>341</a>
+<a name='L342'></a><a href='#L342'>342</a>
+<a name='L343'></a><a href='#L343'>343</a>
+<a name='L344'></a><a href='#L344'>344</a>
+<a name='L345'></a><a href='#L345'>345</a>
+<a name='L346'></a><a href='#L346'>346</a>
+<a name='L347'></a><a href='#L347'>347</a>
+<a name='L348'></a><a href='#L348'>348</a>
+<a name='L349'></a><a href='#L349'>349</a>
+<a name='L350'></a><a href='#L350'>350</a>
+<a name='L351'></a><a href='#L351'>351</a>
+<a name='L352'></a><a href='#L352'>352</a>
+<a name='L353'></a><a href='#L353'>353</a>
+<a name='L354'></a><a href='#L354'>354</a>
+<a name='L355'></a><a href='#L355'>355</a>
+<a name='L356'></a><a href='#L356'>356</a>
+<a name='L357'></a><a href='#L357'>357</a>
+<a name='L358'></a><a href='#L358'>358</a>
+<a name='L359'></a><a href='#L359'>359</a>
+<a name='L360'></a><a href='#L360'>360</a>
+<a name='L361'></a><a href='#L361'>361</a>
+<a name='L362'></a><a href='#L362'>362</a>
+<a name='L363'></a><a href='#L363'>363</a>
+<a name='L364'></a><a href='#L364'>364</a>
+<a name='L365'></a><a href='#L365'>365</a>
+<a name='L366'></a><a href='#L366'>366</a>
+<a name='L367'></a><a href='#L367'>367</a>
+<a name='L368'></a><a href='#L368'>368</a>
+<a name='L369'></a><a href='#L369'>369</a>
+<a name='L370'></a><a href='#L370'>370</a>
+<a name='L371'></a><a href='#L371'>371</a>
+<a name='L372'></a><a href='#L372'>372</a>
+<a name='L373'></a><a href='#L373'>373</a>
+<a name='L374'></a><a href='#L374'>374</a>
+<a name='L375'></a><a href='#L375'>375</a>
+<a name='L376'></a><a href='#L376'>376</a>
+<a name='L377'></a><a href='#L377'>377</a>
+<a name='L378'></a><a href='#L378'>378</a>
+<a name='L379'></a><a href='#L379'>379</a>
+<a name='L380'></a><a href='#L380'>380</a>
+<a name='L381'></a><a href='#L381'>381</a>
+<a name='L382'></a><a href='#L382'>382</a>
+<a name='L383'></a><a href='#L383'>383</a>
+<a name='L384'></a><a href='#L384'>384</a>
+<a name='L385'></a><a href='#L385'>385</a>
+<a name='L386'></a><a href='#L386'>386</a>
+<a name='L387'></a><a href='#L387'>387</a>
+<a name='L388'></a><a href='#L388'>388</a>
+<a name='L389'></a><a href='#L389'>389</a>
+<a name='L390'></a><a href='#L390'>390</a>
+<a name='L391'></a><a href='#L391'>391</a>
+<a name='L392'></a><a href='#L392'>392</a>
+<a name='L393'></a><a href='#L393'>393</a>
+<a name='L394'></a><a href='#L394'>394</a>
+<a name='L395'></a><a href='#L395'>395</a>
+<a name='L396'></a><a href='#L396'>396</a>
+<a name='L397'></a><a href='#L397'>397</a>
+<a name='L398'></a><a href='#L398'>398</a>
+<a name='L399'></a><a href='#L399'>399</a>
+<a name='L400'></a><a href='#L400'>400</a>
+<a name='L401'></a><a href='#L401'>401</a>
+<a name='L402'></a><a href='#L402'>402</a>
+<a name='L403'></a><a href='#L403'>403</a>
+<a name='L404'></a><a href='#L404'>404</a>
+<a name='L405'></a><a href='#L405'>405</a>
+<a name='L406'></a><a href='#L406'>406</a>
+<a name='L407'></a><a href='#L407'>407</a>
+<a name='L408'></a><a href='#L408'>408</a>
+<a name='L409'></a><a href='#L409'>409</a>
+<a name='L410'></a><a href='#L410'>410</a>
+<a name='L411'></a><a href='#L411'>411</a>
+<a name='L412'></a><a href='#L412'>412</a>
+<a name='L413'></a><a href='#L413'>413</a>
+<a name='L414'></a><a href='#L414'>414</a>
+<a name='L415'></a><a href='#L415'>415</a>
+<a name='L416'></a><a href='#L416'>416</a>
+<a name='L417'></a><a href='#L417'>417</a>
+<a name='L418'></a><a href='#L418'>418</a>
+<a name='L419'></a><a href='#L419'>419</a>
+<a name='L420'></a><a href='#L420'>420</a>
+<a name='L421'></a><a href='#L421'>421</a>
+<a name='L422'></a><a href='#L422'>422</a>
+<a name='L423'></a><a href='#L423'>423</a>
+<a name='L424'></a><a href='#L424'>424</a>
+<a name='L425'></a><a href='#L425'>425</a>
+<a name='L426'></a><a href='#L426'>426</a>
+<a name='L427'></a><a href='#L427'>427</a>
+<a name='L428'></a><a href='#L428'>428</a>
+<a name='L429'></a><a href='#L429'>429</a>
+<a name='L430'></a><a href='#L430'>430</a>
+<a name='L431'></a><a href='#L431'>431</a>
+<a name='L432'></a><a href='#L432'>432</a>
+<a name='L433'></a><a href='#L433'>433</a>
+<a name='L434'></a><a href='#L434'>434</a>
+<a name='L435'></a><a href='#L435'>435</a>
+<a name='L436'></a><a href='#L436'>436</a>
+<a name='L437'></a><a href='#L437'>437</a>
+<a name='L438'></a><a href='#L438'>438</a>
+<a name='L439'></a><a href='#L439'>439</a>
+<a name='L440'></a><a href='#L440'>440</a>
+<a name='L441'></a><a href='#L441'>441</a>
+<a name='L442'></a><a href='#L442'>442</a>
+<a name='L443'></a><a href='#L443'>443</a>
+<a name='L444'></a><a href='#L444'>444</a>
+<a name='L445'></a><a href='#L445'>445</a>
+<a name='L446'></a><a href='#L446'>446</a>
+<a name='L447'></a><a href='#L447'>447</a>
+<a name='L448'></a><a href='#L448'>448</a>
+<a name='L449'></a><a href='#L449'>449</a>
+<a name='L450'></a><a href='#L450'>450</a>
+<a name='L451'></a><a href='#L451'>451</a>
+<a name='L452'></a><a href='#L452'>452</a>
+<a name='L453'></a><a href='#L453'>453</a>
+<a name='L454'></a><a href='#L454'>454</a>
+<a name='L455'></a><a href='#L455'>455</a>
+<a name='L456'></a><a href='#L456'>456</a>
+<a name='L457'></a><a href='#L457'>457</a>
+<a name='L458'></a><a href='#L458'>458</a>
+<a name='L459'></a><a href='#L459'>459</a>
+<a name='L460'></a><a href='#L460'>460</a>
+<a name='L461'></a><a href='#L461'>461</a>
+<a name='L462'></a><a href='#L462'>462</a>
+<a name='L463'></a><a href='#L463'>463</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2071x</span>
+<span class="cline-any cline-yes">2071x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">988x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">247x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">247x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7638x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2318x</span>
+<span class="cline-any cline-yes">2318x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2318x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8263x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10277x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1860x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">21226x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">21226x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">345x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { Media, Movie, TVEpisode, TVSeason, TVSeries, MediaType } from '@/types/media';
+import type { MediaKey, MediaRef } from '@/types/rating';
+import { buildMediaKey } from '@/utils/mediaKey';
+import { genresFromIds } from './genres';
+&nbsp;
+type MovieRow = [
+  id: number,
+  title: string,
+  releaseDate: string,
+  runtime: number,
+  genreIds: number[],
+  platforms: string[],
+  voteCount: number,
+  voteAverage: number,
+  popularity: number,
+  overview: string,
+  altTitles?: string[],
+];
+&nbsp;
+function movie(row: MovieRow): Movie {
+  const [id, title, release_date, runtime, genreIds, platforms, vote_count, vote_average, popularity, overview, alt] =
+    row;
+  return {
+    id,
+    media_type: 'movie',
+    title,
+    release_date,
+    runtime,
+    poster_path: null,
+    backdrop_path: null,
+    genres: genresFromIds(genreIds),
+    overview,
+    vote_average,
+    vote_count,
+    popularity,
+    platforms,
+    alt_titles: alt ?? [],
+  };
+}
+&nbsp;
+const NF = 'netflix';
+const PV = 'prime-video';
+const MX = 'max';
+const DP = 'disney-plus';
+&nbsp;
+// Orden: ids 1-8 son los titulos de los wireframes; el resto se agrupa por genero principal.
+const MOVIE_ROWS: MovieRow[] = [
+  // Drama (genero principal 18)
+  [1, 'Aftersun', '2022-10-21', 101, [18], [PV], 2900, 7.6, 62, 'Una joven recuerda unas vacaciones con su padre en un resort turco de los noventa.'],
+  [2, 'Past Lives', '2023-06-02', 106, [18, 10749], [MX], 4300, 7.8, 70, 'Dos amigos de infancia se reencuentran décadas después en Nueva York y se preguntan qué pudo ser.', ['Vidas pasadas']],
+  [3, 'Burning', '2018-05-17', 148, [18, 9648, 53], [NF], 3600, 7.5, 48, 'Un joven mensajero se obsesiona con un misterioso rival que confiesa quemar invernaderos.', ['Beoning']],
+  [4, 'Perfect Days', '2023-12-22', 124, [18], [PV], 2400, 7.9, 44, 'Un limpiador de baños públicos en Tokio disfruta de una rutina sencilla hasta que el pasado llama a su puerta.'],
+  [5, 'Columbus', '2017-08-04', 104, [18], [MX], 1100, 7.2, 25, 'Una joven aficionada a la arquitectura traba amistad con un hombre que cuida de su padre enfermo.'],
+  [9, 'Moonlight', '2016-10-21', 111, [18], [PV, MX], 9400, 7.4, 55, 'Tres etapas en la vida de un joven de Miami que busca su lugar en el mundo.'],
+  [10, 'Whiplash', '2014-10-10', 106, [18, 10402], [NF, PV], 15500, 8.3, 78, 'Un joven baterista se enfrenta a un profesor despiadado en un conservatorio de élite.'],
+  [11, 'Lost in Translation', '2003-09-12', 102, [18, 10749], [MX], 6800, 7.3, 52, 'Dos desconocidos insomnes conectan en un hotel de Tokio.', ['Perdidos en Tokio']],
+  // Suspense (53)
+  [6, 'Parásitos', '2019-05-30', 132, [53, 35, 18], [NF, MX], 17800, 8.5, 95, 'Una familia sin recursos se infiltra poco a poco en la vida de una familia adinerada.', ['Parasite', 'Gisaengchung']],
+  [7, 'Fall', '2022-08-12', 107, [53], [PV, NF], 4700, 6.6, 58, 'Dos escaladoras quedan atrapadas en lo alto de una torre de televisión abandonada.', ['Fall: Miedo a bajar']],
+  [12, 'Gone Girl', '2014-10-03', 149, [53, 18, 9648], [NF, MX], 17200, 7.9, 84, 'La desaparición de una mujer convierte a su marido en el principal sospechoso.', ['Perdida']],
+  [13, 'Prisoners', '2013-09-20', 153, [53, 80, 18], [PV], 11700, 8.1, 66, 'Un padre toma la justicia por su mano cuando su hija desaparece.', ['Los secuestrados']],
+  // Romance (10749)
+  [14, 'Before Sunrise', '1995-01-27', 101, [10749, 18], [MX], 4800, 7.9, 40, 'Un estadounidense y una francesa pasan una noche caminando por Viena.', ['Antes del amanecer']],
+  [15, 'Eternal Sunshine of the Spotless Mind', '2004-03-19', 108, [10749, 878, 18], [NF, PV], 14800, 8.1, 70, 'Una pareja decide borrar de su memoria el recuerdo de la relación.', ['Olvídate de mí']],
+  [16, 'In the Mood for Love', '2000-09-29', 98, [10749, 18], [MX], 3200, 8.1, 38, 'Dos vecinos en el Hong Kong de 1962 descubren que sus parejas los engañan.', ['Deseando amar']],
+  [17, 'Call Me by Your Name', '2017-11-24', 132, [10749, 18], [PV], 7900, 7.9, 60, 'Un verano en el norte de Italia despierta el primer amor de un adolescente.', ['Llámame por tu nombre']],
+  // Comedia (35)
+  [18, 'Amélie', '2001-04-25', 122, [35, 10749], [NF], 12400, 7.8, 60, 'Una camarera parisina decide mejorar en secreto la vida de quienes la rodean.', ['Amelie', 'Le fabuleux destin d\'Amélie Poulain']],
+  [19, 'The Grand Budapest Hotel', '2014-03-28', 99, [35, 12], [DP, PV], 16000, 8.0, 75, 'Las aventuras de un conserje legendario y su joven protegido en un hotel de Europa del Este.', ['El gran hotel Budapest']],
+  [20, 'Some Like It Hot', '1959-03-29', 121, [35, 10749], [PV], 4500, 8.2, 30, 'Dos músicos huyen de la mafia disfrazados de mujeres en una orquesta femenina.', ['Con faldas y a lo loco']],
+  [21, 'Palm Springs', '2020-07-10', 90, [35, 10749, 878], [NF, PV], 3900, 7.4, 46, 'Dos invitados a una boda quedan atrapados en un bucle temporal.'],
+  // Accion (28)
+  [22, 'Mad Max: Fury Road', '2015-05-15', 120, [28, 12, 878], [MX, NF], 21000, 7.6, 90, 'Una huida a toda velocidad por el desierto liderada por la emperatriz Furiosa.', ['Mad Max: Furia en la carretera']],
+  [23, 'John Wick', '2014-10-24', 101, [28, 53], [NF, PV], 17500, 7.4, 82, 'Un asesino retirado vuelve a la acción para vengar la muerte de su perro.', ['Otro día para matar']],
+  [24, 'Die Hard', '1988-07-22', 132, [28, 53], [DP, PV], 11800, 7.8, 64, 'Un policía de Nueva York se enfrenta a un grupo de terroristas en un rascacielos.', ['La jungla de cristal']],
+  [25, 'RRR', '2022-03-24', 182, [28, 18], [NF], 3100, 7.8, 72, 'Dos revolucionarios indios forman una amistad improbable bajo el dominio británico.'],
+  [26, 'Top Gun: Maverick', '2022-05-27', 130, [28, 18], [PV], 8900, 8.2, 88, 'Un veterano piloto entrena a una nueva generación para una misión imposible.'],
+  // Terror (27)
+  [27, 'Hereditary', '2018-06-08', 127, [27, 9648, 53], [MX, PV], 8800, 7.3, 57, 'La muerte de la matriarca destapa secretos oscuros en una familia.', ['Hereditary: El legado del diablo']],
+  [28, 'Get Out', '2017-02-24', 104, [27, 9648, 53], [PV, NF], 14500, 7.6, 70, 'Un fotógrafo visita a la familia de su novia y descubre algo inquietante.', ['Déjame salir']],
+  [29, 'The Shining', '1980-06-13', 146, [27, 53], [MX], 15200, 8.2, 66, 'Un escritor y su familia pasan el invierno como cuidadores de un hotel aislado.', ['El resplandor']],
+  [30, 'A Quiet Place', '2018-04-06', 90, [27, 878, 18], [PV, NF], 13000, 7.4, 68, 'Una familia sobrevive en silencio frente a criaturas que cazan por el sonido.', ['Un lugar tranquilo']],
+  // Documental (99)
+  [31, 'Free Solo', '2018-09-28', 100, [99, 12], [DP], 2500, 8.0, 36, 'Alex Honnold intenta escalar El Capitán sin cuerdas ni protección.'],
+  [32, "Won't You Be My Neighbor?", '2018-06-08', 94, [99], [MX], 1500, 8.0, 28, 'Retrato del presentador infantil Fred Rogers y su mensaje de bondad.'],
+  [33, 'My Octopus Teacher', '2020-09-07', 85, [99], [NF], 3800, 7.8, 40, 'Un buzo entabla una relación singular con un pulpo en un bosque de algas.', ['Lo que el pulpo me enseñó']],
+  [34, 'Jiro Dreams of Sushi', '2011-06-11', 81, [99], [PV], 2200, 7.9, 26, 'El maestro de sushi Jiro Ono y su búsqueda de la perfección.', ['Jiro y el arte del sushi']],
+  // Animacion (16)
+  [35, 'Spirited Away', '2001-07-20', 125, [16, 10751, 14], [NF, MX], 15800, 8.5, 80, 'Una niña queda atrapada en un mundo de espíritus y debe salvar a sus padres.', ['El viaje de Chihiro', 'Sen to Chihiro no kamikakushi']],
+  [36, 'Coco', '2017-11-22', 105, [16, 10751, 10402], [DP], 17500, 8.2, 85, 'Un niño viaja a la Tierra de los Muertos para descubrir la historia de su familia.'],
+  [37, 'Spider-Man: Into the Spider-Verse', '2018-12-14', 117, [16, 28, 878], [NF, PV], 15000, 8.4, 86, 'Miles Morales conoce a otros héroes arácnidos de distintas dimensiones.', ['Spider-Man: Un nuevo universo']],
+  [38, 'Toy Story', '1995-11-22', 81, [16, 10751, 35], [DP], 18000, 8.0, 77, 'Los juguetes de un niño cobran vida cuando nadie los ve.'],
+  [39, 'WALL-E', '2008-06-27', 98, [16, 878, 10751], [DP], 18500, 8.1, 74, 'Un pequeño robot limpiador descubre su propósito en un planeta abandonado.'],
+  // Ciencia ficcion (878)
+  [40, 'Blade Runner 2049', '2017-10-06', 164, [878, 18], [PV, NF], 13500, 7.6, 70, 'Un nuevo blade runner descubre un secreto que podría cambiar el orden social.'],
+  [41, 'Arrival', '2016-11-11', 116, [878, 18], [PV, MX], 16000, 7.6, 69, 'Una lingüista intenta comunicarse con visitantes extraterrestres.', ['La llegada']],
+  [42, '2001: A Space Odyssey', '1968-04-06', 149, [878, 12], [MX], 10500, 8.1, 50, 'Una misión a Júpiter se complica cuando la computadora de la nave toma sus propias decisiones.', ['2001: Una odisea del espacio']],
+  [43, 'Dune', '2021-10-22', 155, [878, 12], [MX], 12800, 7.8, 92, 'Un joven noble debe proteger el planeta desértico del que depende el futuro de su casa.', ['Dune: Parte uno']],
+  // Aventura (12)
+  [44, 'Interstellar', '2014-11-07', 169, [12, 18, 878], [PV, NF], 34000, 8.4, 100, 'Un grupo de astronautas viaja por un agujero de gusano en busca de un nuevo hogar para la humanidad.'],
+  [45, 'Raiders of the Lost Ark', '1981-06-12', 115, [12, 28], [PV], 12000, 7.9, 62, 'El arqueólogo Indiana Jones compite con los nazis por encontrar el Arca de la Alianza.', ['En busca del arca perdida']],
+  [46, 'The Lord of the Rings: The Fellowship of the Ring', '2001-12-19', 178, [12, 14, 28], [MX, NF], 24500, 8.4, 91, 'Un hobbit emprende un viaje para destruir un anillo poderoso.', ['El Señor de los Anillos: La Comunidad del Anillo']],
+  [47, 'Life of Pi', '2012-11-21', 127, [12, 18, 14], [DP], 14000, 7.0, 54, 'Un joven sobrevive a un naufragio en un bote con un tigre de Bengala.', ['La vida de Pi']],
+  // Crimen (80)
+  [48, 'Se7en', '1995-09-22', 127, [80, 9648, 53], [NF, MX], 20000, 8.4, 79, 'Dos detectives persiguen a un asesino que se inspira en los siete pecados capitales.', ['Seven']],
+  [49, 'The Godfather', '1972-03-24', 175, [80, 18], [PV, MX], 21000, 8.7, 88, 'El patriarca de una familia mafiosa transfiere el control a su reacio hijo menor.', ['El padrino']],
+  [50, 'Nightcrawler', '2014-10-31', 117, [80, 18, 53], [NF], 11200, 7.6, 58, 'Un ladrón se adentra en el mundo del periodismo de sucesos nocturno.', ['Primicia mortal']],
+  [51, 'Pulp Fiction', '1994-10-14', 154, [80, 53], [MX, PV], 27000, 8.5, 83, 'Varias historias de criminales de Los Ángeles se entrecruzan.', ['Tiempos violentos']],
+  [61, 'Heat', '1995-12-15', 170, [80, 28, 18], [PV], 7800, 7.9, 56, 'Un policía obsesivo persigue a un ladrón profesional en Los Ángeles.', ['Fuego contra fuego']],
+  // Ampliacion (ids 62-107): titulos de nicho para el feed tras el onboarding
+  [62, 'Paris, Texas', '1984-05-19', 145, [18], [PV], 2100, 8.0, 24, 'Un hombre errante reaparece tras años desaparecido e intenta reconstruir su relación con su hijo.'],
+  [63, 'Poor Things', '2023-12-08', 141, [878, 35, 10749], [DP], 4800, 7.8, 34, 'Una joven resucitada por un científico excéntrico descubre el mundo a su manera.', ['Pobres criaturas']],
+  [64, 'The Zone of Interest', '2023-12-15', 105, [18, 36], [PV], 2400, 7.3, 26, 'El comandante de Auschwitz y su familia llevan una vida idílica junto al muro del campo.', ['La zona de interés']],
+  [65, "Anatomie d'une chute", '2023-08-23', 151, [80, 18, 9648], [NF], 4200, 7.6, 33, 'Una escritora es juzgada por la muerte de su marido mientras su hijo ciego es el único testigo.', ['Anatomía de una caída']],
+  [66, 'The Lighthouse', '2019-10-18', 109, [27, 18, 14], [PV], 4500, 7.4, 30, 'Dos fareros se hunden en la locura en una isla remota de Nueva Inglaterra.', ['El faro']],
+  [67, 'Portrait of a Lady on Fire', '2019-09-18', 122, [10749, 18], [NF], 2800, 8.1, 28, 'Una pintora retrata en secreto a una joven que se niega a casarse, y entre ambas nace el amor.', ['Retrato de una mujer en llamas']],
+  [68, 'Drive My Car', '2021-08-18', 179, [18], [MX], 1500, 7.6, 22, 'Un actor y director viudo entabla amistad con su joven conductora durante un festival en Hiroshima.'],
+  [69, 'The Worst Person in the World', '2021-10-13', 128, [10749, 18, 35], [NF], 1900, 7.7, 25, 'Una treintañera de Oslo busca su camino entre relaciones y vocaciones cambiantes.', ['La peor persona del mundo']],
+  [70, 'Minari', '2020-12-11', 115, [18], [MX], 2800, 7.4, 26, 'Una familia coreana se muda a una granja en Arkansas en busca del sueño americano.'],
+  [71, 'The Souvenir', '2019-05-17', 120, [18, 10749], [PV], 480, 6.9, 14, 'Una joven estudiante de cine se enamora de un hombre misterioso y manipulador.', ['El recuerdo']],
+  [72, 'Paterson', '2016-05-18', 118, [18, 35], [PV], 1600, 7.3, 21, 'Un conductor de autobús y poeta aficionado vive rutinas serenas en Nueva Jersey.'],
+  [73, 'First Reformed', '2017-09-01', 113, [18, 53], [MX], 1500, 7.0, 20, 'Un pastor atormentado entra en crisis de fe al conocer a una activista medioambiental.', ['El reformado']],
+  [74, 'Lady Bird', '2017-11-03', 94, [35, 18], [PV, MX], 4900, 7.4, 36, 'Una adolescente de Sacramento sueña con escapar a la universidad lejos de su madre.'],
+  [75, 'Frances Ha', '2013-05-17', 86, [35, 18], [NF], 1400, 7.1, 20, 'Una bailarina de Nueva York sin dinero ni rumbo intenta madurar sin perder su espíritu.'],
+  [76, 'The Farewell', '2019-07-12', 100, [35, 18], [PV], 1800, 7.4, 22, 'Una familia china decide ocultar a la abuela su diagnóstico terminal con una boda falsa.', ['La despedida']],
+  [77, 'Before Sunset', '2004-07-02', 80, [10749, 18], [MX], 3300, 7.8, 24, 'Nueve años después, dos amantes de una noche se reencuentran en París durante unas horas.', ['Antes del atardecer']],
+  [78, 'Weekend', '2011-09-23', 97, [18, 10749], [NF], 460, 7.4, 13, 'Un fin de semana intenso entre dos hombres que se conocen tras una noche de fiesta.'],
+  [79, 'Brooklyn', '2015-11-04', 112, [18, 10749], [DP], 3300, 7.4, 28, 'Una joven irlandesa emigra a Nueva York y se debate entre dos amores y dos mundos.'],
+  [80, 'Cold War', '2018-06-08', 88, [10749, 18, 10402], [MX], 1500, 7.5, 21, 'Una turbulenta historia de amor en la Polonia y la Europa de la posguerra.', ['Guerra fría']],
+  [81, 'Shoplifters', '2018-06-08', 121, [18, 80], [NF], 1900, 7.9, 24, 'Una familia pobre de Tokio sobrevive a base de pequeños hurtos y acoge a una niña desamparada.', ['Un asunto de familia']],
+  [82, 'Decision to Leave', '2022-06-29', 138, [53, 9648, 10749], [MX], 1500, 7.3, 27, 'Un detective se obsesiona con la viuda del hombre cuya muerte investiga.', ['Decisión de partir']],
+  [83, 'Memories of Murder', '2003-05-02', 131, [80, 18, 53], [PV], 2800, 8.1, 27, 'Dos policías rurales investigan una serie de asesinatos en la Corea de los ochenta.', ['Memorias de un asesino']],
+  [84, 'Mommy', '2014-09-19', 139, [18], [MX], 2100, 8.0, 22, 'Una madre viuda y su hijo con TDAH intentan salir adelante con ayuda de una vecina.'],
+  [85, 'Leave No Trace', '2018-06-29', 109, [18], [PV, MX], 800, 7.1, 15, 'Un padre veterano y su hija viven ocultos en un bosque hasta que los servicios sociales los encuentran.'],
+  [86, 'The Florida Project', '2017-10-06', 111, [18], [PV], 2700, 7.5, 23, 'Una niña de seis años vive un verano de aventuras en un motel junto a Disney World.'],
+  [87, 'Nomadland', '2020-09-11', 108, [18], [DP], 4400, 7.3, 33, 'Una mujer recorre el oeste americano en furgoneta tras perder su hogar en la crisis.'],
+  [88, 'Dig!', '2004-04-16', 107, [99, 10402], [MX], 150, 7.3, 9, 'Documental sobre la rivalidad y la amistad de dos bandas de rock independiente durante siete años.'],
+  [89, 'Searching for Sugar Man', '2012-07-27', 86, [99, 10402], [NF], 2600, 8.1, 24, 'Dos fans investigan el destino de un cantautor de Detroit olvidado en su país y venerado en Sudáfrica.', ['Sugar Man']],
+  [90, 'Honeyland', '2019-07-26', 85, [99], [MX], 330, 7.5, 13, 'Una apicultora de Macedonia del Norte ve alterado su modo de vida por unos vecinos ruidosos.'],
+  [91, 'Fire of Love', '2022-07-15', 93, [99, 10749], [DP], 420, 7.6, 14, 'Dos vulcanólogos franceses dedican su vida y su amor a perseguir erupciones.', ['Fuego de amor']],
+  [92, 'Moon', '2009-06-12', 97, [878, 18, 53], [PV], 4900, 7.6, 32, 'Un astronauta solitario en una base lunar empieza a dudar de su propia identidad.', ['Moon: la cara oculta']],
+  [93, 'Ex Machina', '2015-01-21', 108, [878, 18, 53], [NF, MX], 9800, 7.6, 40, 'Un programador evalúa la conciencia de una androide creada por su excéntrico jefe.'],
+  [94, 'Her', '2013-12-18', 126, [10749, 878, 18], [MX, PV], 11500, 7.9, 46, 'Un escritor solitario se enamora del sistema operativo de su ordenador.', ['Ella']],
+  [95, 'Primer', '2004-10-08', 77, [878, 53, 18], [PV], 1100, 6.8, 12, 'Dos ingenieros descubren por accidente un modo de viajar en el tiempo y pierden el control.'],
+  [96, 'Annihilation', '2018-02-23', 115, [878, 27, 18], [NF], 5100, 6.8, 33, 'Una bióloga entra en una zona alterada por un fenómeno extraterrestre.', ['Aniquilación']],
+  [97, 'Coherence', '2013-08-02', 89, [878, 53, 9648], [NF], 1900, 7.2, 17, 'Durante una cena, el paso de un cometa desencadena sucesos imposibles entre amigos.'],
+  [98, 'The Handmaiden', '2016-06-01', 145, [18, 10749, 53], [PV], 2800, 8.1, 27, 'Una estafadora se infiltra como criada de una heredera japonesa en la Corea de los años treinta.', ['La doncella']],
+  [99, 'Oldboy', '2003-11-21', 120, [53, 9648, 28], [PV], 4900, 8.3, 38, 'Un hombre es liberado tras quince años de encierro y busca vengarse de su captor.'],
+  [100, 'Blue Ruin', '2013-04-26', 90, [80, 53, 18], [NF], 1100, 6.9, 14, 'Un vagabundo regresa a casa para vengar el asesinato de sus padres y desata una espiral.'],
+  [101, 'A Prophet', '2009-08-26', 155, [80, 18], [MX], 1900, 7.8, 20, 'Un joven condenado a prisión se abre paso en el crimen organizado de una cárcel francesa.', ['Un profeta']],
+  [102, 'The Killing of a Sacred Deer', '2017-10-27', 121, [53, 27, 18], [PV], 3500, 7.0, 27, 'Un cirujano debe elegir a quién sacrificar de su familia tras ayudar a un joven inquietante.', ['El sacrificio de un ciervo sagrado']],
+  [103, 'The Babadook', '2014-05-22', 94, [27, 18, 9648], [MX], 4500, 6.8, 31, 'Una viuda y su hijo son acechados por un siniestro libro infantil.'],
+  [104, 'The Wind Rises', '2013-07-20', 126, [16, 18, 10749], [MX], 2300, 7.8, 28, 'La vida del ingeniero que diseñó cazas durante la Segunda Guerra Mundial, entre sueños y amor.', ['El viento se levanta']],
+  [105, 'A Silent Voice', '2016-09-17', 130, [16, 18, 10749], [NF], 1900, 8.2, 30, 'Un joven intenta redimirse ante la compañera sorda a la que acosó en la infancia.', ['Koe no Katachi']],
+  [106, 'Persepolis', '2007-06-27', 96, [16, 18, 36], [PV], 1700, 7.7, 21, 'Una niña iraní crece entre la revolución islámica y su exilio en Europa.', ['Persépolis']],
+  [107, 'Princess Mononoke', '1997-07-12', 134, [16, 14, 12], [MX, NF], 6900, 8.3, 45, 'Un joven guerrero se ve en medio de la guerra entre los dioses del bosque y una ciudad minera.', ['La princesa Mononoke']],
+  [111, 'The Raid', '2011-09-08', 101, [28], [NF, PV], 4800, 7.6, 35, 'Un equipo de élite asalta un edificio controlado por un capo y debe abrirse paso piso a piso.', ['Redada asesina']],
+  [112, 'Kung Fu Hustle', '2004-12-23', 99, [28, 35], [PV], 3600, 7.2, 30, 'Un aspirante a delincuente se cruza con maestros de artes marciales en un barrio de Shanghái.', ['Kung Fusion']],
+  [113, 'Ip Man', '2008-12-12', 106, [28], [NF], 2900, 7.6, 26, 'La vida del maestro de wing chun durante la ocupación japonesa de China.'],
+  [114, 'Edge of Tomorrow', '2014-05-30', 113, [28, 878], [MX, PV], 4900, 7.6, 40, 'Un soldado novato revive una y otra vez la misma batalla contra una invasión alienígena.', ['Al filo del mañana']],
+  [115, 'The Princess Bride', '1987-09-25', 98, [12, 10751, 14], [DP], 4200, 7.8, 32, 'Un granjero se lanza a rescatar a su amada en un cuento de espadachines y gigantes.', ['La princesa prometida']],
+  [116, "Kiki's Delivery Service", '1989-07-29', 103, [16, 10751, 12], [MX], 3400, 7.8, 31, 'Una joven bruja se instala en una ciudad costera y abre un servicio de reparto volador.', ['Nicky, la aprendiz de bruja']],
+  [117, 'Big Hero 6', '2014-11-07', 102, [16, 10751, 28], [DP], 4700, 7.8, 38, 'Un adolescente prodigio y un robot sanitario forman un equipo de superhéroes.'],
+  [118, 'The Secret of Kells', '2009-02-10', 75, [16, 10751, 12], [MX], 1100, 7.6, 14, 'Un joven monje irlandés ayuda a completar un libro iluminado legendario.', ['El secreto de Kells']],
+  [119, 'Train to Busan', '2016-07-20', 118, [28, 27, 53], [NF, PV], 4600, 7.6, 39, 'Los pasajeros de un tren de alta velocidad luchan por sobrevivir a un brote zombi.', ['Estación Zombie']],
+  [120, 'Hunt for the Wilderpeople', '2016-03-31', 101, [12, 35], [NF], 1900, 7.8, 24, 'Un niño rebelde y su tutor huraño huyen por el monte neozelandés perseguidos por la policía.'],
+  [121, 'Tenet', '2020-08-26', 150, [28, 878, 53], [MX], 4900, 7.2, 44, 'Un agente secreto manipula el flujo del tiempo para evitar una guerra mundial.'],
+  [122, 'Searching', '2018-08-24', 102, [28, 878], [PV], 3100, 7.4, 22, 'Un padre investiga la desaparición de su hija a través de su vida digital.', ['Searching: Desaparecida']],
+];
+&nbsp;
+interface TvRow {
+  id: number;
+  name: string;
+  firstAirDate: string;
+  runtime: number;
+  genreIds: number[];
+  platforms: string[];
+  voteCount: number;
+  voteAverage: number;
+  popularity: number;
+  overview: string;
+  alt?: string[];
+  episodes: string[];
+}
+&nbsp;
+function episodes(names: string[], runtime: number): TVEpisode[] {
+  return names.map((name, i) =&gt; ({ episode_number: i + 1, name, runtime, still_path: null }));
+}
+&nbsp;
+function series(row: TvRow): TVSeries {
+  const season: TVSeason = {
+    season_number: 1,
+    episode_count: row.episodes.length,
+    episodes: episodes(row.episodes, row.runtime),
+  };
+  return {
+    id: row.id,
+    media_type: 'tv',
+    name: row.name,
+    first_air_date: row.firstAirDate,
+    episode_run_time: [row.runtime],
+    seasons: [season],
+    poster_path: null,
+    backdrop_path: null,
+    genres: genresFromIds(row.genreIds),
+    overview: row.overview,
+    vote_average: row.voteAverage,
+    vote_count: row.voteCount,
+    popularity: row.popularity,
+    platforms: row.platforms,
+    alt_titles: row.alt ?? [],
+  };
+}
+&nbsp;
+const TV_ROWS: TvRow[] = [
+  {
+    id: 8,
+    name: 'Fallout',
+    firstAirDate: '2024-04-10',
+    runtime: 58,
+    genreIds: [878, 18, 28],
+    platforms: [PV],
+    voteCount: 4200,
+    voteAverage: 8.2,
+    popularity: 98,
+    overview: 'Una joven del refugio 33 sale a la superficie tras el apocalipsis nuclear y descubre un mundo hostil.',
+    episodes: [
+      'The End',
+      'The Target',
+      'The Head',
+      'The Ghouls',
+      'The Past',
+      'The Trap',
+      'The Radio',
+      'The Beginning',
+    ],
+  },
+  {
+    id: 52,
+    name: 'Breaking Bad',
+    firstAirDate: '2008-01-20',
+    runtime: 47,
+    genreIds: [18, 80],
+    platforms: [NF],
+    voteCount: 14500,
+    voteAverage: 8.9,
+    popularity: 96,
+    overview: 'Un profesor de química con cáncer se asocia con un antiguo alumno para fabricar metanfetamina.',
+    episodes: ['Piloto', 'Cat in the Bag', 'And the Bag in the River', 'Cancer Man'],
+  },
+  {
+    id: 53,
+    name: 'Stranger Things',
+    firstAirDate: '2016-07-15',
+    runtime: 50,
+    genreIds: [18, 9648, 878],
+    platforms: [NF],
+    voteCount: 18000,
+    voteAverage: 8.6,
+    popularity: 99,
+    overview: 'La desaparición de un niño destapa experimentos secretos y fuerzas sobrenaturales en un pueblo de Indiana.',
+    episodes: [
+      'Capítulo uno: La desaparición de Will Byers',
+      'Capítulo dos: La rarita de Maple Street',
+      'Capítulo tres: Holly, Jolly',
+      'Capítulo cuatro: El cuerpo',
+    ],
+  },
+  {
+    id: 54,
+    name: 'The Bear',
+    firstAirDate: '2022-06-23',
+    runtime: 34,
+    genreIds: [18, 35],
+    platforms: [DP],
+    voteCount: 2300,
+    voteAverage: 8.3,
+    popularity: 75,
+    overview: 'Un joven chef vuelve a Chicago para dirigir el restaurante familiar al borde de la ruina.',
+    alt: ['El oso'],
+    episodes: ['System', 'Hands', 'Brigade', 'Dogs'],
+  },
+  {
+    id: 55,
+    name: 'Chernobyl',
+    firstAirDate: '2019-05-06',
+    runtime: 64,
+    genreIds: [18, 36],
+    platforms: [MX],
+    voteCount: 7600,
+    voteAverage: 8.7,
+    popularity: 80,
+    overview: 'Recreación del desastre nuclear de 1986 y de las personas que intentaron contenerlo.',
+    episodes: ['1:23:45', 'Por favor, mantengan la calma', 'Abre, oh tierra', 'La felicidad de toda la humanidad'],
+  },
+  {
+    id: 56,
+    name: 'The Last of Us',
+    firstAirDate: '2023-01-15',
+    runtime: 56,
+    genreIds: [18, 878, 27],
+    platforms: [MX],
+    voteCount: 5600,
+    voteAverage: 8.6,
+    popularity: 94,
+    overview: 'Un superviviente escolta a una adolescente por unos Estados Unidos devastados por una infección.',
+    episodes: ['Cuando estés perdido en la oscuridad', 'Infectados', 'Mucho, mucho tiempo', 'Agárrate a mi mano'],
+  },
+  {
+    id: 57,
+    name: 'The Mandalorian',
+    firstAirDate: '2019-11-12',
+    runtime: 40,
+    genreIds: [878, 12, 28],
+    platforms: [DP],
+    voteCount: 9800,
+    voteAverage: 8.5,
+    popularity: 90,
+    overview: 'Un cazarrecompensas solitario protege a un misterioso niño en los confines de la galaxia.',
+    episodes: ['Capítulo 1: El mandaloriano', 'Capítulo 2: El niño', 'Capítulo 3: El pecado', 'Capítulo 4: Santuario'],
+  },
+  {
+    id: 58,
+    name: 'Black Mirror',
+    firstAirDate: '2011-12-04',
+    runtime: 55,
+    genreIds: [878, 18, 53],
+    platforms: [NF],
+    voteCount: 5400,
+    voteAverage: 8.3,
+    popularity: 78,
+    overview: 'Antología de historias que exploran el lado oscuro de la tecnología.',
+    episodes: ['El himno nacional', 'Quince millones de méritos', 'Toda tu historia'],
+  },
+  {
+    id: 59,
+    name: 'Planet Earth II',
+    firstAirDate: '2016-11-06',
+    runtime: 50,
+    genreIds: [99],
+    platforms: [MX],
+    voteCount: 1100,
+    voteAverage: 9.0,
+    popularity: 45,
+    overview: 'Un recorrido por los hábitats más extremos del planeta y sus criaturas.',
+    alt: ['Planeta Tierra II'],
+    episodes: ['Islas', 'Montañas', 'Junglas', 'Desiertos'],
+  },
+  {
+    id: 60,
+    name: 'Arcane',
+    firstAirDate: '2021-11-06',
+    runtime: 42,
+    genreIds: [16, 878, 28],
+    platforms: [NF],
+    voteCount: 3900,
+    voteAverage: 8.7,
+    popularity: 82,
+    overview: 'Dos hermanas quedan en bandos opuestos de un conflicto entre dos ciudades.',
+    episodes: ['Bienvenidos al patio de juegos', 'Algunos misterios es mejor dejarlos sin resolver', 'El monstruo en el que te has convertido', 'Cuando estos muros caigan'],
+  },
+  {
+    id: 108,
+    name: 'Normal People',
+    firstAirDate: '2020-04-26',
+    runtime: 30,
+    genreIds: [18, 10749],
+    platforms: [PV],
+    voteCount: 1500,
+    voteAverage: 7.9,
+    popularity: 30,
+    overview: 'La relación intermitente de dos jóvenes irlandeses desde el instituto hasta la universidad.',
+    alt: ['Gente normal'],
+    episodes: ['Episodio 1', 'Episodio 2', 'Episodio 3'],
+  },
+  {
+    id: 109,
+    name: 'Mindhunter',
+    firstAirDate: '2017-10-13',
+    runtime: 55,
+    genreIds: [80, 18, 53],
+    platforms: [NF],
+    voteCount: 3300,
+    voteAverage: 8.6,
+    popularity: 38,
+    overview: 'Dos agentes del FBI entrevistan a asesinos en serie para entender su mente en los años setenta.',
+    episodes: ['Episodio 1', 'Episodio 2', 'Episodio 3'],
+  },
+  {
+    id: 110,
+    name: 'The Leftovers',
+    firstAirDate: '2014-06-29',
+    runtime: 60,
+    genreIds: [18, 9648, 14],
+    platforms: [MX],
+    voteCount: 1300,
+    voteAverage: 8.1,
+    popularity: 25,
+    overview: 'Tres años después de la desaparición del dos por ciento de la humanidad, un pueblo trata de seguir adelante.',
+    alt: ['Los que se quedan'],
+    episodes: ['Episodio 1', 'Episodio 2', 'Episodio 3'],
+  },
+];
+&nbsp;
+const movies: Movie[] = MOVIE_ROWS.map(movie);
+const tvs: TVSeries[] = TV_ROWS.map(series);
+&nbsp;
+/** Catalogo completo ordenado por id ascendente (ids secuenciales 1-122). */
+export const CATALOG: ReadonlyArray&lt;Media&gt; = [...movies, ...tvs].sort((a, b) =&gt; a.id - b.id);
+&nbsp;
+export const MOVIES: ReadonlyArray&lt;Movie&gt; = CATALOG.filter((m): m is Movie =&gt; m.media_type === 'movie');
+export const SERIES: ReadonlyArray&lt;TVSeries&gt; = CATALOG.filter((m): m is TVSeries =&gt; m.media_type === 'tv');
+&nbsp;
+const INDEX = new Map&lt;string, Media&gt;(CATALOG.map((m) =&gt; [`${m.media_type}:${m.id}`, m]));
+&nbsp;
+export function getMedia(type: MediaType, id: number): Media | undefined {
+  return INDEX.get(`${type}:${id}`);
+}
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >getMovie(</span>id: number): Movie | undefined {
+  const m = <span class="cstat-no" title="statement not covered" >getMedia('movie', id);</span>
+<span class="cstat-no" title="statement not covered" >  return m &amp;&amp; m.media_type === 'movie' ? m : undefined;</span>
+}
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >getSeries(</span>id: number): TVSeries | undefined {
+  const m = <span class="cstat-no" title="statement not covered" >getMedia('tv', id);</span>
+<span class="cstat-no" title="statement not covered" >  return m &amp;&amp; m.media_type === 'tv' ? m : undefined;</span>
+}
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >getMediaByRef(</span>ref: Pick&lt;MediaRef, 'mediaType' | 'mediaId'&gt;): Media | undefined {
+<span class="cstat-no" title="statement not covered" >  return getMedia(ref.mediaType, ref.mediaId);</span>
+}
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >getTvSeason(</span>id: number, seasonNumber: number): TVSeason | undefined {
+<span class="cstat-no" title="statement not covered" >  return getSeries(id)?.seasons.find(<span class="fstat-no" title="function not covered" >(s</span>) =&gt; <span class="cstat-no" title="statement not covered" >s.season_number === seasonNumber)</span>;</span>
+}
+&nbsp;
+/** Clave de historial del titulo completo (pelicula o serie). */
+export function mediaKeyOf(media: Media): MediaKey {
+  return buildMediaKey({ mediaType: media.media_type, mediaId: media.id });
+}
+&nbsp;
+export function titleOf(media: Media): string {
+  return media.media_type === 'movie' ? media.title : media.name;
+}
+&nbsp;
+export function releaseDateOf(media: Media): string {
+  return media.media_type === 'movie' ? media.release_date : media.first_air_date;
+}
+&nbsp;
+export function releaseYearOf(media: Media): number {
+  return Number(releaseDateOf(media).slice(0, 4));
+}
+&nbsp;
+/** Duracion en minutos: runtime en peliculas, episode_run_time[0] en series. */
+export function runtimeOf(media: Media): number {
+  return media.media_type === 'movie' ? media.runtime : (media.episode_run_time[0] ?? <span class="branch-1 cbranch-no" title="branch not covered" >0)</span>;
+}
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >mainGenreId(</span>media: Media): number | undefined {
+<span class="cstat-no" title="statement not covered" >  return media.genres[0]?.id;</span>
+}
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-10-09T08:28:32.557Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    
