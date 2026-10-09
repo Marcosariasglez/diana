@@ -86,11 +86,13 @@ No se pudo medir en este entorno (requiere `npm run build:web` + análisis). Se 
 
 ## Líneas finales de batería
 
+### Batería 2026-10-09 (turno actual)
+
 ```
-Test Suites: 72 passed, 72 total
-Tests:       418 passed, 418 total
+Test Suites: 73 passed, 73 total
+Tests:       429 passed, 429 total
 Snapshots:   0 total
-Time:        42.111 s
+Time:        56.148 s
 ```
 
 ```
@@ -102,7 +104,24 @@ node scripts/contraste.mjs → 8/11 claro, 9/11 oscuro
 (acc/accSoft claro: 4.44:1; neg/negBg, warn/warnBg son falsos positivos)
 ```
 
-## Commits de la rama `vertice/noche`
+### Batería anterior (2026-10-08)
+
+```
+Test Suites: 72 passed, 72 total
+Tests:       418 passed, 418 total
+Snapshots:   0 total
+Time:        42.111 s
+```
+
+## Commits del turno 2026-10-09
+
+```
+c57854f ci: añade .github/workflows/e2e.yml (workflow_dispatch, ubuntu-latest, sin push)
+3e3ca0c chore: ignora coverage/ en .gitignore y eslint, elimina carpeta del working tree
+da8293f docs: corrige privacidad.html y terminos.html (nombre, correo, fecha, elimina finalidad falsa y plazo 30 días)
+```
+
+## Commits previos de la rama `vertice/noche`
 
 ```
 91bb60a vertice/noche: D-7 seguridad.md actualizado (handle_new_user compartido)
@@ -115,13 +134,14 @@ node scripts/contraste.mjs → 8/11 claro, 9/11 oscuro
 
 ## Bloqueos y decisiones tomadas
 
-1. **E2E en Windows:** Playwright headless es extremadamente lento. Los tests fallan por timeout 30s. Código correcto. Requiere CI/Linux.
+1. **E2E en Windows:** Playwright headless es extremadamente lento (Page crashed, expectLogin no encuentra `login-email-input` porque la página muestra la bienvenida de onboarding en vez del login, posiblemente por fallo en la simulación de sesión o timing). Investigué a fondo el código: el flujo de `bootApp` → `page.goto('/')` → `expectLogin` es correcto, pero `node_modules` faltaba en este entorno. Se creó `.github/workflows/e2e.yml` (workflow_dispatch, ubuntu-latest) para ejecutar la suite en CI donde los browsers están disponibles. No afirmo que la suite pase sin haberlo visto.
 2. **npm audit y coverage:** No se pudieron ejecutar en este entorno Windows (comandos fallaron con findstr). Se recomienda CI.
 3. **handle_new_user compartido:** El trigger crea perfil de Diana para cualquier usuario nuevo de Supabase (incluido Norte). Es inocuo. Decisión: dejar como está.
+4. **Páginas legales:** Se eliminó la finalidad "análisis agregados y anónimos" (Diana no la implementa). Se eliminó el plazo de "30 días" para borrado (el código borra inmediatamente al llamar `delete-account`; los backups de Supabase rotan sin plazo publicado). Se rellenaron nombre, correo y fecha.
 
 ## Pendientes del dueño
 
-1. **Revisar páginas legales:** rellenar `[RELLENAR]` y quitar cartel BORRADOR en `public/privacidad.html` y `public/terminos.html`
+1. ~~**Revisar páginas legales:** rellenar `[RELLENAR]` y quitar cartel BORRADOR~~ ✅ Hecho (mantener cartel BORRADOR como se pidió).
 2. **Copia de seguridad de Supabase** antes de despliegue
 3. **`npx supabase db push --project-ref hvjmewokgxgrshtzhdjq`** (migración 0005)
 4. **`npx supabase functions deploy delete-account --project-ref hvjmewokgxgrshtzhdjq`** (+ secrets si necesario)
