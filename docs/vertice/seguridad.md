@@ -84,6 +84,13 @@ aunque comparten origen. Cambiarla desloguea a quien esté dentro.
 [`src/store/useAuthStore.test.ts`](../../src/store/useAuthStore.test.ts) y
 [`src/__tests__/login.test.tsx`](../../src/__tests__/login.test.tsx).
 
+**`handle_new_user` con identidad compartida (decisión D-7):** el trigger crea un perfil de
+Diana para **cualquier** usuario nuevo de Supabase, incluido quien se registre por Norte.
+Esto es inocuo (el perfil queda vacío) y simple de mantener. Se documenta aquí y no se
+modifica. Si en el futuro se quiere evitar, el trigger debería comprobar si el usuario
+viene de Diana (no hay forma fiable ahora; la alternativa es crear el perfil la primera
+vez que entra en Diana, lo que complica el flujo). **Decisión: dejar como está.**
+
 ## Delete Account (Q2)
 
 **Edge Function:** `supabase/functions/delete-account/index.ts`
