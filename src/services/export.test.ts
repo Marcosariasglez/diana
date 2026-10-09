@@ -72,6 +72,7 @@ const ROWS: Record<string, unknown[]> = {
   watched: [{ key: 'movie:1' }],
   rooms: [{ code: 'ABCD', host_id: 'user-a' }],
   room_members: [{ code: 'ABCD' }],
+  watchlist: [{ media_type: 'movie', media_id: 9, added_at: '2026-10-02T10:00:00.000Z' }],
 };
 
 describe('export (A5 · Exportar mis datos)', () => {
@@ -99,6 +100,10 @@ describe('export (A5 · Exportar mis datos)', () => {
     ]);
     expect(payload.watched).toEqual(['movie:1']);
     expect(payload.rooms).toEqual([{ code: 'ABCD', isHost: true }]);
+    // D2-3: la watchlist va en el export.
+    expect(payload.watchlist).toEqual([
+      { mediaType: 'movie', mediaId: 9, addedAt: '2026-10-02T10:00:00.000Z' },
+    ]);
     expect(new Date(payload.exportedAt).toISOString()).toBe(payload.exportedAt);
   });
 

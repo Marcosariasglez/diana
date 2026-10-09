@@ -47,6 +47,16 @@ begin
   delete from public.watched where user_id = p_target_user_id;
   delete from public.history_entries where user_id = p_target_user_id;
   delete from public.initial_ratings where user_id = p_target_user_id;
+
+  -- D2-3: «Quiero ver» (tabla de la migración 0008). Si 0008 aún no se
+  -- aplicó (orden de despliegue a mano del dueño), no debe fallar el resto
+  -- del borrado: se ignora solo la tabla inexistente.
+  begin
+    delete from public.watchlist where user_id = p_target_user_id;
+  exception when undefined_table then
+    null;
+  end;
+
   delete from public.profiles where id = p_target_user_id;
 end $$;
 

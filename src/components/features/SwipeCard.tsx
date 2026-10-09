@@ -1,4 +1,4 @@
-import { useImperativeHandle, type Ref } from 'react';
+import { useImperativeHandle, type ReactNode, type Ref } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -30,13 +30,19 @@ export interface SwipeCardProps {
   onDecide: (dir: SwipeDir) => void;
   /** Por defecto true; false en swipe de grupo (gesto vertical desactivado). */
   allowUnseen?: boolean;
+  /**
+   * D2-3: pieza sobre la carta de arriba (p. ej. botón «Quiero ver»): se pinta
+   * centrada en la parte alta del poster. Solo recibe toques ella misma
+   * (pointerEvents=box-none): el gesto de swipe sigue funcionando en el resto.
+   */
+  topBadge?: ReactNode;
   ref?: Ref<SwipeCardHandle>;
 }
 
 const SPRING = { damping: 15, stiffness: 120 };
 const UNSEEN_BLUE = '#2E5E7A';
 
-export function SwipeCard({ media, isTop, onDecide, allowUnseen = true, ref }: SwipeCardProps) {
+export function SwipeCard({ media, isTop, onDecide, allowUnseen = true, topBadge, ref }: SwipeCardProps) {
   const { colors } = useTheme();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -150,6 +156,14 @@ export function SwipeCard({ media, isTop, onDecide, allowUnseen = true, ref }: S
             <Text style={[styles.stampText, { color: UNSEEN_BLUE }]}>No la he visto</Text>
           </Animated.View>
         </View>
+        {topBadge ? (
+          <View
+            pointerEvents="box-none"
+            style={{ position: 'absolute', top: 28, alignSelf: 'center', left: 0, right: 0, alignItems: 'center' }}
+          >
+            {topBadge}
+          </View>
+        ) : null}
       </Animated.View>
     </GestureDetector>
   );

@@ -3,13 +3,15 @@ import { createDefaultProfile, useProfileStore } from './useProfileStore';
 import { useHistoryStore } from './useHistoryStore';
 import { useFeedStore } from './useFeedStore';
 import { useRoomStore } from './useRoomStore';
-import { profileRepository } from '@/services';
+import { useWatchlistStore } from './useWatchlistStore';
+import { profileRepository, watchlistRepository } from '@/services';
 
 /** Devuelve los stores persistentes y de sesion al estado inicial (cambio de usuario o cierre de sesion). */
 export function resetLocalStores(userId?: string): void {
   useRoomStore.getState().leaveRoom();
   useFeedStore.getState().reset();
   useHistoryStore.setState({ entries: [], watched: [] });
+  useWatchlistStore.getState().setItems([]);
   useProfileStore.setState({ profile: { ...createDefaultProfile(), ...(userId ? { id: userId } : {}) }, hasOnboarded: false });
 }
 
@@ -37,5 +39,14 @@ export async function bootstrapUserData(userId: string): Promise<void> {
     hasOnboarded: remote.profile.hasOnboarded === true,
   });
   useHistoryStore.setState({ entries: remote.entries ?? [], watched: remote.watched ?? [] });
+  // D2-3: «Quiero ver» — el servidor es la fuente de verdad (RLS: solo lo suyo).
+  // Si la tabla 0008 no está desplegada aún, fallar el resto del bootstrap:
+  // se degrada a la copia local.
+  try {
+    const watchlist = await watchlistRepository.load();
+    if (watchlist !== null) useWatchlistStore.getState().setItems(watchlist);
+  } catch {
+    // sin 0007/0008 desplegadas o sin red: se conserva la copia local
+  }
   useFeedStore.getState().reset();
 }

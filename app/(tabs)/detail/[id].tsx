@@ -7,6 +7,7 @@ import { ChevronLeft, Tv } from 'lucide-react-native';
 import { EpisodePicker } from '@/components/features/EpisodePicker';
 import { MetricCard } from '@/components/features/MetricCard';
 import { SlotReveal } from '@/components/features/SlotReveal';
+import { WatchlistButton } from '@/components/features/WatchlistButton';
 import { platformName } from '@/constants/platforms';
 import { StarRating } from '@/components/features/StarRating';
 import { mediaMeta, mediaTitle, mediaYear, posterUri } from '@/components/features/mediaHelpers';
@@ -212,7 +213,9 @@ function DetailContent({ media, params }: { media: Media; params: DetailParams }
     cards: { flexDirection: 'row' as const, gap: 12, paddingHorizontal: 20, marginTop: 12 },
     skeletonCards: { flexDirection: 'row' as const, justifyContent: 'space-between' as const },
     rate: { paddingHorizontal: 20, marginTop: 16 },
-    footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: FOOTER_BOTTOM_GAP },
+    // D2-3: fila del footer con acción principal + «Quiero ver».
+    footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: FOOTER_BOTTOM_GAP, gap: 10 },
+    footerRow: { flexDirection: 'row' as const, gap: 10, alignItems: 'stretch' },
     center: { flex: 1, justifyContent: 'center' as const },
   }));
 
@@ -301,7 +304,17 @@ function DetailContent({ media, params }: { media: Media; params: DetailParams }
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button label={view.buttonLabel} disabled={view.buttonDisabled} onPress={data.onPrimaryPress} />
+        <View style={styles.footerRow}>
+          <Button
+            label={view.buttonLabel}
+            disabled={view.buttonDisabled}
+            onPress={data.onPrimaryPress}
+            style={{ flex: 1 }}
+          />
+          <View style={{ justifyContent: 'center' }}>
+            <WatchlistButton mediaType={media.media_type} mediaId={media.id} size="small" />
+          </View>
+        </View>
       </View>
       <BackButton inkColor={colors.ink} cardColor={colors.card} />
     </Screen>

@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { getSupabase } from '@/lib/supabase';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useProfileStore } from '@/store/useProfileStore';
+import { useWatchlistStore } from '@/store/useWatchlistStore';
 import type { HistoryRow } from './supabase/mappers';
 
 /**
@@ -49,6 +50,8 @@ export interface ExportPayload {
   }>;
   watched: string[];
   rooms: Array<{ code: string; isHost: boolean }>;
+  /** D2-3: «Quiero ver». */
+  watchlist: Array<{ mediaType: string; mediaId: number; addedAt: string }>;
 }
 
 const dateStamp = (d: Date): string =>
@@ -64,13 +67,18 @@ export async function buildExportPayload(): Promise<ExportPayload> {
   const userId = data.session?.user.id ?? useProfileStore.getState().profile.id;
   const email = data.session?.user.email ?? null;
 
-  const [profileRow, ratings, rows, watched, rooms, memberships] = await Promise.all([
+  const [profileRow, ratings, rows, watched, rooms, memberships, watchlistRows] = await Promise.all([
     sb.from('profiles').select('*').eq('id', userId).maybeSingle(),
     selectAll<{ media_id: number; value: string; genre_ids: number[] }>('initial_ratings', 'media_id,value,genre_ids'),
     selectAll<HistoryRow>('history_entries', '*', 'rated_at'),
     selectAll<{ key: string }>('watched', 'key'),
     selectAll<{ code: string; host_id: string }>('rooms', 'code,host_id'),
     selectAll<{ code: string }>('room_members', 'code'),
+    // D2-3: si la tabla 0008 no está desplegada, la query falla y el export
+    // degrada a la copia local (no rompe el resto del payload).
+    selectAll<{ media_type: string; media_id: number; added_at: string }>('watchlist', 'media_type,media_id,added_at').catch(
+      () => useWatchlistStore.getState().items.map((i) => ({ media_type: i.mediaType, media_id: i.mediaId, added_at: i.addedAt })),
+    ),
   ]);
   if (profileRow.error) throw profileRow.error;
 
@@ -102,6 +110,7 @@ export async function buildExportPayload(): Promise<ExportPayload> {
     })),
     watched: watched.map((w) => w.key),
     rooms: roomRows.map((r) => ({ code: r.code, isHost: r.host_id === userId })),
+    watchlist: watchlistRows.map((w) => ({ mediaType: w.media_type, mediaId: w.media_id, addedAt: w.added_at })),
   };
 }
 
@@ -138,6 +147,9 @@ export function buildLocalExportPayload(): ExportPayload {
     })),
     watched: local.watched,
     rooms: [],
+    watchlist: useWatchlistStore
+      .getState()
+      .items.map((i) => ({ mediaType: i.mediaType, mediaId: i.mediaId, addedAt: i.addedAt })),
   };
 }
 

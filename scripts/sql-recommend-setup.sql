@@ -31,7 +31,9 @@ begin
     create role authenticated nologin;
   end if;
   if not exists (select 1 from pg_roles where rolname = 'service_role') then
-    create role service_role nologin;
+    -- En Supabase, service_role tiene BYPASSRLS (es como lo define su imagen):
+    -- sin este atributo el stub no se comportaría igual que la clave de servicio.
+    create role service_role nologin bypassrls;
   end if;
 end
 $$;

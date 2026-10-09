@@ -1,6 +1,7 @@
 // Unico punto de cambio mock -> Supabase (7.7). Lee EXPO_PUBLIC_BACKEND y CATALOG.
 import { BACKEND, CATALOG } from '@/lib/env';
 import type { CatalogRepository } from './catalog.repository';
+import { mockWatchlistRepository, type WatchlistRepository } from './watchlist.repository';
 import { importRepository as mockImportRepository, type ImportRepository } from './import.repository';
 import { mockProfileRepository, type ProfileRepository } from './profile.repository';
 import { ratingRepository as mockRatingRepository, type RatingRepository } from './rating.repository';
@@ -12,6 +13,7 @@ import { supabaseRatingRepository } from './supabase/rating.repository';
 import { supabaseRoomRepository } from './supabase/room.repository';
 import { tmdbSearchRepository } from './tmdb/search.repository';
 import { tmdbImportRepository } from './tmdb/import.repository';
+import { supabaseWatchlistRepository } from './supabase/watchlist.repository';
 
 const useServer = BACKEND === 'supabase';
 const useTmdb = CATALOG === 'tmdb';
@@ -30,6 +32,9 @@ export const profileRepository = lazy<ProfileRepository>(() => (useServer ? supa
 export const roomRepository = lazy<RoomRepository>(() => (useServer ? supabaseRoomRepository : mockRoomRepository));
 export const searchRepository = lazy<SearchRepository>(() => (useTmdb ? tmdbSearchRepository : mockSearchRepository));
 export const importRepository = lazy<ImportRepository>(() => (useTmdb ? tmdbImportRepository : mockImportRepository));
+// D2-3: «Quiero ver» espejo en la tabla watchlist (migración 0008). Solo con
+// servidor: en modo mock la persistencia local (useWatchlistStore) basta.
+export const watchlistRepository = lazy<WatchlistRepository>(() => (useServer ? supabaseWatchlistRepository : mockWatchlistRepository));
 
 export type { CatalogRepository } from './catalog.repository';
 export type { ImportRepository } from './import.repository';

@@ -11,6 +11,11 @@ jest.mock('@/services', () => ({
     saveImport: jest.fn(),
     removeEntry: jest.fn(),
   },
+  watchlistRepository: {
+    load: jest.fn().mockResolvedValue(null),
+    upsert: jest.fn(),
+    remove: jest.fn(),
+  },
 }));
 
 import { bootstrapUserData } from './bootstrapUserData';

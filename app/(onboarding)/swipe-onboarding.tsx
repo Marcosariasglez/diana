@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SwipeDeck } from '@/components/features/SwipeDeck';
+import { WatchlistButton } from '@/components/features/WatchlistButton';
 import { ErrorState, ProgressBar, Screen, Skeleton } from '@/components/ui';
 import { useOnboardingSwipe } from '@/features/onboarding/useOnboardingSwipe';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -67,6 +68,16 @@ export default function SwipeOnboardingScreen() {
           progress={decided}
           max={total}
           onDecide={(media, dir) => decide(media, dir)}
+          topBadge={
+            cards[0] ? (
+              <WatchlistButton
+                mediaType={cards[0].media_type}
+                mediaId={cards[0].id}
+                size="small"
+                activeLabel="En tu lista"
+              />
+            ) : undefined
+          }
         />
       ) : null}
 

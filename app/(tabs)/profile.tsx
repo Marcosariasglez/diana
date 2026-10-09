@@ -14,6 +14,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { HISTORY_PAGE_SIZE, detailHref, paginateHistory } from '@/features/profile/profileLogic';
+import { WatchlistSection } from '@/features/profile/WatchlistSection';
 import { useProfileImport } from '@/features/profile/useProfileImport';
 import {
   selectAverageRating,
@@ -206,6 +207,9 @@ export default function ProfileScreen() {
             </View>
           )}
         </Card>
+
+        {/* D2-3: lista «Quiero ver» (alta/baja desde ficha y mazo). */}
+        <WatchlistSection />
 
         {/* Grupo Aplicación */}
         <Text style={[textStyle('label'), styles.groupLabel]}>APLICACIÓN</Text>
