@@ -17,6 +17,7 @@ import { EmptyState, ErrorState, PillGroup, Screen, Skeleton } from '@/component
 import { BOTTOM_NAV_HEIGHT } from '@/components/ui/BottomNav';
 import { PLATFORMS } from '@/constants/platforms';
 import { useFeedData } from '@/features/feed/useFeedData';
+import { selectUnreadCount, useNotificationTrayStore } from '@/store/useNotificationTrayStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
@@ -58,6 +59,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const feed = useFeedData();
   const { featured, categories, status, platforms } = feed;
+  const unread = useNotificationTrayStore(selectUnreadCount);
   const { colors } = useTheme();
   const styles = useThemedStyles((c) => StyleSheet.create({
     content: { paddingTop: 16, paddingBottom: BOTTOM_NAV_HEIGHT + 24, gap: 16 },
@@ -76,6 +78,18 @@ export default function HomeScreen() {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
     },
+    bellBadge: {
+      position: 'absolute' as const,
+      top: -4,
+      right: -4,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      paddingHorizontal: 4,
+    },
+    bellBadgeText: { color: c.onAcc, fontSize: 10, lineHeight: 12, fontFamily: 'Inter-SemiBold' },
     pillScroll: { flexGrow: 0 },
     pills: { paddingHorizontal: 20, paddingVertical: 4 },
     sections: { gap: 24 },
@@ -129,10 +143,17 @@ export default function HomeScreen() {
           <Pressable
             onPress={() => router.push('/notifications')}
             accessibilityRole="button"
-            accessibilityLabel="Notificaciones"
+            accessibilityLabel={
+              unread > 0 ? `Notificaciones, ${unread} sin leer` : 'Notificaciones'
+            }
             style={[styles.bell, SHADOWS.card]}
           >
             <Bell size={20} color={colors.ink} fill={colors.ink} strokeWidth={2} />
+            {unread > 0 ? (
+              <View style={[styles.bellBadge, { backgroundColor: colors.acc }]}>
+                <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : String(unread)}</Text>
+              </View>
+            ) : null}
           </Pressable>
         </View>
 
