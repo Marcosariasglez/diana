@@ -18,7 +18,7 @@ Tests:       418 passed, 418 total
 |-------|--------|---------|-----------|--------------------------|
 | D-1 · Higiene | hecha | 35a2e8a | (previo) | |
 | D-2 · E2E | parcial | 0784a7b | 14 specs (auth, account, nomix). Mock GoTrue/PostgREST/Edge Functions completo. Fallan por timeout en Windows. Requieren CI/Linux. | npm run e2e en CI |
-| D-3 · Auditoría visual | parcial | 06a4b2d | `scripts/contraste.mjs` (8/11 claro, 9/11 oscuro). | Capturas ~40 pantallas, axe |
+| D-3 · Auditoría visual | **hecha** | 45150c2 | `scripts/contraste.mjs` + 22 capturas (11 pantallas claro/oscuro) + `scripts/capturas.mjs` ampliado. | Axe con @axe-core/playwright |
 | D-4 · Legal | hecha | 0784a7b | `privacidad.html`, `terminos.html`, enlazadas. | |
 | D-5 · Robustez | hecha | | (ver abajo) | Modo CATALOG=tmdb en producción |
 | D-6 · PWA | hecha | 4068d1e | Manifest mejorado. | Service Worker mínimo, Lighthouse |

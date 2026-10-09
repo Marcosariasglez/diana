@@ -27,6 +27,7 @@ const ROOT = join(__dirname, '..');
 // `welcome` se siembra con hasOnboarded=false (el guard la redirige a / si ya
 // hay onboarding); el resto, con hasOnboarded=true.
 const SCREENS = [
+  // Principales
   { name: 'login', path: '/login', onboarded: true },
   { name: 'welcome', path: '/welcome', onboarded: false },
   { name: 'inicio', path: '/', onboarded: true },
@@ -34,6 +35,12 @@ const SCREENS = [
   { name: 'match', path: '/match', onboarded: true },
   { name: 'perfil', path: '/profile', onboarded: true },
   { name: 'cuenta', path: '/account', onboarded: true },
+  // Secundarias
+  { name: 'daily-log', path: '/daily-log', onboarded: true },
+  { name: 'notifications', path: '/notifications', onboarded: true },
+  { name: 'not-found', path: '/__not-found__', onboarded: true },
+  // Estados especiales (se capturan pero pueden redirigir)
+  { name: 'room-join', path: '/room/join', onboarded: true },
 ];
 
 const WIDTH = 390;
