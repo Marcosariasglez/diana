@@ -11,7 +11,7 @@ if (!existsSync(indexPath)) {
 }
 
 const manifest = {
-  name: 'Diana',
+  name: 'Diana · Tu cine, con tu gusto.',
   short_name: 'Diana',
   description: 'Encuentra tu próxima película favorita en segundos',
   start_url: `${base}/`,
@@ -21,8 +21,8 @@ const manifest = {
   background_color: '#F4F3EF',
   theme_color: '#0B7A66',
   icons: [
-    { src: `${base}/icon-192.png`, sizes: '192x192', type: 'image/png' },
-    { src: `${base}/icon-512.png`, sizes: '512x512', type: 'image/png' },
+    { src: `${base}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: `${base}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
   ],
 };
 writeFileSync(new URL('manifest.json', dist), JSON.stringify(manifest, null, 2));
@@ -36,6 +36,7 @@ const tags = [
   '<meta name="apple-mobile-web-app-status-bar-style" content="default" />',
   '<meta name="apple-mobile-web-app-title" content="Diana" />',
   '<meta name="theme-color" content="#0B7A66" />',
+  '<meta name="theme-color" content="#0A0C0F" media="(prefers-color-scheme: dark)" />',
 ]
   .filter((t) => !(t.includes('name="theme-color"') && html.includes('name="theme-color"'))) // Expo ya lo pone con web.themeColor
   .join('\n    ');
