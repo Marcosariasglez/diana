@@ -5,16 +5,30 @@ import { CATALOG } from '@/mocks/data/catalog';
 const FIRST_TITLE = 'Aftersun';
 
 /**
- * Mazo del onboarding (7.2): determinista, Aftersun primero, reparto por turnos entre
- * generos principales (genres[0]), maximo ONBOARDING_MAX_PER_MAIN_GENRE por genero y sin
- * dos cartas consecutivas del mismo genero principal mientras haya alternativa.
+ * Mazo del onboarding (7.2) y arranque en frío (VERTICE-PLAN-2, D2-2.5):
+ * determinista, Aftersun primero, reparto por turnos entre géneros principales
+ * (genres[0]), máximo ONBOARDING_MAX_PER_MAIN_GENRE por género y sin dos cartas
+ * consecutivas del mismo género principal mientras haya alternativa.
+ *
+ * Con `platforms` (el swipe de onboarding llega con 0 valoraciones): el mazo se
+ * construye sobre los títulos DISPONIBLES en esas plataformas — «populares en
+ * tus plataformas» (el orden por popularidad del pool se conserva). Si no hay
+ * suficientes disponibles, se completa con el resto del catálogo (popular y
+ * diverso) para no dejar el mazo corto. Sin `platforms` el comportamiento es
+ * exactamente el de antes (contrato O2: Aftersun primero, 8+ géneros, etc.).
  */
 export function getOnboardingDeckMovies(
   count: number = ONBOARDING_COUNT,
   catalog: ReadonlyArray<Media> = CATALOG,
+  platforms?: ReadonlyArray<string>,
 ): Movie[] {
+  const hasPlatforms = (platforms?.length ?? 0) > 0;
+  const inPlatforms = (m: Media) => !hasPlatforms || m.platforms.some((p) => platforms?.includes(p));
   const movies = catalog.filter((m): m is Movie => m.media_type === 'movie');
-  const first = movies.find((m) => m.title === FIRST_TITLE);
+  const inPlat = movies.filter(inPlatforms);
+  // Pool: solo disponibles si son suficientes; si no, se completan con el resto.
+  const pool = inPlat.length >= count ? inPlat : [...inPlat, ...movies.filter((m) => !inPlatforms(m))];
+  const first = pool.find((m) => m.title === FIRST_TITLE);
   const deck: Movie[] = [];
   const used = new Map<number, number>();
   const mainOf = (m: Movie) => m.genres[0]?.id ?? 0;
@@ -25,7 +39,7 @@ export function getOnboardingDeckMovies(
   if (first && count > 0) take(first);
 
   const groups = new Map<number, Movie[]>();
-  for (const m of movies) {
+  for (const m of pool) {
     if (m === first) continue;
     const g = mainOf(m);
     const list = groups.get(g) ?? [];
@@ -39,7 +53,7 @@ export function getOnboardingDeckMovies(
 
   while (deck.length < count) {
     let progressed = false;
-    // Si el primero de la vuelta repetiria el genero de la ultima carta, se pasa al final.
+    // Si el primero de la vuelta repite el género de la última carta, se pasa al final.
     const round = [...order];
     const last = deck[deck.length - 1];
     if (last && round.length > 1 && round[0] === mainOf(last)) round.push(round.shift() as number);

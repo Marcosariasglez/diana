@@ -24,7 +24,10 @@ const mediaCache = new Map<string, Media>();
 const seasonCache = new Map<string, TVSeason>();
 
 export const tmdbCatalogRepository: CatalogRepository = {
-  async getOnboardingDeck(count) { return getOnboardingDeckMovies(count, await getPool()); },
+  async getOnboardingDeck(count, platforms) {
+    const pool = await getPool(platforms ? [...platforms] : []);
+    return getOnboardingDeckMovies(count, pool, platforms ? [...platforms] : undefined);
+  },
   async getFeatured(platforms, ctx) { return pickFeatured(platforms, ctx, await getPool(platforms)); },
   async getFeedCategories(platforms, ctx, page) { return pickFeedPage(platforms, ctx, page, await getPool(platforms)); },
   async getCategoryItems(category, platforms, ctx, page) {

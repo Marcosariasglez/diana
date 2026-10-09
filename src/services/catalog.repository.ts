@@ -2,7 +2,7 @@ import type { FeedCategory, Media, MediaType, MediaWithAffinity, Movie, TVSeason
 import type { Complexity, MoodFilters } from '@/types/mood';
 import type { MediaKey, RankingContext } from '@/types/rating';
 import { QUESTIONS_BY_COMPLEXITY } from '@/features/mood/questions';
-import { getMedia, getTvSeason } from '@/mocks/data/catalog';
+import { CATALOG, getMedia, getTvSeason } from '@/mocks/data/catalog';
 import { fakeDelay } from '@/mocks/latency';
 import { bucketOfTenths } from '@/mocks/mock-ai/predict';
 import {
@@ -15,7 +15,8 @@ import {
 } from '@/mocks/mock-ai';
 
 export interface CatalogRepository {
-  getOnboardingDeck(count: number): Promise<Movie[]>;
+  /** D2-2.5: con `platforms` el mazo usa «populares en tus plataformas» (0 valoraciones). */
+  getOnboardingDeck(count: number, platforms?: ReadonlyArray<string>): Promise<Movie[]>;
   getFeatured(platforms: string[], ctx: RankingContext): Promise<MediaWithAffinity | null>;
   getFeedCategories(
     platforms: string[],
@@ -45,9 +46,9 @@ export interface CatalogRepository {
 export const GROUP_DECK_SEED = 'group-deck';
 
 export const catalogRepository: CatalogRepository = {
-  async getOnboardingDeck(count) {
+  async getOnboardingDeck(count, platforms) {
     await fakeDelay();
-    return getOnboardingDeckMovies(count);
+    return getOnboardingDeckMovies(count, CATALOG, platforms);
   },
   async getFeatured(platforms, ctx) {
     await fakeDelay();

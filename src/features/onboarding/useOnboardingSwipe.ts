@@ -14,11 +14,22 @@ export interface OnboardingSwipe {
   /** Decisiones ya tomadas. */
   decided: number;
   total: number;
+  /**
+   * D2-2.5: true si el mazo se construyó sobre títulos disponibles en las
+   * plataformas del usuario («populares en tus plataformas», arranque en frío
+   * con 0 valoraciones). La pantalla lo muestra como rótulo.
+   */
+  popularOnPlatforms: boolean;
   decide: (media: { id: number }, dir: SwipeDir) => void;
   retry: () => void;
 }
 
-/** Mazo de onboarding (O2): carga 20 peliculas y registra cada decision como valoracion inicial. */
+/**
+ * Mazo de onboarding (O2) y arranque en frío (D2-2.5): carga 20 películas y
+ * registra cada decisión como valoración inicial. Con 0 valoraciones el mazo
+ * es «populares en tus plataformas»: títulos disponibles en las plataformas
+ * favoritas del usuario, diversos y en orden de popularidad.
+ */
 export function useOnboardingSwipe(): OnboardingSwipe {
   const addInitialRating = useProfileStore((s) => s.addInitialRating);
   const completeOnboarding = useProfileStore((s) => s.completeOnboarding);
@@ -26,6 +37,7 @@ export function useOnboardingSwipe(): OnboardingSwipe {
   const [cards, setCards] = useState<Movie[]>([]);
   const [decided, setDecided] = useState(0);
   const [total, setTotal] = useState(ONBOARDING_COUNT);
+  const [popularOnPlatforms, setPopularOnPlatforms] = useState(false);
   const alive = useRef(true);
   const requestId = useRef(0);
   const remaining = useRef(0);
@@ -35,7 +47,8 @@ export function useOnboardingSwipe(): OnboardingSwipe {
     const id = ++requestId.current;
     setStatus('loading');
     try {
-      const deck = await catalogRepository.getOnboardingDeck(ONBOARDING_COUNT);
+      const platforms = useProfileStore.getState().profile.favoritePlatforms;
+      const deck = await catalogRepository.getOnboardingDeck(ONBOARDING_COUNT, platforms);
       if (!alive.current || id !== requestId.current) return;
       if (deck.length === 0) {
         setStatus('error');
@@ -46,6 +59,7 @@ export function useOnboardingSwipe(): OnboardingSwipe {
       setCards(deck);
       setTotal(deck.length);
       setDecided(0);
+      setPopularOnPlatforms(platforms.length > 0);
       setStatus('ready');
     } catch {
       if (alive.current && id === requestId.current) setStatus('error');
@@ -75,5 +89,5 @@ export function useOnboardingSwipe(): OnboardingSwipe {
     [addInitialRating, completeOnboarding],
   );
 
-  return { status, cards, decided, total, decide, retry: () => void load() };
+  return { status, cards, decided, total, popularOnPlatforms, decide, retry: () => void load() };
 }
