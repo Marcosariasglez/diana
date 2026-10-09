@@ -179,7 +179,7 @@ export default function AccountScreen() {
         </Card>
 
         {/* Aplicación */}
-        <Text style={[textStyle('label'), styles.groupLabel]}>APARICENCIA</Text>
+        <Text style={[textStyle('label'), styles.groupLabel]}>APARIENCIA</Text>
         <Card>
           <SegmentedControl
             options={APPEARANCE_OPTIONS}
