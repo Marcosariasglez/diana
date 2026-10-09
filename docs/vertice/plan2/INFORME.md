@@ -29,10 +29,10 @@ Tests:       482 passed, 482 total
 |-------|--------|---------|-----------------------------|--------------------------|
 | D2-0 · Deuda inmediata | **hecha** | `b7c5d43` | verify + auditoría + e2e account-desktop (abajo) | Integración real con Supabase/iPhone |
 | D2-1 · Catálogo completo ES | **hecha** (pendiente dueño: despliegue + token TMDB) | `8700e02` `10a40b8` `2758c6b` `b3b18d4` `056b29b` `28b86ac` `ce83aa1` | verify (79 suites / 482 tests) + auditoría + capturas `docs/vertice/capturas/plan2/` | No se pudo verificar contra la API real de TMDB (sin `TMDB_READ_TOKEN`) ni contra Supabase real (producción intocable); ids TMDB de proveedores sin evidencia en el repo quedaron como `null` (Movistar Plus+, SkyShowtime, Atresplayer, Plex, YouTube) y la sync los salta hasta verificarlos |
-| D2-2 · Recomendador real | en curso | — | — | — |
-| D2-3 · «Quiero ver» y listas | pendiente | — | — | — |
-| D2-4 · Avisos (si queda tiempo) | pendiente | — | — | — |
-| D2-5 · Calidad | pendiente | — | — | — |
+| D2-2 · Recomendador real | **hecha** (pendiente dueño: desplegar 0007 + decidir `content`) | `788c908` `c9bdb75` `11d6d0b` | eval con cifras reales (`evaluacion.md`: heuristic 5.42 EAM / 0.569 p@10; content 3.705 / 0.444) → `heuristic` queda por defecto; 20 tests nuevos; SQL 0007 probado contra Postgres+pgvector local | No se pudo medir contra Supabase real ni con el embedding gte-small real; la evaluación usa embeddings sintéticos del mock (lógica del modelo, no calidad del embedding) |
+| D2-3 · «Quiero ver» y listas | **hecha** (pendiente dueño: desplegar 0008) | `0f3625f` | verify (87/531) + auditoría + scan; SQL 0008/0005 verificado contra Postgres 16 local (`sql-watchlist-local.mjs`: RLS entre usuarios, borrado, upsert); 19 tests nuevos | No se pudo probar contra Supabase real (producción intocable); la prueba de borrado «solo lo del usuario» corrió en Postgres local |
+| D2-4 · Avisos (si queda tiempo) | **hecha** (bandeja in-app; push solo propuesta) | `20be74c` | verify (90/554) + auditoría + scan; 23 tests (lógica, store, hook); propuesta Web Push documentada sin implementar | El aviso llega en la próxima comprobación (cooldown 1 h), no en tiempo real; el push real no se implementa (propuesta en `propuesta-web-push.md`) |
+| D2-5 · Calidad | **hecha** | `ab7f8a6` `1ce3e06` | verify final (95 suites / 581 tests) + auditoría + scan; 13 tests nuevos en stores/repos críticos; `ARQUITECTURA.md` + README (vars, comandos, lanzar sync) | Sin `TMDB_READ_TOKEN` no se pudo re-ejecutar `verify-catalog.mjs` contra la API real (su lógica ya está testeada) |
 
 ## D2-1 · Catálogo completo de España — resumen de lo hecho (commits existentes)
 
@@ -126,3 +126,193 @@ la pantalla Cuenta en escritorio (D2-0) y se registran para el dueño / una tare
 
 **Capturas**: `test-results/d2-0-cuenta-login.png` y `test-results/d2-0-cuenta-movil.png`
 (390×844 y 1280×720).
+
+## D2-2 · Recomendador real — resumen de lo hecho
+
+- **D2-2.1/2.2** (`788c908`, turno previo): migración `0007_recomendador.sql`
+  (`catalog_features` + embedding 384-d con índice HNSW, `recommend()` y
+  `predict_tenths()` con `security invoker`) **probada contra Postgres+pgvector
+  local en Docker** (`node scripts/sql-recommend-local.mjs`: RLS real,
+  aislamiento entre usuarios, arranque en frío).
+- **D2-2.3/2.4/2.6** (`c9bdb75`):
+  - Cliente: [`src/services/recommender.ts`](../../src/services/recommender.ts) —
+    `activeRecommender()` (degrada a `heuristic` si `CATALOG≠tmdb`),
+    `contentRecommend` (RPC `recommend`; `null` si falla → el feed cae a la
+    heurística sin que el usuario lo note) y `contentPredictTenths` (RPC
+    `predict_tenths`, clamp 10..50).
+  - Interruptor [`EXPO_PUBLIC_RECOMMENDER`](../../src/lib/env.ts)
+    (`heuristic|content`), tests `env.test.ts`.
+  - **Evaluación offline** (`scripts/eval-recomendador.mjs` →
+    [`evaluacion.md`](./evaluacion.md)), con **precision@10 corregido** (top-10
+    real por usuario dentro del holdout, no el métrico roto de partida que
+    daba 0.2 a todos):
+
+    | Modelo | EAM (décimas) | Precisión@10 |
+    |---|---|---|
+    | heuristic | 5.42 | **0.569** |
+    | mean | 8.803 | 0.181 |
+    | random | 11.758 | 0.212 |
+    | content | **3.705** | 0.444 |
+
+    Veredicto (regla del plan: debe ganar las dos métricas): **content gana en
+    EAM, la heurística gana en precisión@10** → `EXPO_PUBLIC_RECOMMENDER`
+    queda `heuristic` por defecto y se documenta; el cliente degrada a
+    `heuristic` si el RPC no existe (red de seguridad).
+  - Tests: `recommender.test.ts`, `useFeedStore.test.ts` (content→feed,
+    fallback a heurística) — 16 tests.
+- **D2-2.5** (`11d6d0b`): arranque en frío — `getOnboardingDeckMovies(count,
+  catalog, platforms?)` construye el mazo de títulos disponibles en las
+  plataformas del usuario (completa con el resto del catálogo si hay < count
+  disponibles; el contrato O2 sin plataformas es idéntico); rótulo
+  «Populares en tus plataformas» en el swipe de onboarding. Tests:
+  `onboardingDeck.coldstart.test.ts` (6) + `useOnboardingSwipe.test.ts` (4).
+
+**Qué NO se pudo comprobar:** el RPC `recommend` contra Supabase real
+(producción intocable) y la calidad del embedding **real** (gte-small sobre
+sinopsis): la evaluación usa embeddings sintéticos deterministas del mock, que
+miden la lógica del modelo (vector centrado, prior con shrinkage, umbral 20,
+regresión simple), no la calidad del embedding.
+
+## D2-3 · «Quiero ver» y listas — resumen de lo hecho
+
+- **Migración** `0008_watchlist.sql`: tabla `(user_id, media_type, media_id,
+  notes, added_at)` + RLS `watchlist_own` + índice; **0005 actualizada** con el
+  borrado de `watchlist` (bloque `exception when undefined_table` para que el
+  orden de despliegue no importe; 0005 es la única editable del plan).
+- **Verificado contra Postgres 16 local** (`node scripts/sql-watchlist-local.mjs`,
+  contenedor Docker efímero + `sql-recommend-setup.sql` con stubs
+  `auth.users`/`auth.uid()`/roles `service_role bypassrls`): A lee/escribe lo
+  suyo; **B no puede leer/insertar para A (42501)/actualizar/borrar** (0 filas
+  vía `get diagnostics`); upsert sin duplicados; check constraint rechaza
+  tipo no válido; `delete_user_data(a)` borra watchlist+profile de A y no toca
+  a B. Salida final: `OK 0008/0005: watchlist RLS + borrado verificados contra
+  Postgres local`.
+- **Cliente**: `useWatchlistStore` (persist `diana.watchlist.v1`), repos
+  mock/supabase (upsert `onConflict (user_id,media_type,media_id)` conservando
+  el `added_at` local; delete por (user,tipo,id)); `index.ts` con proxy lazy
+  (mock → `load()` null). **B-D9**: los fallos de red nunca bloquean la UI
+  (`.catch(reportSyncError)`).
+- **UI**: `WatchlistButton` (ficha + `topBadge` sobre la carta del mazo —
+  `SwipeCard`/`SwipeDeck` con `pointerEvents=box-none` para no robar el gesto
+  de swipe); sección «Quiero ver» en Perfil con filtro «disponible ahora en
+  mis plataformas» (resolución perezosa de títulos contra
+  `activeCatalogSource.byIds`).
+- **Datos**: incluida en **exportar mis datos** (`export.ts`, con fallback al
+  store local si la query falla por 0008 sin desplegar) y en
+  `delete_user_data` (0005). `bootstrapUserData` la hidrata desde el servidor
+  como fuente de verdad.
+- Tests: `useWatchlistStore.test.ts` (10), `supabase/watchlist.repository.test.ts`
+  (6), `WatchlistButton.test.tsx` (3) — 19 nuevos.
+
+## D2-4 · Avisos «Ya está en tu plataforma» — resumen de lo hecho
+
+- **Lógica pura** [`availabilityLogic.ts`](../../src/features/notifications/availabilityLogic.ts):
+  compara la watchlist contra el catálogo ACTUAL con una **base guardada** por
+  título (`diana.availability.baseline.v1`): solo se avisa de plataformas
+  NUEVAS **propias**; primera vez solo fija la base (sin aluvión); título
+  fuera del catálogo vacía la base (re-avisa si vuelve).
+- **Hook** [`useAvailabilityNotifications.ts`](../../src/features/notifications/useAvailabilityNotifications.ts)
+  (montado en el layout de tabs): resolución vía `byIds`, **cooldown de 1 h**
+  entre comprobaciones, inactivo con `CATALOG=mock` (catálogo estático) y
+  limpia de la bandeja los avisos de títulos fuera de la watchlist.
+- **UI**: bandeja real en `app/notifications.tsx` (poster + «Ahora en X y Y»,
+  no leídas con borde, tap → ficha, borrar todo; al abrir se marcan leídas) y
+  **badge de no leídos en la campana del inicio**.
+- **Propuesta Web Push SIN implementar** (como pide el plan):
+  [`propuesta-web-push.md`](./propuesta-web-push.md) — VAPID + service worker
+  (Android bien; iOS solo PWA instalada con matices), tablas borrador
+  (`notifications`, `availability_snapshot`, `push_subscriptions`), APNs/EAS
+  Push para iOS garantizado, plan de trabajo y riesgos.
+- Tests: `availabilityLogic.test.ts` (10), `useNotificationTrayStore.test.ts`
+  (8), `useAvailabilityNotifications.test.ts` (5) — 23 nuevos.
+
+## D2-5 · Calidad — resumen de lo hecho
+
+- **Módulos críticos sin test, cubiertos** (13 tests nuevos):
+  `useMoodStore` (wizard, finalize ready/empty/error, carrera por requestId),
+  `useSettingsStore` (persistencia v2, migración v1→v2), `useProfileStore`
+  (espejo con B-D9, copias de arrays, onboarding), `rankingContext` (lectura
+  sin suscripción; `unseen` no cuenta como visto),
+  `supabaseProfileRepository` (load mapeado, parche parcial, onConflict PK,
+  not-authenticated).
+- **`docs/vertice/plan2/ARQUITECTURA.md`**: flujo catálogo →
+  sincronización → cliente → recomendador + watchlist y avisos; tabla de
+  degradación por entorno; mapa de tests de frontera.
+- **README.md**: variables nuevas (`EXPO_PUBLIC_RECOMMENDER`,
+  `TMDB_READ_TOKEN`, `CATALOG_SYNC_SECRET`), comandos nuevos
+  (`eval-recomendador`, `sql-*` local, `verify-catalog`) y sección
+  «Cómo lanzar la sincronización de catálogo» (solo el dueño).
+- El resto de `src/` sin test (componentes UI, hooks, constantes, mocks) está
+  cubierto de forma indirecta por las suites de integración existentes
+  (`wireframeFacts`, `persistence`, e2e) o es datos puros; se documenta aquí
+  la decisión de no forzar test de render por componente.
+
+## Batería final (tras D2-5, tal cual)
+
+`npm run verify`:
+```
+Test Suites: 95 passed, 95 total
+Tests:       581 passed, 581 total
+```
+`node scripts/auditoria-estilos.mjs`:
+```
+✓ Auditoría de estilos: todo limpio.
+```
+`npm run scan:secrets`:
+```
+✓ service_role no filtrada: 290 ficheros revisados en [app, src, public, dist]
+```
+
+## Pasos del dueño (comandos exactos)
+
+Producción intocable durante el turno: **nada** se ha desplegado. En este
+orden (tras copia de seguridad de la base de Supabase):
+
+1. **Extensiones** (Supabase → Database → Extensions): `pg_trgm`, `unaccent`,
+   `vector` (pgvector).
+2. **Migraciones a mano en el SQL Editor** (`supabase db push` no funciona en
+   este proyecto porque 0001–0004 se aplicaron a mano; si se quiere usar,
+   antes: `npx supabase migration repair`):
+   ```
+   supabase/migrations/0005_delete_user_data.sql   (si aún no está; ahora incluye watchlist)
+   supabase/migrations/0006_catalogo.sql
+   supabase/migrations/0007_recomendador.sql
+   supabase/migrations/0008_watchlist.sql
+   ```
+3. **Edge Functions**:
+   ```
+   npx supabase functions deploy tmdb
+   npx supabase functions deploy catalog-sync
+   npx supabase secrets set CATALOG_SYNC_SECRET=<valor>   # el mismo valor, como secret de GitHub
+   ```
+4. **Primera sincronización completa**: GitHub → Actions → *catalog-sync* →
+   **Run workflow** (workflow_dispatch). Comprobar después:
+   ```
+   node scripts/verify-catalog.mjs        # requiere TMDB_READ_TOKEN en .env.local
+   ```
+5. **Recomendador (opcional)**: con 0007 desplegado, decidir
+   `EXPO_PUBLIC_RECOMMENDER=content` (hoy `heuristic` por el veredicto de la
+   evaluación; el cliente degrada solo si el RPC falla).
+6. `git push` (CI: verify + build + Pages en `/diana`).
+7. (D2-1, si aún no) `npx supabase functions deploy delete-account` y
+   re-ejecutar `npm run rls` cuando 0005 esté desplegada (con respaldo
+   reciente; ver README «Cuándo es seguro ejecutar npm run rls»).
+8. (D2-4, opcional) Web Push: ver
+   `docs/vertice/plan2/propuesta-web-push.md` (no se implementó).
+
+## Lo que NO se pudo comprobar contra servicios reales (resumen)
+
+- **TMDB real**: sin `TMDB_READ_TOKEN` en `.env.local` no se llamó a la API
+  (ids de proveedores pendientes de verificar siguen en `PENDING_VERIFICATION`;
+  `verify-catalog.mjs` queda listo para el paso 4).
+- **Supabase real**: 0005 (nueva versión), 0006, 0007 y 0008 **no
+  desplegadas** (producción intocable). Todo lo SQL se probó contra Postgres
+  16 local en Docker (RLS real de usuarios, borrado por usuario, upsert); los
+  repos Supabase, con mocks del cliente.
+- **Embedding real (gte-small)**: la evaluación del recomendador usa
+  embeddings sintéticos; la calidad del embedding real solo se mide en
+  producción tras la primera sync con features.
+- **Avisos**: la detección es client-side con cooldown de 1 h (la sync es
+  diaria); el push real no se implementó (propuesta documentada).
+- **iPhone/PWA instalada**: nada se pudo probar en dispositivo real (e2e
+  cubre web; el guion D5 del plan queda para el dueño).
