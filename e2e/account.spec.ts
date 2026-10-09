@@ -26,7 +26,7 @@ test.describe('cuenta (supabase simulado)', () => {
   test('d) cerrar sesión: scope local, limpia diana.* y vertice-diana-auth, vuelve a /login', async ({ page }) => {
     const { s, errors } = await signedInPage(page);
     // Dato local que debe desaparecer con el cierre.
-    await page.getByRole('button', { name: 'Perfil', exact: true }).click();
+    await page.getByRole('tab', { name: 'Perfil', exact: true }).click();
     // (la métrica de vistas persiste en diana.history.v1 / diana.profile.v1)
 
     await goAccount(page);
@@ -114,7 +114,7 @@ test.describe('cuenta (supabase simulado)', () => {
 
   test('h) apariencia: elegir Oscuro persiste tras recargar', async ({ page }) => {
     const { errors } = await signedInPage(page);
-    await page.getByRole('button', { name: 'Perfil', exact: true }).click();
+    await page.getByRole('tab', { name: 'Perfil', exact: true }).click();
     await page.getByRole('tab', { name: 'Oscuro' }).click();
     // El documento web refleja el tema (data-theme=dark, lo pone ThemeProvider).
     await expect
