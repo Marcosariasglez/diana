@@ -134,14 +134,14 @@ da8293f docs: corrige privacidad.html y terminos.html (nombre, correo, fecha, el
 
 ## Bloqueos y decisiones tomadas
 
-1. **E2E en Windows:** Playwright headless es extremadamente lento (Page crashed, expectLogin no encuentra `login-email-input` porque la página muestra la bienvenida de onboarding en vez del login, posiblemente por fallo en la simulación de sesión o timing). Investigué a fondo el código: el flujo de `bootApp` → `page.goto('/')` → `expectLogin` es correcto, pero `node_modules` faltaba en este entorno. Se creó `.github/workflows/e2e.yml` (workflow_dispatch, ubuntu-latest) para ejecutar la suite en CI donde los browsers están disponibles. No afirmo que la suite pase sin haberlo visto.
+1. **E2E en Windows:** No demostrado; pendiente de ejecutar en GitHub Actions. Se observó "Page crashed" y que `expectLogin` encontraba la bienvenida de onboarding en vez del login. La causa real (node_modules ausente, fallo de simulación de sesión, timing) no está demostrada. Se creó `.github/workflows/e2e.yml` (workflow_dispatch, ubuntu-latest) para ejecutar la suite en CI donde los browsers están disponibles. No se afirma que la suite pase sin haberlo visto.
 2. **npm audit y coverage:** No se pudieron ejecutar en este entorno Windows (comandos fallaron con findstr). Se recomienda CI.
 3. **handle_new_user compartido:** El trigger crea perfil de Diana para cualquier usuario nuevo de Supabase (incluido Norte). Es inocuo. Decisión: dejar como está.
-4. **Páginas legales:** Se eliminó la finalidad "análisis agregados y anónimos" (Diana no la implementa). Se eliminó el plazo de "30 días" para borrado (el código borra inmediatamente al llamar `delete-account`; los backups de Supabase rotan sin plazo publicado). Se rellenaron nombre, correo y fecha.
+4. **Páginas legales:** Se eliminó la finalidad "análisis agregados y anónimos" (Diana no la implementa). Se eliminó el plazo de "30 días" para borrado (el código borra inmediatamente al llamar `delete-account`; los backups de Supabase rotan sin plazo publicado). Se rellenaron nombre y correo (Marcos / marcosariasgonzalez00@gmail.com). La cláusula de propiedad intelectual y la de legislación española/tribunales de Madrid se eliminaron de terminos.html y se sustituyeron por una línea neutra; quedan pendientes de revisión legal del dueño.
 
 ## Pendientes del dueño
 
-1. ~~**Revisar páginas legales:** rellenar `[RELLENAR]` y quitar cartel BORRADOR~~ ✅ Hecho (mantener cartel BORRADOR como se pidió).
+1. ~~**Revisar páginas legales:** rellenar `[RELLENAR]` y quitar cartel BORRADOR~~ ✅ Responsable corregido (Marcos / marcosariasgonzalez00@gmail.com). Cartel BORRADOR mantenido. Cláusulas de propiedad intelectual y legislación española eliminadas; revisión legal pendiente del dueño.
 2. **Copia de seguridad de Supabase** antes de despliegue
 3. **`npx supabase db push --project-ref hvjmewokgxgrshtzhdjq`** (migración 0005)
 4. **`npx supabase functions deploy delete-account --project-ref hvjmewokgxgrshtzhdjq`** (+ secrets si necesario)
