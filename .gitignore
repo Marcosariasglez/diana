@@ -49,3 +49,6 @@ example
 /ios
 /android
 jest-out.txt
+
+# test coverage
+coverage/

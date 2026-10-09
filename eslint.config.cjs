@@ -78,6 +78,7 @@ module.exports = [
       'supabase/',
       'scripts/',
       'e2e/',
+      'coverage/',
       'eslint.config.cjs',
       'babel.config.js',
       'jest.config.js',
