@@ -39,8 +39,17 @@ const REGION = 'ES';
 const LANG = 'es-ES';
 
 // Presupuesto por ejecución (para ser reanudable). Ajustable por query.
+//
+// IMPORTANTE (límites del plan gratuito de Supabase, verificado 2026-10-09):
+//   - Wall clock máx por worker: 150 s (gratis) / 400 s (de pago).
+//   - Timeout de respuesta (idle): 150 s → si la función no responde antes,
+//     Supabase devuelve 504. Esta función responde al terminar, así que el
+//     presupuesto POR DEFECTO debe caber en < 150 s; el trabajo restante se
+//     recupera en la siguiente ejecución (workflow cron/dispatch) gracias a
+//     catalog_sync_state.
 const DEFAULT_PAGE_BUDGET = 200;                  // páginas de discover por run
-const DEFAULT_TIME_BUDGET_MS = 4 * 60 * 1000;     // 4 min por run
+const DEFAULT_TIME_BUDGET_MS = 2 * 60 * 1000;     // 2 min por run (< 150 s idle)
+const MAX_TIME_BUDGET_MS = 4 * 60 * 1000;         // tope de la opción timeMs
 const DEFAULT_BATCH = 100;                        // filas por upsert
 const DEFAULT_DELTA_YEARS = 2;                    // `delta`: últimos N años
 const DEFAULT_START_YEAR = 1940;
@@ -325,17 +334,23 @@ async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number): Prom
     monetization: job.monetization,
     range_key: job.window.key,
   };
-  // Continúa desde la última página guardada (REANUDABLE).
+  // REANUDABLE: lee el estado anterior de este trabajo.
   const { data: prev } = await admin
     .from('catalog_sync_state')
-    .select('last_page, last_total')
+    .select('last_page, last_total, status')
     .eq('provider', job.provider)
     .eq('media_type', job.mediaType)
     .eq('monetization', job.monetization)
     .eq('range_key', job.window.key)
     .maybeSingle();
-  const startPage = (prev?.last_page as number) ?? 0;
-  let total = (prev?.last_total as number) ?? 0;
+  const prevRow = prev as { last_page?: number; last_total?: number; status?: string } | null;
+  // Si la pasada se interrumpió (running/error) por el presupuesto de tiempo o
+  // páginas, continúa DESDE la última página guardada. Si ya terminó (done) es
+  // una re-sincronización (novedades y cambios de disponibilidad) y vuelve a
+  // empezar por la página 1 para capturar lo nuevo.
+  const incomplete = prevRow != null && (prevRow.status === 'running' || prevRow.status === 'error');
+  const startPage = incomplete ? (prevRow.last_page ?? 0) : 0;
+  let total = incomplete ? (prevRow.last_total ?? 0) : 0;
   await admin
     .from('catalog_sync_state')
     .upsert({ ...stateKey, status: 'running', last_error: null, last_page: startPage, updated_at: new Date().toISOString() });
@@ -418,7 +433,7 @@ Deno.serve(async (req: Request) => {
   const mode = body.mode === 'delta' ? 'delta' : 'full';
   const budget: RunBudget = {
     pages: Math.max(1, Math.min(Number(body.pages) || DEFAULT_PAGE_BUDGET, 2000)),
-    timeMs: Math.max(1_000, Math.min(Number(body.timeMs) || DEFAULT_TIME_BUDGET_MS, 10 * 60 * 1000)),
+    timeMs: Math.max(1_000, Math.min(Number(body.timeMs) || DEFAULT_TIME_BUDGET_MS, MAX_TIME_BUDGET_MS)),
   };
   const currentYear = Number(body.currentYear) || new Date().getFullYear();
   // Límite opcional de trabajos por run (debug/avanzado gradual; por defecto sin tope).

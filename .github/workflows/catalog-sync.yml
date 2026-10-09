@@ -1,0 +1,95 @@
+# Sincronización del catálogo España (VERTICE-PLAN-2, D2-1.4).
+#
+# Llama a la Edge Function `catalog-sync` con el secreto de sincronización.
+# La función es REANUDABLE (catalog_sync_state), así que cada ejecución
+# procesa un presupuesto (por defecto 2 min, < el timeout de 150 s del plan
+# gratuito) y la siguiente continúa donde quedó. Por eso:
+#   - `delta` DIARIO: novedades + cambios de disponibilidad de los últimos años.
+#   - `full` SEMANAL (domingo): re-sincroniza todo el catálogo por ventanas de
+#     años; las que no terminan en un run se retoman en el siguiente (el
+#     cron de delta de martes a sábado y el dispatch manual ayudan).
+#
+# Variables del REPOSITORIO (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL          (variable, igual que keepalive.yml)
+#   CATALOG_SYNC_SECRET   (secret; el MISMO valor que el secreto de la función
+#                          en Supabase: `supabase secrets set CATALOG_SYNC_SECRET=…`).
+#
+# Alternativa a pg_cron + pg_net (documentada en INFORME.md): pg_cron ejecuta
+# el job dentro de Postgres y pg_net llama a la función con HTTP sin depender
+# de GitHub. Requiere extensión pg_cron (disponible en Supabase) y pg_net
+# (NO disponible en el plan gratuito de Supabase; en el self-hosted o en pago
+# según la región). El workflow de GitHub es el elegido porque no exige
+# extensión de pago y ya existe el patrón (keepalive.yml).
+name: catalog-sync
+
+on:
+  schedule:
+    # delta diario 03:30 UTC (05:30 Madrid en verano).
+    - cron: '30 3 * * *'
+    # full semanal, domingo 01:00 UTC (03:00 Madrid en verano).
+    - cron: '0 1 * * 0'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Modo de sincronización'
+        type: choice
+        options:
+          - delta
+          - full
+        default: delta
+      pages:
+        description: 'Presupuesto de páginas por run (opcional)'
+        type: string
+        default: ''
+      timeMs:
+        description: 'Presupuesto de milisegundos por run (opcional; máx 240000)'
+        type: string
+        default: ''
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delta diario (cron 30 3 * * *)
+        if: github.event_name == 'schedule' && github.event.schedule == '30 3 * * *'
+        run: |
+          curl -fsS -X POST \
+            "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
+            -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
+            -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{"mode":"delta"}' \
+            -o /tmp/catalog-sync.json -w "HTTP %{http_code}\n"
+          cat /tmp/catalog-sync.json
+
+      - name: Full semanal (cron) o parámetros manuales (dispatch)
+        if: github.event_name == 'schedule' && github.event.schedule == '0 1 * * 0'
+        run: |
+          curl -fsS -X POST \
+            "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
+            -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
+            -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{"mode":"full"}' \
+            -o /tmp/catalog-sync.json -w "HTTP %{http_code}\n"
+          cat /tmp/catalog-sync.json
+
+      - name: Ejecución manual (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          MODE: ${{ github.event.inputs.mode }}
+          PAGES: ${{ github.event.inputs.pages }}
+          TIME_MS: ${{ github.event.inputs.timeMs }}
+        run: |
+          BODY="{\"mode\":\"${MODE}\"}"
+          [ -n "$PAGES" ] && BODY="{\"mode\":\"${MODE}\",\"pages\":${PAGES}}"
+          [ -n "$TIME_MS" ] && BODY="{\"mode\":\"${MODE}\",\"timeMs\":${TIME_MS}}"
+          [ -n "$PAGES" ] && [ -n "$TIME_MS" ] && BODY="{\"mode\":\"${MODE}\",\"pages\":${PAGES},\"timeMs\":${TIME_MS}}"
+          curl -fsS -X POST \
+            "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
+            -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
+            -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            -o /tmp/catalog-sync.json -w "HTTP %{http_code}\n"
+          cat /tmp/catalog-sync.json

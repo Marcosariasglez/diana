@@ -266,6 +266,33 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
     expect(tmdbRequests.some((u) => /page=1/.test(u) && u.includes('/discover/movie'))).toBe(false);
   });
 
+  it('re-sincroniza: si la pasada terminó (done), vuelve a empezar por la página 1 (captura novedades)', async () => {
+    syncState.push({
+      provider: 'netflix',
+      media_type: 'movie',
+      monetization: 'flatrate',
+      range_key: '1940-1949',
+      last_page: 1,
+      last_total: 40,
+      status: 'done',
+      last_error: null,
+      last_synced_at: '2026-10-01T00:00:00.000Z',
+      updated_at: '2026-10-01T00:00:00.000Z',
+    });
+    page('movie', 1, [titleRow(600)], 1, 1);
+
+    const res = await post({ mode: 'full', currentYear: 1949, pages: 5, timeMs: 60_000, maxJobs: 1 });
+    expect(res.status).toBe(200);
+    // Re-sincronización desde la página 1 (no desde la 1 guardada → no hace nada).
+    expect(tmdbRequests.some((u) => /page=1/.test(u) && u.includes('/discover/movie'))).toBe(true);
+    expect(titles.some((t) => t.tmdb_id === 600)).toBe(true);
+    const st = syncState.find(
+      (s) => s.provider === 'netflix' && s.media_type === 'movie' && s.monetization === 'flatrate' && s.range_key === '1940-1949',
+    );
+    expect(st).toBeDefined();
+    expect(st!.status).toBe('done');
+  });
+
   it('upsert con el mismo título ya sincronizado NO duplica (idempotente)', async () => {
     titles.push(titleRow(1, { platforms_flatrate: ['netflix'] }));
     page('movie', 1, [titleRow(1)], 1, 1);
