@@ -1,0 +1,112 @@
+[
+  {
+    "screen": "login",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "welcome",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "inicio",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "mood",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "match",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "perfil",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "cuenta",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "daily-log",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "notifications",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "not-found",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "room-join",
+    "theme": "light",
+    "ok": true
+  },
+  {
+    "screen": "login",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "welcome",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "inicio",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "mood",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "match",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "perfil",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "cuenta",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "daily-log",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "notifications",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "not-found",
+    "theme": "dark",
+    "ok": true
+  },
+  {
+    "screen": "room-join",
+    "theme": "dark",
+    "ok": true
+  }
+]
