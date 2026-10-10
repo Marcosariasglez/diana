@@ -17,6 +17,12 @@
 
 \set ON_ERROR_STOP on
 
+-- El tipo `vector` (y sus operadores) vive en el schema `extensions` (0007
+-- crea la extensión ahí, como en Supabase). Esta sesión de pruebas conecta
+-- con el search_path por defecto (sin `extensions`), así que lo apéndalo:
+-- afecta solo a esta sesión, no a nada global.
+select set_config('search_path', current_setting('search_path') || ', extensions', false);
+
 -- ---------------------------------------------------------------------------
 -- Datos sintéticos
 -- ---------------------------------------------------------------------------

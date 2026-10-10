@@ -24,7 +24,26 @@
 --     el usuario solo ve SUS valoraciones por RLS (prueba de aislamiento en
 --     scripts/sql-recommend-test.sql contra un Postgres local).
 
-create extension if not exists vector;
+-- La extensión vive en el schema `extensions` (convención de Supabase: la UI
+-- la crea ahí por defecto). El Postgres local de los scripts (imagen
+-- pgvector/pgvector:pg16) no tiene ese schema: se crea antes (idempotente).
+-- IMPORTANTE: los PL/pgSQL de abajo llevan `set search_path = public,
+-- extensions` porque el tipo `vector` (y sus operadores) viven en
+-- `extensions`; si la búsqueda de nombres no lo ve, falla 42704 al compilar.
+create schema if not exists extensions;
+create extension if not exists vector with schema extensions;
+
+-- En Supabase la plantilla ya da USAGE de `extensions` a anon/authenticated;
+-- en un Postgres local de pruebas no (y si la extensión se creó como superuser
+-- el default es solo para el owner). Se garantiza aquí (idempotente).
+grant usage on schema extensions to authenticated;
+grant usage on schema extensions to anon;
+
+-- El SQL Editor de Supabase corre con search_path "$user", public: añade
+-- `extensions` a la búsqueda de nombres de ESTA sesión (así el tipo `vector`
+-- y la clase de operadores vector_cosine_ops del índice HNSW se resuelven).
+-- Solo afecta a esta transacción; no toca nada global.
+select set_config('search_path', 'public, extensions', false);
 
 -- ---------------------------------------------------------------------------
 -- catalog_features: señales por título para el recomendador basado en
@@ -84,7 +103,7 @@ revoke all on public.catalog_features_state from anon, authenticated, public;
 -- TMDB vote_average (0..10) → décimas de Diana (10..50) = vote_average * 5.
 create function public._prior_tenths(p_media_type text, p_tmdb_id int)
 returns numeric
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select round(5 * (c.vote_count * c.vote_average
                     + 100 * coalesce((select avg(c2.vote_average)
                                       from public.catalog_titles c2
@@ -112,7 +131,7 @@ grant execute on function public._prior_tenths(text, int) to authenticated;
 -- gusto de otro usuario (misma pauta que los RPC de 0003).
 create function public._user_taste_vector(p_user uuid)
 returns vector
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, extensions as $$
 declare
   v_sk vector;      -- Σ K_i·e_i (K_i = 2·nota, entero 1..10)
   v_s0 vector;      -- Σ e_i
@@ -182,7 +201,7 @@ grant execute on function public._user_taste_vector(uuid) to authenticated;
 -- géneros de la heurística actual, pero centrado y real.)
 create function public._genre_prefs(p_user uuid)
 returns table (genre_id int, weight numeric)
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, extensions as $$
 declare
   v_avg numeric;
 begin
@@ -214,7 +233,7 @@ grant execute on function public._genre_prefs(uuid) to authenticated;
 -- géneros del candidato (los sin señal no penalizan: 0).
 create function public._genre_affinity(p_user uuid, p_genre_ids int[])
 returns numeric
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, extensions as $$
 begin
   if p_user is distinct from auth.uid() then
     raise exception 'bad-user';
@@ -258,6 +277,7 @@ create function public.recommend(
 )
 language sql stable
 security invoker
+set search_path = public, extensions
 as $$
   with platforms as (
     select case when coalesce(array_length(p_platforms, 1), 0) > 0
@@ -276,7 +296,7 @@ as $$
       c.popularity,
       case
         when tv.v is null then 0::numeric   -- frío: desempate por popularidad
-        else (0.7 * coalesce(1 - (f.embedding <-> tv.v), 0)
+        else (0.7 * coalesce(1 - extensions.l2_distance(f.embedding, tv.v), 0)
               + 0.3 * public._genre_affinity(auth.uid(), c.genre_ids))::numeric
       end as score
     from public.catalog_titles c
@@ -327,7 +347,7 @@ as $$
            join public.catalog_features cf
              on cf.tmdb_id = c.tmdb_id and cf.media_type = c.media_type
            where r.delta > 0 and cf.embedding is not null
-           order by (cf.embedding <-> r.emb) asc
+           order by extensions.l2_distance(cf.embedding, r.emb) asc
            limit 2
          ) x),
          array[]::text[]
@@ -356,6 +376,7 @@ create function public.predict_tenths(p_media_type text, p_tmdb_id int)
 returns smallint
 language plpgsql stable
 security invoker
+set search_path = public, extensions
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -386,7 +407,7 @@ begin
     into v_cov, v_var
     from (
       select h.user_rating as r,
-             0.7 * coalesce(1 - (f.embedding <-> public._user_taste_vector(v_uid)), 0)
+             0.7 * coalesce(1 - extensions.l2_distance(f.embedding, public._user_taste_vector(v_uid)), 0)
                + 0.3 * public._genre_affinity(v_uid, c.genre_ids) as score
       from public.history_entries h
       left join public.catalog_features f
@@ -400,11 +421,11 @@ begin
 
   -- score del candidato y media de los scores valorados (mismo score).
   select
-    0.7 * coalesce(1 - (f.embedding <-> public._user_taste_vector(v_uid)), 0)
+    0.7 * coalesce(1 - extensions.l2_distance(f.embedding, public._user_taste_vector(v_uid)), 0)
       + 0.3 * public._genre_affinity(v_uid, c.genre_ids),
     (select coalesce(avg(x.score), 0)
      from (
-       select 0.7 * coalesce(1 - (f2.embedding <-> public._user_taste_vector(v_uid)), 0)
+       select 0.7 * coalesce(1 - extensions.l2_distance(f2.embedding, public._user_taste_vector(v_uid)), 0)
                 + 0.3 * public._genre_affinity(v_uid, c2.genre_ids) as score
        from public.history_entries h2
        left join public.catalog_features f2
