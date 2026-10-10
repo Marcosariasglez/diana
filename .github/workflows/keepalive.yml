@@ -2,6 +2,10 @@
 # de inactividad. IMPORTANTE: la pausa la causa el Postgres en reposo, así que el
 # ping debe tocar la base de datos, no solo el endpoint /auth/v1/health.
 # Consulta mínima autenticada con la anon key (variable del repo, NUNCA service_role).
+# IMPORTANTE: GET, no POST: un POST sin cuerpo lo interpreta PostgREST como
+# JSON-PATCH y responde 400 PGRST102 «Empty or invalid json» (rompía el ping).
+# El cuerpo vacío [] con anon+RLS es el resultado esperado (no ve filas ajenas):
+# lo que cuenta es que la consulta toque Postgres y despierte el plan gratuito.
 name: keepalive
 on:
   schedule:
@@ -14,7 +18,7 @@ jobs:
       - name: Consulta mínima a Postgres (anon key)
         run: |
           curl -fsS -o /dev/null -w "%{http_code}" \
-            -X POST "${{ vars.SUPABASE_URL }}/rest/v1/profiles?select=id&limit=1" \
+            "${{ vars.SUPABASE_URL }}/rest/v1/profiles?select=id&limit=1" \
             -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
             -H "Authorization: Bearer ${{ vars.SUPABASE_ANON_KEY }}" \
             -H "Content-Profile: public" \
