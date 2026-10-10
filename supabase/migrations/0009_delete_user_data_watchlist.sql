@@ -1,18 +1,15 @@
--- Diana 0005: borrado de datos de Diana (VERTICE Q2).
--- Borra SOLO los datos de la app Diana del usuario de `p_target_user_id`, en
--- orden de dependencias (FK cascade haría el trabajo de las hijas, pero se
--- explicita para que quede claro y no dependa del esquema).
--- El alcance de las salas está RESTRINGIDO a las salas en las que participaba
--- este usuario (miembro o anfitrión): nunca se borran salas huérfanas de
--- otras personas.
--- La identidad de Supabase Auth (auth.users) NO se toca: la borra la Edge
--- Function `delete-account` con service_role solo cuando recibe
--- { everywhere: true }.
+-- Diana 0009: delete_user_data con el borrado de «Quiero ver» (VERTICE-PLAN-2, D2-3).
 --
--- Seguridad: security definer (necesita borrar filas de tablas con RLS),
--- pero REVOKE a todo el mundo: solo se llama con service_role desde la
--- Edge Function (allí se valida el JWT del usuario). Ni anon ni
--- authenticated pueden invocar este RPC.
+-- MIGRACIÓN FORWARD (no editar 0005): en las bases donde 0005 ya se aplicó,
+-- la función sigue teniendo el cuerpo ANTIGUO (sin el borrado de watchlist)
+-- y el borrado local de una cuenta (delete-account con everywhere=false)
+-- dejaba filas huérfanas en public.watchlist (el cascade de auth.users no
+-- se ejecuta: solo se toca con everywhere=true). Se re-crea la función con
+-- `create or replace`: idempotente y seguro sobre ambas versiones.
+--
+-- Mismo cuerpo que el 0005 editado (para despliegues nuevos donde 0005 aún
+-- no se había aplicado), con los mismos permisos: security definer +
+-- REVOKE a todos (solo se invoca con service_role desde la Edge Function).
 
 create or replace function public.delete_user_data(p_target_user_id uuid)
 returns void
@@ -48,11 +45,14 @@ begin
   delete from public.history_entries where user_id = p_target_user_id;
   delete from public.initial_ratings where user_id = p_target_user_id;
 
-  -- El borrado de «Quiero ver» (watchlist, tabla 0008) NO está aquí: se
-  -- añadió en la migración forward 0009_delete_user_data_watchlist.sql.
-  -- En las bases donde 0005 ya estaba aplicada, editar ESTE archivo no
-  -- actualizaría la función desplegada: la re-crea 0009 con `create or
-  -- replace` (incluido este borrado y el mismo REVOKE).
+  -- D2-3: «Quiero ver» (tabla de la migración 0008). Si 0008 aún no se
+  -- aplicó (orden de despliegue a mano del dueño), no debe fallar el resto
+  -- del borrado: se ignora solo la tabla inexistente.
+  begin
+    delete from public.watchlist where user_id = p_target_user_id;
+  exception when undefined_table then
+    null;
+  end;
 
   delete from public.profiles where id = p_target_user_id;
 end $$;

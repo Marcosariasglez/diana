@@ -102,7 +102,12 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
         set({
           featured: content.featured,
           categories: content.categories,
-          hasMore: content.hasMore,
+          // El RPC `recommend` aún NO tiene paginación (devuelve hasta 60
+          // candidatos de una vez); `loadNextPage` llamaría al repositorio
+          // heurístico y mezclaría páginas heurísticas a mitad del feed de
+          // contenido. Se marca NO paginable hasta que el RPC tenga paging/
+          // caché de continuación (D2-2.6).
+          hasMore: false,
           page: 0,
           status: 'ready',
         });

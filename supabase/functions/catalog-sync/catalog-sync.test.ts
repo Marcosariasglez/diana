@@ -174,6 +174,7 @@ interface JobResult {
   total: number;
   done: boolean;
   error?: string;
+  skipped?: boolean;
 }
 interface SyncBody {
   mode: string;
@@ -291,6 +292,53 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
     );
     expect(st).toBeDefined();
     expect(st!.status).toBe('done');
+  });
+
+  it('resync:false: un trabajo ya terminado (done) se SALTA (la bomba solo avanza lo pendiente)', async () => {
+    syncState.push({
+      provider: 'netflix',
+      media_type: 'movie',
+      monetization: 'flatrate',
+      range_key: '1940-1949',
+      last_page: 1,
+      last_total: 40,
+      status: 'done',
+      last_error: null,
+      last_synced_at: '2026-10-01T00:00:00.000Z',
+      updated_at: '2026-10-01T00:00:00.000Z',
+    });
+
+    const res = await post({ mode: 'full', currentYear: 1949, pages: 5, timeMs: 60_000, maxJobs: 1, resync: false });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as SyncBody;
+    expect(body.results[0].done).toBe(true);
+    expect(body.results[0].skipped).toBe(true);
+    expect(body.results[0].synced).toBe(0);
+    expect(body.stopped).toBe(false);
+    // Nada pendiente: no se debe llamar a TMDB.
+    expect(tmdbRequests.length).toBe(0);
+  });
+
+  it('resync:false con un trabajo pendiente (running): sí lo REANUDA (la bomba avanza)', async () => {
+    syncState.push({
+      provider: 'netflix',
+      media_type: 'movie',
+      monetization: 'flatrate',
+      range_key: '1940-1949',
+      last_page: 1,
+      last_total: 40,
+      status: 'running',
+      last_error: null,
+      last_synced_at: null,
+      updated_at: null,
+    });
+    page('movie', 2, [titleRow(700)], 1, 1);
+
+    const res = await post({ mode: 'full', currentYear: 1949, pages: 5, timeMs: 60_000, maxJobs: 1, resync: false });
+    expect(res.status).toBe(200);
+    expect(tmdbRequests.some((u) => /page=2/.test(u) && u.includes('/discover/movie'))).toBe(true);
+    expect(tmdbRequests.some((u) => /page=1/.test(u) && u.includes('/discover/movie'))).toBe(false);
+    expect(titles.some((t) => t.tmdb_id === 700)).toBe(true);
   });
 
   it('upsert con el mismo título ya sincronizado NO duplica (idempotente)', async () => {

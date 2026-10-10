@@ -26,14 +26,24 @@ Las migraciones viven en `supabase/migrations/`. Deben aplicarse en orden numér
 | `0003_rpc.sql` | RPC para salas (crear, unirse, decisiones, etc.) | ✅ Sí |
 | `0004_realtime.sql` | Realtime para salas (publicación de cambios en tiempo real) | ✅ Sí |
 | `0005_delete_user_data.sql` | RPC `delete_user_data(uuid)` para borrado de datos de Diana | ❌ **Pendiente** |
+| `0006_catalogo.sql` | Catálogo España (`catalog_titles` + `catalog_sync_state` + RLS) | ❌ **Pendiente** |
+| `0007_recomendador.sql` | Recomendador vectorial (`embeddings` + RPC `recommend`) | ❌ **Pendiente** |
+| `0008_watchlist.sql` | «Quiero ver» (tabla `watchlist` + RLS) | ❌ **Pendiente** |
+| `0009_delete_user_data_watchlist.sql` | Forward: re-crea `delete_user_data` con el borrado de `watchlist` (editar 0005 no actualiza las bases donde ya estaba aplicada) | ❌ **Pendiente** |
+| `0010_catalog_sync_state_monetization.sql` | Forward: check de `monetization` admite `'rent|buy'` (el pase 2 de catalog-sync lo escribe; sin esto el job nunca se reanuda) | ❌ **Pendiente** |
 
-### Desplegar migración pendiente
+### Desplegar migraciones pendientes
 
 ```bash
 npx supabase db push --project-ref hvjmewokgxgrshtzhdjq
 ```
 
 Esto aplicará **solo** las migraciones que no estén desplegadas (en este caso, la 0005).
+
+> **Nota (migraciones forward):** `0009` y `0010` corrigen objetos creados por
+> `0005`/`0006` en bases donde esas ya estaban aplicadas (editar una migración
+> ya numerada no actualiza una base desplegada). Son idempotentes: en un
+> despliegue desde cero aplican el estado final igual.
 
 ### Verificar migraciones
 

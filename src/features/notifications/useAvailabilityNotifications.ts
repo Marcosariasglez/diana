@@ -7,6 +7,7 @@ import { activeCatalogSource } from '@/services/supabase/catalog/select';
 import { reportSyncError } from '@/lib/syncError';
 import { BACKEND, CATALOG } from '@/lib/env';
 import { detectNewlyAvailable, keyOf } from './availabilityLogic';
+import { AVAILABILITY_BASELINE_KEY, AVAILABILITY_LAST_CHECK_KEY } from './availabilityKeys';
 
 /**
  * VERTICE-PLAN-2, D2-4: orquesta la detección de «Ya está en tu plataforma».
@@ -26,15 +27,13 @@ import { detectNewlyAvailable, keyOf } from './availabilityLogic';
  * useNotificationTrayStore (lo leen la campana y la bandeja). Se monta una
  * vez en el layout de tabs.
  */
-const BASELINE_KEY = 'diana.availability.baseline.v1';
-const LAST_CHECK_KEY = 'diana.availability.lastcheck.v1';
 export const CHECK_COOLDOWN_MS = 60 * 60 * 1000;
 
 type Baseline = Record<string, string[]>;
 
 async function readBaseline(): Promise<Baseline> {
   try {
-    const raw = await AsyncStorage.getItem(BASELINE_KEY);
+    const raw = await AsyncStorage.getItem(AVAILABILITY_BASELINE_KEY);
     return raw ? (JSON.parse(raw) as Baseline) : {};
   } catch {
     return {};
@@ -43,7 +42,7 @@ async function readBaseline(): Promise<Baseline> {
 
 async function readLastCheck(): Promise<number> {
   try {
-    const raw = await AsyncStorage.getItem(LAST_CHECK_KEY);
+    const raw = await AsyncStorage.getItem(AVAILABILITY_LAST_CHECK_KEY);
     const n = raw ? Number(raw) : 0;
     return Number.isFinite(n) ? n : 0;
   } catch {
@@ -61,9 +60,16 @@ export function useAvailabilityNotifications(): { checking: boolean } {
   const inFlight = useRef(false);
   const runId = useRef(0);
 
-  // Limpieza: los avisos de títulos fuera de la watchlist se descartan.
+  // Limpieza: los avisos de títulos fuera de la watchlist se descartan. Si la
+  // watchlist está VACÍA se limpia toda la bandeja (los avisos de la cuenta
+  // anterior no pueden quedar visibles: el efecto no se re-ejecuta hasta que
+  // haya elementos y `resetLocalStores` no cubre el caso «misma sesión, el
+  // usuario vacía su lista»).
   useEffect(() => {
-    if (items.length === 0) return;
+    if (items.length === 0) {
+      useNotificationTrayStore.getState().clear();
+      return;
+    }
     const alive = new Set(items.map((i) => keyOf(i)));
     const tray = useNotificationTrayStore.getState().notices;
     const stale = tray.filter((n) => !alive.has(keyOf(n)));
@@ -97,6 +103,7 @@ export function useAvailabilityNotifications(): { checking: boolean } {
       for (const m of [...movies, ...tvs]) byKey.set(keyOf({ mediaType: m.media_type, mediaId: m.id }), m);
 
       const baseline = await readBaseline();
+      if (id !== runId.current) return; // se des-montó en el último await
       const { news, nextBaseline } = detectNewlyAvailable(
         items,
         (mediaType, mediaId) => byKey.get(keyOf({ mediaType, mediaId })),
@@ -107,8 +114,8 @@ export function useAvailabilityNotifications(): { checking: boolean } {
       // Con CATALOG=mock el catálogo no cambia: no se fija base (no se
       // generarían avisos falsos) ni se marca la hora.
       if (CATALOG !== 'mock' && BACKEND !== 'mock') {
-        await AsyncStorage.setItem(BASELINE_KEY, JSON.stringify(nextBaseline));
-        await AsyncStorage.setItem(LAST_CHECK_KEY, String(now));
+        await AsyncStorage.setItem(AVAILABILITY_BASELINE_KEY, JSON.stringify(nextBaseline));
+        await AsyncStorage.setItem(AVAILABILITY_LAST_CHECK_KEY, String(now));
       }
       if (news.length > 0) {
         const add = useNotificationTrayStore.getState().add;
@@ -135,6 +142,14 @@ export function useAvailabilityNotifications(): { checking: boolean } {
   useEffect(() => {
     if (!hydrated) return;
     void runCheck();
+    return () => {
+      // Desmontaje (p. ej. cierre de sesión → /login): invalida la
+      // comprobación en vuelo para que no escriba en bandeja/storage DESPUÉS
+      // del cierre (un add() tardío reescribiría la clave diana.* que acaba
+      // de limpiar el cierre de sesión).
+      runId.current += 1;
+      inFlight.current = false;
+    };
   }, [runCheck, hydrated]);
 
   return { checking };

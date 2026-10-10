@@ -1,16 +1,22 @@
 // VERTICE-PLAN-2, D2-1.5: traduce los parámetros del motor (BrowseParams /
 // SearchParams) a filtros PostgREST sobre `catalog_titles`. Es PURO y se
 // prueba con fixtures (no hay Supabase real): verifica que se construye el
-// filtro correcto (cs. sobre arrays, or para «disponible en mis plataformas»,
+// filtro correcto (cd. sobre arrays, or para «disponible en mis plataformas»,
 // websearch_query para FTS, rango de década, orden y range).
 //
 // La salida es ESTRUCTurada ({col, op, val}) para poder aplicarla al builder
 // de supabase-js con .filter(col, op, val) / .or(val). `toQueryStrings` la
 // convierte a la forma `col=op.val` legible (para tests/log).
+//
+// Sintaxis PostgREST: para arrays se usa `cd` (contains: «el array contiene
+// estos elementos»), NO `cs` (contained-by, que además casaría con el array
+// vacío {}), y el valor va como literal de array `{a,b}`. `.or()` recibe los
+// términos `col.cd.{...}` SEPARADOS POR COMAS sin paréntesis: supabase-js
+// añade los paréntesis él mismo.
 import { MAX_PAGE_SIZE, type BrowseParams, type CatalogSort, type SearchParams } from './types';
 
 /** Operadores PostgREST que usa el catálogo. */
-export type FilterOp = 'eq' | 'cs' | 'gte' | 'lte' | 'or' | 'websearch_query' | 'ilike';
+export type FilterOp = 'eq' | 'cd' | 'gte' | 'lte' | 'or' | 'websearch_query' | 'ilike';
 
 export interface CatalogFilter {
   /** Columna (para `or` es null). */
@@ -44,23 +50,24 @@ function clampLimit(limit?: number): number {
 
 /**
  * «Disponible en mis plataformas»: el título está en CUALQUIER modalidad.
- * PostgREST no tiene UNION, así que se traduce a un `or=(cs.1,cs.2,cs.3)` con
- * las plataformas de los tres arrays.
+ * PostgREST no tiene UNION, así que se traduce a un `or` con los términos
+ * `columna.cd.{plataforma}` de los tres arrays (supabase-js añade los
+ * paréntesis; `cd` + literal `{…}` es la sintaxis correcta de contains).
  */
 export function platformFilter(platforms: readonly string[]): string {
   const combos: string[] = [];
   for (const p of platforms) {
-    combos.push(`platforms_flatrate=cs.${p}`);
-    combos.push(`platforms_rent=cs.${p}`);
-    combos.push(`platforms_buy=cs.${p}`);
+    combos.push(`platforms_flatrate=cd.{${p}}`);
+    combos.push(`platforms_rent=cd.{${p}}`);
+    combos.push(`platforms_buy=cd.{${p}}`);
   }
-  return `(${combos.join(',')})`;
+  return combos.join(',');
 }
 
 export function buildBrowseQuery(p: BrowseParams): PostgRestQuery {
   const filters: CatalogFilter[] = [];
   if (p.type) filters.push({ col: 'media_type', op: 'eq', val: p.type });
-  if (p.genre !== undefined) filters.push({ col: 'genre_ids', op: 'cs', val: `{${p.genre}}` });
+  if (p.genre !== undefined) filters.push({ col: 'genre_ids', op: 'cd', val: `{${p.genre}}` });
   if (p.decade !== undefined) {
     const d = Math.floor(p.decade / 10) * 10;
     filters.push({ col: 'year', op: 'gte', val: String(d) }, { col: 'year', op: 'lte', val: String(d + 9) });

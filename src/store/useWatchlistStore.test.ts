@@ -1,7 +1,7 @@
-// D2-3: store local de «Quiero ver». Estado simple (items) + acciones de
-// alta/baja/toggle con deduplicación por (mediaType, mediaId). La clave de
-// persistencia debe ser estable (diana.watchlist.v1) para no perder la lista
-// al actualizar la app.
+// D2-3: store local de «Quiero ver». Estado (items) + cola de mutaciones
+// pendientes (pendingAdds/pendingRemovals) + acciones de alta/baja/toggle con
+// deduplicación por (mediaType, mediaId). La clave de persistencia debe ser
+// estable (diana.watchlist.v1) para no perder la lista al actualizar la app.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useWatchlistStore } from './useWatchlistStore';
 
@@ -9,6 +9,7 @@ describe('useWatchlistStore (D2-3)', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     useWatchlistStore.getState().setItems([]);
+    useWatchlistStore.getState().clearPending();
   });
 
   it('parte vacío: has() false y items []', () => {
@@ -82,16 +83,16 @@ describe('useWatchlistStore (D2-3)', () => {
     expect(s.has('movie', 1)).toBe(false);
   });
 
-  it('persistencia: clave diana.watchlist.v1, version 1, partialize solo items', () => {
+  it('persistencia: clave diana.watchlist.v1, version 2, partialize items+cola', () => {
     const store = useWatchlistStore as unknown as {
       persist: { getOptions: () => { name: string; version: number; partialize: (s: any) => unknown } };
     };
     const options = store.persist.getOptions();
     expect(options.name).toBe('diana.watchlist.v1');
-    expect(options.version).toBe(1);
+    expect(options.version).toBe(2);
     useWatchlistStore.getState().add('movie', 2);
     const partial = options.partialize(useWatchlistStore.getState()) as Record<string, unknown>;
-    expect(Object.keys(partial).sort()).toEqual(['items']);
+    expect(Object.keys(partial).sort()).toEqual(['items', 'pendingAdds', 'pendingRemovals']);
   });
 
   it('escribe la lista particionada en AsyncStorage al cambiar el estado', async () => {
@@ -100,9 +101,67 @@ describe('useWatchlistStore (D2-3)', () => {
     const raw = (await AsyncStorage.getItem('diana.watchlist.v1')) as string;
     expect(raw).toBeTruthy();
     const parsed = JSON.parse(raw);
-    expect(parsed.version).toBe(1);
+    expect(parsed.version).toBe(2);
     expect(parsed.state.items).toHaveLength(1);
     expect(parsed.state.items[0].mediaId).toBe(6);
     expect(parsed.state).not.toHaveProperty('add');
+  });
+
+  it('add deja la alta pendiente hasta que markPushed la confirma', () => {
+    useWatchlistStore.getState().add('movie', 8);
+    expect(useWatchlistStore.getState().pendingAdds).toHaveLength(1);
+    useWatchlistStore.getState().markPushed('movie', 8);
+    expect(useWatchlistStore.getState().pendingAdds).toHaveLength(0);
+  });
+
+  it('remove deja el tombstone pendiente hasta que markRemoved lo confirma', () => {
+    useWatchlistStore.getState().setItems([{ mediaType: 'movie', mediaId: 8, addedAt: 'x' }]);
+    useWatchlistStore.getState().remove('movie', 8);
+    expect(useWatchlistStore.getState().pendingRemovals).toEqual(['movie:8']);
+    useWatchlistStore.getState().markRemoved('movie', 8);
+    expect(useWatchlistStore.getState().pendingRemovals).toHaveLength(0);
+  });
+
+  it('reconcileWithServer: snapshot + altas pendientes − bajas pendientes (no muta)', () => {
+    // Local: alta offline (movie:9) cuyo upsert falló; tv:1 se empujó y luego
+    // se bajó offline (tombstone) sin que el delete llegara al servidor.
+    const s0 = useWatchlistStore.getState();
+    s0.add('movie', 9);
+    s0.add('tv', 1);
+    s0.markPushed('tv', 1); // el upsert de tv:1 sí llegó al servidor
+    s0.remove('tv', 1);
+    // getState() devuelve un SNAPSHOT: las aserciones vuelven a leerlo.
+    const pending = useWatchlistStore.getState();
+    expect(pending.pendingAdds).toHaveLength(1); // movie:9
+    expect(pending.pendingAdds[0].mediaId).toBe(9);
+    expect(pending.pendingRemovals).toEqual(['tv:1']);
+    // El servidor (leído ANTES de las mutaciones offline) tiene movie:1 y tv:1.
+    const reconciled = pending.reconcileWithServer([
+      { mediaType: 'movie', mediaId: 1, addedAt: 's1' },
+      { mediaType: 'tv', mediaId: 1, addedAt: 's1' },
+    ]);
+    expect(reconciled).toEqual([
+      { mediaType: 'movie', mediaId: 1, addedAt: 's1' }, // del snapshot
+      { mediaType: 'movie', mediaId: 9, addedAt: expect.any(String) }, // alta offline reaplicada
+      // tv:1 NO: tombstone pendiente
+    ]);
+  });
+
+  it('reconcileWithServer no duplica si el snapshot ya trae la alta pendiente', () => {
+    const store = useWatchlistStore.getState();
+    store.add('movie', 4);
+    const reconciled = store.reconcileWithServer([
+      { mediaType: 'movie', mediaId: 4, addedAt: 'server' },
+    ]);
+    expect(reconciled).toHaveLength(1);
+  });
+
+  it('clearPending vacía la cola pero no la lista (cambio de cuenta)', () => {
+    useWatchlistStore.getState().add('movie', 3);
+    useWatchlistStore.getState().clearPending();
+    const s = useWatchlistStore.getState();
+    expect(s.items).toHaveLength(1);
+    expect(s.pendingAdds).toHaveLength(0);
+    expect(s.pendingRemovals).toHaveLength(0);
   });
 });

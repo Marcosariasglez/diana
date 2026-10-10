@@ -25,7 +25,12 @@ const seasonCache = new Map<string, TVSeason>();
 
 export const tmdbCatalogRepository: CatalogRepository = {
   async getOnboardingDeck(count, platforms) {
-    const pool = await getPool(platforms ? [...platforms] : []);
+    // El pool se pide SIN filtrar por plataformas: si el proveedor filtrado
+    // tiene menos de `count` títulos, el helper completa el mazo con el resto
+    // del catálogo (paridad con el comportamiento documentado/probado del
+    // mock: «si no hay suficientes disponibles, se completa con el resto»).
+    // Filtrar aquí eliminaría TODOS los candidatos de fallback.
+    const pool = await getPool();
     return getOnboardingDeckMovies(count, pool, platforms ? [...platforms] : undefined);
   },
   async getFeatured(platforms, ctx) { return pickFeatured(platforms, ctx, await getPool(platforms)); },

@@ -1,18 +1,24 @@
 # Sincronización del catálogo España (VERTICE-PLAN-2, D2-1.4).
 #
 # Llama a la Edge Function `catalog-sync` con el secreto de sincronización.
-# La función es REANUDABLE (catalog_sync_state), así que cada ejecución
-# procesa un presupuesto (por defecto 2 min, < el timeout de 150 s del plan
-# gratuito) y la siguiente continúa donde quedó. Por eso:
+# La función es REANUDABLE (catalog_sync_state): cada llamada procesa un
+# presupuesto (por defecto 2 min, < el timeout de ~150 s del plan gratuito) y
+# guarda su avance. El workflow actúa de BOMBA: repite la llamada mientras la
+# función diga que quedó trabajo (stopped=true), así un solo dispatch/cron
+# bombea hasta terminar el lote entero sin re-anclar a mano. Por eso:
 #   - `delta` DIARIO: novedades + cambios de disponibilidad de los últimos años.
 #   - `full` SEMANAL (domingo): re-sincroniza todo el catálogo por ventanas de
-#     años; las que no terminan en un run se retoman en el siguiente (el
-#     cron de delta de martes a sábado y el dispatch manual ayudan).
+#     años; un `full` manual (o el cron) bombea la sincronización inicial.
 #
 # Variables del REPOSITORIO (Settings → Secrets and variables → Actions):
 #   SUPABASE_URL          (variable, igual que keepalive.yml)
 #   CATALOG_SYNC_SECRET   (secret; el MISMO valor que el secreto de la función
 #                          en Supabase: `supabase secrets set CATALOG_SYNC_SECRET=…`).
+#
+# La función está protegida por la comprobación JWT POR DEFECTO del gateway de
+# Supabase, así que cada petición lleva TAMBIÉN `Authorization: Bearer <anon key>`
+# (mismo patrón que keepalive.yml): sin esa cabecera el gateway responde 401
+# antes de que la función pueda validar `x-catalog-sync-secret`.
 #
 # Alternativa a pg_cron + pg_net (documentada en INFORME.md): pg_cron ejecuta
 # el job dentro de Postgres y pg_net llama a la función con HTTP sin depender
@@ -37,6 +43,10 @@ on:
           - delta
           - full
         default: delta
+      resync:
+        description: 'true = re-sincronizar TODO desde la página 1 (novedades). false = solo AVANZAR lo pendiente (la bomba termina cuando el lote está completo; úsalo para el full inicial)'
+        type: boolean
+        default: true
       pages:
         description: 'Presupuesto de páginas por run (opcional)'
         type: string
@@ -49,47 +59,71 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # El bombeo de un `full` inicial puede tardar horas; 350 < tope de GitHub (360).
+    timeout-minutes: 350
     steps:
-      - name: Delta diario (cron 30 3 * * *)
-        if: github.event_name == 'schedule' && github.event.schedule == '30 3 * * *'
-        run: |
-          curl -fsS -X POST \
-            "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
-            -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
-            -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
-            -H "Content-Type: application/json" \
-            -d '{"mode":"delta"}' \
-            -o /tmp/catalog-sync.json -w "HTTP %{http_code}\n"
-          cat /tmp/catalog-sync.json
-
-      - name: Full semanal (cron) o parámetros manuales (dispatch)
-        if: github.event_name == 'schedule' && github.event.schedule == '0 1 * * 0'
-        run: |
-          curl -fsS -X POST \
-            "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
-            -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
-            -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
-            -H "Content-Type: application/json" \
-            -d '{"mode":"full"}' \
-            -o /tmp/catalog-sync.json -w "HTTP %{http_code}\n"
-          cat /tmp/catalog-sync.json
-
-      - name: Ejecución manual (workflow_dispatch)
-        if: github.event_name == 'workflow_dispatch'
+      - name: 'Sincronización (bomba: repite mientras quede trabajo)'
         env:
-          MODE: ${{ github.event.inputs.mode }}
-          PAGES: ${{ github.event.inputs.pages }}
-          TIME_MS: ${{ github.event.inputs.timeMs }}
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          IN_MODE: ${{ github.event.inputs.mode }}
+          IN_RESYNC: ${{ github.event.inputs.resync }}
+          IN_PAGES: ${{ github.event.inputs.pages }}
+          IN_TIME_MS: ${{ github.event.inputs.timeMs }}
         run: |
-          BODY="{\"mode\":\"${MODE}\"}"
-          [ -n "$PAGES" ] && BODY="{\"mode\":\"${MODE}\",\"pages\":${PAGES}}"
-          [ -n "$TIME_MS" ] && BODY="{\"mode\":\"${MODE}\",\"timeMs\":${TIME_MS}}"
-          [ -n "$PAGES" ] && [ -n "$TIME_MS" ] && BODY="{\"mode\":\"${MODE}\",\"pages\":${PAGES},\"timeMs\":${TIME_MS}}"
-          curl -fsS -X POST \
-            "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
-            -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
-            -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
-            -H "Content-Type: application/json" \
-            -d "$BODY" \
-            -o /tmp/catalog-sync.json -w "HTTP %{http_code}\n"
+          set -uo pipefail
+          # Modo según el evento: schedule → por el cron; dispatch → por el input.
+          # El cron SIEMPRE re-sincroniza (true): el delta captura novedades y
+          # el full semanal actualiza todo el catálogo.
+          MODE="${IN_MODE}"
+          RESYNC="${IN_RESYNC}"
+          if [ "${EVENT_NAME}" = "schedule" ]; then
+            if [ "${SCHEDULE}" = "30 3 * * *" ]; then MODE="delta"; else MODE="full"; fi
+            RESYNC="true"
+          fi
+          PAGES="${IN_PAGES}"
+          TIME_MS="${IN_TIME_MS}"
+          BODY="{\"mode\":\"${MODE}\",\"resync\":${RESYNC}}"
+          if [ -n "${PAGES}" ]; then BODY="{\"mode\":\"${MODE}\",\"resync\":${RESYNC},\"pages\":${PAGES}}"; fi
+          if [ -n "${TIME_MS}" ]; then BODY="{\"mode\":\"${MODE}\",\"resync\":${RESYNC},\"timeMs\":${TIME_MS}}"; fi
+          if [ -n "${PAGES}" ] && [ -n "${TIME_MS}" ]; then BODY="{\"mode\":\"${MODE}\",\"resync\":${RESYNC},\"pages\":${PAGES},\"timeMs\":${TIME_MS}}"; fi
+          echo "Modo: ${MODE} | Re-sincronizar: ${RESYNC} | Cuerpo: ${BODY}"
+
+          # BOMBA: cada llamada procesa un presupuesto (~2 min) y es REANUDABLE.
+          # Con resync=false, la función SALTA lo ya terminado y solo avanza lo
+          # pendiente; se repite mientras haya trabajo (stopped=true). Con
+          # resync=true un `full` re-sincroniza todo desde la página 1 (el lote
+          # entero cabe en el timeout del job; si se corta, el próximo cron o
+          # dispatch continúa donde quedó).
+          # Si alguna llamada devuelve un error, la bomba se detiene para que
+          # el fallo se vea en el log (el estado queda 'error' y se reanuda).
+          # Tope de 400 iteraciones como red de seguridad (sobrepasa el timeout).
+          for i in $(seq 1 400); do
+            code=$(curl -sS -X POST \
+              "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
+              -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
+              -H "Authorization: Bearer ${{ vars.SUPABASE_ANON_KEY }}" \
+              -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
+              -H "Content-Type: application/json" \
+              -d "$BODY" \
+              -o /tmp/catalog-sync.json -w "%{http_code}") || { echo "curl sin respuesta (¿red?)"; exit 1; }
+            if [ "$code" != "200" ]; then
+              echo "HTTP ${code}:"; cat /tmp/catalog-sync.json; exit 1
+            fi
+            stopped=$(jq -r '.stopped // false' /tmp/catalog-sync.json)
+            processed=$(jq -r '.processed // 0' /tmp/catalog-sync.json)
+            nerr=$(jq -r '[.results[]? | select(.error != null)] | length' /tmp/catalog-sync.json)
+            echo "[iteración $i] processed=${processed} stopped=${stopped} errores=${nerr}"
+            if [ "${nerr}" != "0" ]; then
+              echo "Hay errores en el lote; detengo la bomba (se reanuda en la próxima ejecución):"
+              cat /tmp/catalog-sync.json
+              exit 1
+            fi
+            if [ "$stopped" != "true" ]; then
+              echo "SINCRONIZACIÓN COMPLETA: lote entero procesado, sin trabajo pendiente."
+              break
+            fi
+            sleep 5
+          done
+          echo "--- última respuesta de la función ---"
           cat /tmp/catalog-sync.json

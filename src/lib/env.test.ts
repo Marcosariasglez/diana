@@ -3,10 +3,19 @@
 // con las variables fijadas explícitamente (no depende de .env.local).
 describe('env: EXPO_PUBLIC_RECOMMENDER (D2-2.6)', () => {
   const KEYS = ['EXPO_PUBLIC_RECOMMENDER', 'EXPO_PUBLIC_BACKEND', 'EXPO_PUBLIC_CATALOG'] as const;
+  // Snapshot ORIGINAL capturado UNA sola vez (beforeAll): si se capturara en
+  // beforeEach, `saved` se sobrescribiría con el valor fijado por el propio
+  // test y afterAll restauraría undefined/valores de test (fuga entre
+  // test files: .env.local perdería EXPO_PUBLIC_* para el resto de la suite).
   const saved: Record<string, string | undefined> = {};
-  beforeEach(() => {
+  beforeAll(() => {
     for (const k of KEYS) {
       saved[k] = process.env[k];
+      delete process.env[k];
+    }
+  });
+  beforeEach(() => {
+    for (const k of KEYS) {
       delete process.env[k];
     }
   });

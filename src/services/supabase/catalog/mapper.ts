@@ -16,8 +16,12 @@ export function availablePlatforms(row: Pick<CatalogRow, 'platforms_flatrate' | 
 }
 
 function dateFromYear(year: number | null): string {
-  const y = Number.isFinite(year as number) ? (year as number) : new Date().getFullYear();
-  return `${y}-01-01`;
+  // Año ausente (NULL en la base) → '0000-01-01', NO el año actual: un año
+  // ficticio «hoy» contaminaría las décadas (filterBrowse), el orden por año
+  // y el filtro de tolerancia de import. `yearOf('0000-01-01')` = 0 y
+  // mediaMeta oculta los años <= 0 («sin fecha»).
+  const y = Number.isFinite(year as number) ? (year as number) : 0;
+  return `${String(y).padStart(4, '0')}-01-01`;
 }
 
 /** Titulares distintos del original (p. ej. título español + inglés). */

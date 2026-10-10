@@ -11,7 +11,9 @@
 --   - RLS «solo lo tuyo» (mismo patrón que watched/history_entries, 0002):
 --     for all to authenticated, user_id = auth.uid() en using y with check.
 --     No hay lectura para anon (no es catálogo público).
---   - El borrado del usuario lo cubre delete_user_data (0005, ampliada):
+--   - El borrado del usuario lo cubre delete_user_data (migración 0009,
+--     re-creada con el borrado de `watchlist`: editar 0005 no actualiza las
+--     bases donde ya estaba aplicada):
 --     `delete from public.watchlist where user_id = ...`.
 --
 -- Sin desplegar: como 0006/0007, se aplica a mano en el SQL Editor.
