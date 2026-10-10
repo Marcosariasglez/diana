@@ -273,8 +273,16 @@ async function tmdbDiscover(mediaType: 'movie' | 'tv', params: Record<string, st
         }
         throw lastErr;
       }
-      // 4xx (salvo 429): parámetro malo, no reintenta.
-      throw new Error(`tmdb ${res.status} ${path}`);
+      // 4xx (salvo 429): parámetro malo o credencial inválida: no reintenta.
+      // El cuerpo va en el error: TMDB lo explica (p. ej. "Invalid API key…"
+      // cuando se envió una clave v3 o un digest en vez del token v4 JWT).
+      let detail = '';
+      try {
+        detail = (await res.text()).slice(0, 200);
+      } catch {
+        /* sin cuerpo */
+      }
+      throw new Error(`tmdb ${res.status} ${path} ${detail}`.trim());
     } catch (e) {
       if (e instanceof TypeError) {
         // Error de red: reintento.
@@ -427,10 +435,22 @@ Deno.serve(async (req: Request) => {
   const secret = req.headers.get('x-catalog-sync-secret') ?? '';
   const expected = Deno.env.get('CATALOG_SYNC_SECRET') ?? '';
   if (!expected || secret !== expected) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), {
-      status: 401,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
+    // Diagnóstico sin exponer el secreto: SHA-256 y longitud de lo RECIBIDO
+    // (para compararlo con el valor configurado en el lado que manda la
+    // petición) y longitud de lo esperado. Un mismatch típico: salto de
+    // línea o espacios al copiar el secret.
+    const digest = async (s: string): Promise<string> =>
+      Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+    return new Response(
+      JSON.stringify({
+        error: 'unauthorized',
+        received: { len: secret.length, sha256: await digest(secret) },
+        expectedLen: expected.length,
+      }),
+      { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } },
+    );
   }
 
   let body: { mode?: string; pages?: number; timeMs?: number; currentYear?: number; maxJobs?: number; resync?: boolean } = {};
