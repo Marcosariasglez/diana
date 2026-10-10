@@ -56,12 +56,12 @@ test.describe('no mezcla con Norte (mismo origen)', () => {
       signedIn: true,
       extraStorage: { [NORTHE_AUTH_KEY]: JSON.stringify(norteSession) },
     });
-    // Saneidad: la app sí usa SU sesión (vertice-diana-auth), no la de Norte.
-    const diana = await page.evaluate((k) => window.localStorage.getItem(k), DIANA_AUTH_KEY);
-    expect(JSON.parse(diana ?? '{}').user?.id).toBe(E2E_USER.id);
-
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Para ti' }).first()).toBeVisible();
+    // Saneidad: la app sí usa SU sesión (vertice-diana-auth), no la de Norte.
+    // (Después del goto: en about:blank el evaluate falla con SecurityError.)
+    const diana = await page.evaluate((k) => window.localStorage.getItem(k), DIANA_AUTH_KEY);
+    expect(JSON.parse(diana ?? '{}').user?.id).toBe(E2E_USER.id);
     await page.getByRole('tab', { name: 'Perfil', exact: true }).click();
     await page.getByRole('button', { name: 'Gestionar cuenta' }).click();
     await page.getByRole('button', { name: 'Cerrar sesión' }).click();

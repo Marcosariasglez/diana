@@ -47,10 +47,50 @@ const otpVerifyErrorCode = (e: AuthError): AuthErrorCode => {
   return 'otp_invalid';
 };
 
+/**
+ * D-2 d): borra de localStorage las claves propias de la app (las diana.* de
+ * persist y vertice-diana-auth de auth-js). resetLocalStores solo resetea la
+ * memoria; en web las claves persistidas seguirían ahí. Solo web.
+ */
+function clearDianaLocalStorage(): void {
+  if (Platform.OS !== 'web') return;
+  try {
+    Object.keys(window.localStorage)
+      .filter((k) => k.startsWith('diana.') || k === 'vertice-diana-auth')
+      .forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    /* storage no disponible */
+  }
+}
+
+/**
+ * b): tras el redirect OAuth en web la URL conserva ?code=…&state=… (auth-js
+ * no siempre los limpia). Con la sesión ya establecida son inútiles y el code
+ * no debe quedar expuesto en la barra de direcciones ni en el historial.
+ */
+function stripOAuthUrlParams(): void {
+  if (Platform.OS !== 'web') return;
+  try {
+    const u = new URL(window.location.href);
+    if (u.searchParams.has('code') || u.searchParams.has('state')) {
+      u.searchParams.delete('code');
+      u.searchParams.delete('state');
+      window.history.replaceState(null, '', u.toString());
+    }
+  } catch {
+    /* ignorar */
+  }
+}
+
 export const useAuthStore = create<AuthState>()((set, get) => {
   const handleSession = async (session: Session | null) => {
     if (!session) {
       resetLocalStores();
+      // El reset anterior reescribió los defaults a localStorage vía persist;
+      // se borran las claves para que no quede nada de diana.* tras sin sesión
+      // (el evento SIGNED_OUT llega después de signOut, así que sin esto el
+      // clear del signOut se anularía).
+      clearDianaLocalStorage();
       set({ status: 'signedOut', userId: null, email: null, provider: null });
       return;
     }
@@ -67,6 +107,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       email: session.user.email ?? null,
       provider: (session.user.app_metadata?.provider as AuthProvider) ?? 'email',
     });
+    stripOAuthUrlParams();
   };
 
   return {
@@ -133,6 +174,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       // de auth-js es 'global' (invalida todas las sesiones), así que va explícito.
       await getSupabase().auth.signOut({ scope: 'local' }).catch(() => undefined);
       resetLocalStores();
+      // D-2 d): limpiar también lo persistido en localStorage (diana.*).
+      // resetLocalStores solo resetea en memoria: el persist de Zustand
+      // reescribiría los valores vacíos al momento, y las claves
+      // vertice-diana-auth (auth-js) no la toca resetLocalStores.
+      clearDianaLocalStorage();
       set({ status: 'signedOut', userId: null, email: null, provider: null, error: null });
     },
     signOutEverywhere: async () => {
@@ -140,6 +186,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         .auth.signOut({ scope: 'global' })
         .catch(() => undefined);
       resetLocalStores();
+      clearDianaLocalStorage();
       set({ status: 'signedOut', userId: null, email: null, provider: null, error: null });
     },
   };
