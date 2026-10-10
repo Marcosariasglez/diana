@@ -95,20 +95,33 @@ jobs:
           # resync=true un `full` re-sincroniza todo desde la página 1 (el lote
           # entero cabe en el timeout del job; si se corta, el próximo cron o
           # dispatch continúa donde quedó).
-          # Si alguna llamada devuelve un error, la bomba se detiene para que
-          # el fallo se vea en el log (el estado queda 'error' y se reanuda).
+          # Robustez (aprendida del 503 de la iteración 78): los fallos de
+          # INFRAESTRUCTURA (5xx de Supabase por pico de CPU del plan gratuito,
+          # 000 = fallo de red de curl) se REINTENTAN con espera progresiva;
+          # un run de horas no puede morir por un tirón puntual. Los 4xx (401
+          # secreto, 422, …) son errores REALES y fallan al vuelo para que se
+          # vean en el log (el estado queda 'error' y se reanuda).
           # Tope de 400 iteraciones como red de seguridad (sobrepasa el timeout).
           for i in $(seq 1 400); do
-            code=$(curl -sS -X POST \
-              "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
-              -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
-              -H "Authorization: Bearer ${{ vars.SUPABASE_ANON_KEY }}" \
-              -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
-              -H "Content-Type: application/json" \
-              -d "$BODY" \
-              -o /tmp/catalog-sync.json -w "%{http_code}") || { echo "curl sin respuesta (¿red?)"; exit 1; }
-            if [ "$code" != "200" ]; then
-              echo "HTTP ${code}:"; cat /tmp/catalog-sync.json; exit 1
+            ok=0
+            for attempt in 1 2 3 4 5; do
+              code=$(curl -sS -X POST \
+                "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
+                -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
+                -H "Authorization: Bearer ${{ vars.SUPABASE_ANON_KEY }}" \
+                -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
+                -H "Content-Type: application/json" \
+                -d "$BODY" \
+                -o /tmp/catalog-sync.json -w "%{http_code}") || code=000
+              case "$code" in
+                200) ok=1; break ;;
+                401|403|422) echo "HTTP ${code} (error real, no reintento):"; cat /tmp/catalog-sync.json; exit 1 ;;
+                *) echo "iteración ${i}: HTTP ${code} (infraestructura), reintento ${attempt}/5 en $((30 * attempt)) s..."
+                   sleep $((30 * attempt)) ;;
+              esac
+            done
+            if [ "$ok" != 1 ]; then
+              echo "iteración ${i}: 5 reintentos fallidos (HTTP último: ${code}); detengo la bomba:"; cat /tmp/catalog-sync.json; exit 1
             fi
             stopped=$(jq -r '.stopped // false' /tmp/catalog-sync.json)
             processed=$(jq -r '.processed // 0' /tmp/catalog-sync.json)
