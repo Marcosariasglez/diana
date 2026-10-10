@@ -14,15 +14,15 @@
  * "generar uno desde el otro" (script) o una prueba que compare ambos.
  *
  * ESTADO DE LOS IDS TMDB (importante):
- *   - `tmdbProviderId` con un número = id con evidencia en el repo (el PROVIDER_MAP
- *     anterior de la función tmdb). Aun así, el conjunto completo NO está verificado
- *     contra la API real: no hay `TMDB_READ_TOKEN` en `.env.local`. El plan exige
- *     verificarlo con la acción `providers` (`/watch/providers/movie` y `/tv` con
- *     `watch_region=ES`) antes de confiar en él. El script `scripts/verify-catalog.mjs`
- *     lo hace cuando hay token.
- *   - `tmdbProviderId: null` = el plan pide incluirlo, pero no hay un id TMDB
- *     verificado: va en `PENDING_VERIFICATION` y la sincronización lo SALTA hasta que
- *     el dueño confirme el id con la acción `providers`.
+ *   - VERIFICADOS EN VIVO el 2026-10-10 contra `/watch/providers/movie` y `/tv`
+ *     con `watch_region=ES` (acción `providers` del plan). LECCIÓN: el PROVIDER_MAP
+ *     anterior traía ids erróneos (prime-video 9, max 384, apple-tv 531, filmin 275,
+ *     mubi 387, rtve-play 179, rakuten-tv 350, pluto-tv 362): solo netflix (8) y
+ *     disney-plus (337) eran correctos. Vuelve a verificarlos SIEMPRE que un sync
+ *     parezca escribir plataformas imposibles.
+ *   - `tmdbProviderId: null` = sin presencia en ES en TMDB (no entra en el filtro
+ *     `with_watch_providers`): va en `PENDING_VERIFICATION` y la sincronización lo
+ *     SALTA. Es el caso de `paramount-plus` (no aparece en la lista ES de TMDB).
  */
 
 export type Monetization = 'flatrate' | 'svod' | 'tvod' | 'free';
@@ -50,26 +50,26 @@ export interface ProviderDef {
  * romper `favorite_platforms` antiguos; nunca entran en el filtro de TMDB).
  */
 export const PROVIDERS: readonly ProviderDef[] = [
-  // --- Activos en ES (ids con evidencia en el repo; verificados con `providers`
-  //     cuando exista TMDB_READ_TOKEN) -------------------------------------------
+  // --- Activos en ES — ids VERIFICADOS en vivo (2026-10-10, /watch/providers ES) ---
   { id: 'netflix', name: 'Netflix', tmdbProviderId: 8, es: true, monetization: 'flatrate' },
-  { id: 'prime-video', name: 'Prime Video', tmdbProviderId: 9, es: true, monetization: 'flatrate' },
-  { id: 'max', name: 'Max', tmdbProviderId: 384, es: true, monetization: 'flatrate' },
+  { id: 'prime-video', name: 'Prime Video', tmdbProviderId: 119, es: true, monetization: 'flatrate' },
+  { id: 'max', name: 'Max', tmdbProviderId: 1899, es: true, monetization: 'flatrate' },
   { id: 'disney-plus', name: 'Disney+', tmdbProviderId: 337, es: true, monetization: 'flatrate' },
-  { id: 'apple-tv', name: 'Apple TV+', tmdbProviderId: 531, es: true, monetization: 'flatrate' },
-  { id: 'paramount-plus', name: 'Paramount+', tmdbProviderId: 386, es: true, monetization: 'flatrate' },
-  { id: 'filmin', name: 'Filmin', tmdbProviderId: 275, es: true, monetization: 'flatrate' },
-  { id: 'mubi', name: 'MUBI', tmdbProviderId: 387, es: true, monetization: 'flatrate' },
-  { id: 'rtve-play', name: 'RTVE Play', tmdbProviderId: 179, es: true, monetization: 'free' },
-  { id: 'rakuten-tv', name: 'Rakuten TV', tmdbProviderId: 350, es: true, monetization: 'svod' },
-  { id: 'pluto-tv', name: 'Pluto TV', tmdbProviderId: 362, es: true, monetization: 'free' },
+  { id: 'apple-tv', name: 'Apple TV+', tmdbProviderId: 350, es: true, monetization: 'flatrate' },
+  { id: 'filmin', name: 'Filmin', tmdbProviderId: 63, es: true, monetization: 'flatrate' },
+  { id: 'mubi', name: 'MUBI', tmdbProviderId: 11, es: true, monetization: 'flatrate' },
+  { id: 'rtve-play', name: 'RTVE Play', tmdbProviderId: 541, es: true, monetization: 'free' },
+  { id: 'rakuten-tv', name: 'Rakuten TV', tmdbProviderId: 35, es: true, monetization: 'svod' },
+  { id: 'pluto-tv', name: 'Pluto TV', tmdbProviderId: 300, es: true, monetization: 'free' },
+  { id: 'movistar-plus', name: 'Movistar Plus+', tmdbProviderId: 2241, es: true, monetization: 'flatrate' },
+  { id: 'skyshowtime', name: 'SkyShowtime', tmdbProviderId: 1773, es: true, monetization: 'flatrate' },
+  { id: 'atresplayer', name: 'Atresplayer', tmdbProviderId: 62, es: true, monetization: 'free' },
+  { id: 'plex', name: 'Plex', tmdbProviderId: 538, es: true, monetization: 'svod' },
+  { id: 'youtube', name: 'YouTube', tmdbProviderId: 188, es: true, monetization: 'tvod' },
 
-  // --- El plan pide incluirlos; id TMDB pendiente de verificación con `providers`
-  { id: 'movistar-plus', name: 'Movistar Plus+', tmdbProviderId: null, es: true, monetization: 'flatrate' },
-  { id: 'skyshowtime', name: 'SkyShowtime', tmdbProviderId: null, es: true, monetization: 'flatrate' },
-  { id: 'atresplayer', name: 'Atresplayer', tmdbProviderId: null, es: true, monetization: 'free' },
-  { id: 'plex', name: 'Plex', tmdbProviderId: null, es: true, monetization: 'svod' },
-  { id: 'youtube', name: 'YouTube', tmdbProviderId: null, es: true, monetization: 'tvod' },
+  // --- En el plan y en la UI, pero SIN presencia en ES en TMDB (no se pueden
+  //     sincronizar; tmdbProviderId null → PENDING_VERIFICATION, la sync salta).
+  { id: 'paramount-plus', name: 'Paramount+', tmdbProviderId: null, es: true, monetization: 'flatrate' },
 
   // --- Desactualizados / fuera de ES (solo para no romper datos guardados;
   //     nunca entran en el filtro de TMDB) --------------------------------------

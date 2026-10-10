@@ -9,7 +9,7 @@
  *  - el orden (popularidad/voto/año/título) es estable;
  *  - search hace substring sobre título y original;
  *  - candidates se acota a [1, 1000] y ordena por popularidad;
- *  - el builder PostgREST genera los filtros correctos (cd., or sin paréntesis,
+ *  - el builder PostgREST genera los filtros correctos (cs., or sin paréntesis,
  *    year gte/lte, websearch_query, order multi-columna y range) — así el repo
  *    PostgREST y el mock comparten
  *    la misma semántica;
@@ -116,32 +116,32 @@ describe('catálogo paginado (D2-1.5) — motor', () => {
 });
 
 describe('catálogo paginado (D2-1.5) — builder PostgREST', () => {
-  it('buildBrowseQuery: plataformas → or con cd.{…} sobre los tres arrays (sin paréntesis)', () => {
+  it('buildBrowseQuery: plataformas → or con cs.{…} sobre los tres arrays (sin paréntesis)', () => {
     const q = buildBrowseQuery({ platforms: ['netflix', 'max'] });
     const orFilter = q.filters.find((f) => f.op === 'or');
     expect(orFilter).toBeDefined();
     const s = platformFilter(['netflix', 'max']);
     expect(orFilter!.val).toBe(s);
-    expect(s).toContain('platforms_flatrate=cd.{netflix}');
-    expect(s).toContain('platforms_rent=cd.{netflix}');
-    expect(s).toContain('platforms_buy=cd.{max}');
+    expect(s).toContain('platforms_flatrate=cs.{netflix}');
+    expect(s).toContain('platforms_rent=cs.{netflix}');
+    expect(s).toContain('platforms_buy=cs.{max}');
     // supabase-js añade los paréntesis: el valor de .or() no los lleva.
     expect(s.startsWith('(')).toBe(false);
     expect(s.endsWith(')')).toBe(false);
   });
 
-  it('buildBrowseQuery: género cd.{id}, década year gte/lte, orden y range', () => {
+  it('buildBrowseQuery: género cs.{id}, década year gte/lte, orden y range', () => {
     const q = buildBrowseQuery({ genre: 18, decade: 2010, sort: 'vote', cursor: 40, limit: 20, type: 'movie' });
     expect(q.filters).toEqual([
       { col: 'media_type', op: 'eq', val: 'movie' },
-      { col: 'genre_ids', op: 'cd', val: '{18}' },
+      { col: 'genre_ids', op: 'cs', val: '{18}' },
       { col: 'year', op: 'gte', val: '2010' },
       { col: 'year', op: 'lte', val: '2019' },
     ]);
     expect(q.order).toBe('vote_average.desc,vote_count.desc,media_type.asc,tmdb_id.asc');
     expect(q.range).toEqual([40, 59]);
     // La serialización legible lo refleja (tests/log).
-    expect(toQueryStrings(q)).toContain('genre_ids=cd.{18}');
+    expect(toQueryStrings(q)).toContain('genre_ids=cs.{18}');
     expect(toQueryStrings(q)).toContain('year=gte.2010');
     expect(toQueryStrings(q)).toContain('offset=40');
   });

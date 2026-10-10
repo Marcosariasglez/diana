@@ -70,7 +70,7 @@ describe('parseProvidersSource + syncableProviders (D2-1.8)', () => {
   const FIXTURE = `
 export const PROVIDERS = [
   { id: 'netflix', name: 'Netflix', tmdbProviderId: 8, es: true },
-  { id: 'filmin', name: 'Filmin', tmdbProviderId: 275, es: true },
+  { id: 'filmin', name: 'Filmin', tmdbProviderId: 63, es: true },
   { id: 'movistar-plus', name: 'Movistar Plus', tmdbProviderId: null, es: true },
   { id: 'peacock', name: 'Peacock', tmdbProviderId: 155, es: false },
 ];
@@ -80,7 +80,7 @@ export const PROVIDERS = [
     const all = parseProvidersSource(FIXTURE);
     expect(all).toEqual([
       { id: 'netflix', tmdbProviderId: 8, es: true },
-      { id: 'filmin', tmdbProviderId: 275, es: true },
+      { id: 'filmin', tmdbProviderId: 63, es: true },
       { id: 'movistar-plus', tmdbProviderId: null, es: true },
       { id: 'peacock', tmdbProviderId: 155, es: false },
     ]);

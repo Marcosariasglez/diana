@@ -39,11 +39,11 @@ create table public.catalog_titles (
 );
 
 -- Índices de consulta del cliente (browse):
---  - disponibilidad en una plataforma: «cd.» (contains) sobre los arrays
---    (el filtro PostgREST es platforms_*=cd.{id}: el array CONTIENE la
---    plataforma; «cs.»/contained-by daría el sentido al revés y casaría con
+--  - disponibilidad en una plataforma: «cs.» (contains @>) sobre los arrays
+--    (el filtro PostgREST es platforms_*=cs.{id}: el array CONTIENE la
+--    plataforma; «cd.»/contained-by daría el sentido al revés y casaría con
 --    el array vacío)
---  - género: «cd.» sobre genre_ids
+--  - género: «cs.» sobre genre_ids
 --  - década: rango sobre year
 --  - orden: popularity / vote_average / año
 create index catalog_titles_flatrate_gin on public.catalog_titles using gin (platforms_flatrate);

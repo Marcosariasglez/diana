@@ -54,13 +54,21 @@ function chain(table: string) {
   const q = {
     table,
     _eq: {} as Record<string, unknown>,
+    _in: { col: null as string | null, vals: [] as unknown[] },
     _select: false,
-    select() {
+    _cols: '',
+    select(cols?: string) {
       q._select = true;
+      q._cols = cols ?? '';
       return q;
     },
     eq(col: string, val: unknown) {
       q._eq[col] = val;
+      return q;
+    },
+    in(col: string, vals: unknown[]) {
+      q._in.col = col;
+      q._in.vals = vals;
       return q;
     },
     async maybeSingle() {
@@ -69,6 +77,24 @@ function chain(table: string) {
         return { data: match[0] ?? null, error: null };
       }
       return { data: null, error: null };
+    },
+    /** select simple (sin maybeSingle): lo usa el MERGE de plataformas para
+     *  leer la fila previa antes del upsert. Thenable compatible con `await`. */
+    then(onFulfilled?: (v: { data: Row[]; error: unknown }) => unknown, onRejected?: (e: unknown) => unknown) {
+      const rows = titles.filter(
+        (r) =>
+          Object.entries(q._eq).every(([k, v]) => r[k] === v) &&
+          (!q._in.col || (q._in.vals as unknown[]).includes(r[q._in.col!])),
+      );
+      const project = (r: Row): Row => {
+        if (!q._cols) return r;
+        const cols = q._cols.split(',').map((c) => c.trim());
+        const out: Row = {};
+        for (const c of cols) out[c] = r[c] ?? null;
+        return out;
+      };
+      const p = Promise.resolve({ data: rows.map(project), error: null as unknown });
+      return onFulfilled ? p.then(onFulfilled, onRejected) : p;
     },
     async upsert(rows: Row | Row[], opts?: { onConflict: string }) {
       const list = Array.isArray(rows) ? rows : [rows];
@@ -193,6 +219,40 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
     fetchImpl = makeFetch();
     fn._setSupabaseForTest(mockAdmin);
     fn._setFetchForTest(fetchImpl);
+  });
+
+  it('merge de plataformas: el pase rent|buy NO borra platforms_flatrate del pase anterior', async () => {
+    // El pase flatrate (job netflix/movie/flatrate) ya dejó esta fila.
+    titles.push({ ...titleRow(1), tmdb_id: 1, platforms_flatrate: ['netflix'], platforms_rent: [], platforms_buy: [] });
+    page('movie', 1, [titleRow(1)], 1, 1);
+    page('tv', 1, [], 0, 1);
+
+    // Corremos el pase rent|buy del mismo título (job index 1: netflix/movie/rent|buy).
+    const res = await post({ mode: 'full', currentYear: 1949, pages: 5, timeMs: 60_000, skipJobs: 1, maxJobs: 1 });
+    expect(res.status).toBe(200);
+    const t = titles.find((x) => x.tmdb_id === 1 && x.media_type === 'movie');
+    expect(t).toBeDefined();
+    // flatrate sobreviviente (no lo borró el pase rent|buy)…
+    expect((t!.platforms_flatrate as string[]).includes('netflix')).toBe(true);
+    // …y el pase rent|buy AÑADIÓ netflix a rent y buy.
+    expect((t!.platforms_rent as string[]).includes('netflix')).toBe(true);
+    expect((t!.platforms_buy as string[]).includes('netflix')).toBe(true);
+  });
+
+  it('merge de plataformas: dos pases con plataformas distintas se UNIONAN (no se pisan)', async () => {
+    titles.push({ ...titleRow(1), tmdb_id: 1, platforms_flatrate: ['netflix', 'prime-video'], platforms_rent: [], platforms_buy: [] });
+    page('movie', 1, [titleRow(1)], 1, 1);
+    page('tv', 1, [], 0, 1);
+
+    // Pase rent|buy de prime-video (job index 5: prime-video/movie/rent|buy):
+    // descubre el mismo título y lo fuerza a rent/buy de prime-video.
+    const res = await post({ mode: 'full', currentYear: 1949, pages: 5, timeMs: 60_000, skipJobs: 5, maxJobs: 1 });
+    expect(res.status).toBe(200);
+    const t = titles.find((x) => x.tmdb_id === 1 && x.media_type === 'movie');
+    expect(t).toBeDefined();
+    expect((t!.platforms_flatrate as string[]).sort()).toEqual(['netflix', 'prime-video']);
+    expect((t!.platforms_rent as string[]).includes('prime-video')).toBe(true);
+    expect((t!.platforms_buy as string[]).includes('prime-video')).toBe(true);
   });
 
   it('sin secreto → 401 (nunca ejecutable por un usuario normal)', async () => {

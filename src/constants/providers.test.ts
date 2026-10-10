@@ -62,11 +62,22 @@ describe('providers (único origen de verdad, D2-1.1)', () => {
       expect(p.tmdbProviderId).toBeNull();
       expect(PROVIDER_FILTER).not.toContain(p.id);
     }
-    // El plan pide incluir Filmin, MUBI, RTVE Play…; al menos Filmin debe estar
-    // resuelto (id con evidencia en el repo) y sí entrar en el filtro.
-    expect(PROVIDER_BY_ID.get('filmin')!.tmdbProviderId).toBe(275);
-    expect(PROVIDER_BY_ID.get('mubi')!.tmdbProviderId).toBe(387);
-    expect(PROVIDER_BY_ID.get('rtve-play')!.tmdbProviderId).toBe(179);
+    // Ids VERIFICADOS en vivo (2026-10-10, /watch/providers ES): si alguno
+    // cambia en TMDB, estos tests lo detectan.
+    expect(PROVIDER_BY_ID.get('filmin')!.tmdbProviderId).toBe(63);
+    expect(PROVIDER_BY_ID.get('mubi')!.tmdbProviderId).toBe(11);
+    expect(PROVIDER_BY_ID.get('rtve-play')!.tmdbProviderId).toBe(541);
+    expect(PROVIDER_BY_ID.get('prime-video')!.tmdbProviderId).toBe(119);
+    expect(PROVIDER_BY_ID.get('max')!.tmdbProviderId).toBe(1899);
+    expect(PROVIDER_BY_ID.get('apple-tv')!.tmdbProviderId).toBe(350);
+    expect(PROVIDER_BY_ID.get('rakuten-tv')!.tmdbProviderId).toBe(35);
+    expect(PROVIDER_BY_ID.get('pluto-tv')!.tmdbProviderId).toBe(300);
+    expect(PROVIDER_BY_ID.get('movistar-plus')!.tmdbProviderId).toBe(2241);
+    expect(PROVIDER_BY_ID.get('skyshowtime')!.tmdbProviderId).toBe(1773);
+    expect(PROVIDER_BY_ID.get('atresplayer')!.tmdbProviderId).toBe(62);
+    expect(PROVIDER_BY_ID.get('plex')!.tmdbProviderId).toBe(538);
+    expect(PROVIDER_BY_ID.get('youtube')!.tmdbProviderId).toBe(188);
+    expect(PROVIDER_BY_ID.get('paramount-plus')!.tmdbProviderId).toBeNull(); // sin presencia ES en TMDB
   });
 
   it('los proveedores desactualizados (es:false) no entran en el filtro ni en PLATFORMS', () => {

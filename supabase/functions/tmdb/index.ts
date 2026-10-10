@@ -18,16 +18,10 @@ const MAX_SEASONS = 12;
 // IMPORT: relativo porque Deno no resuelve el alias `@/` de la app.
 import { PROVIDER_BY_TMDB_ID, PROVIDER_FILTER as PROVIDER_FILTER_ES } from '../../../src/constants/providers.ts';
 
-// Alias TMDB -> id Diana para ids alternativos de la misma plataforma
-// (Amazon=119 además de Prime Video=9; HBO Max=1899 además de Max=384).
-const PROVIDER_ALIASES: Record<number, string> = {
-  119: 'prime-video',
-  1899: 'max',
-};
-const PROVIDER_MAP: Record<number, string> = {
-  ...Object.fromEntries(PROVIDER_BY_TMDB_ID.entries()),
-  ...PROVIDER_ALIASES,
-};
+// Sin aliases: desde la verificación en vivo (2026-10-10) los ids de
+// providers.ts son los CANÓNICOS de TMDB (Prime Video=119, HBO Max=1899…),
+// así que PROVIDER_BY_TMDB_ID ya los mapea directamente.
+const PROVIDER_MAP: Record<number, string> = Object.fromEntries(PROVIDER_BY_TMDB_ID.entries());
 // Filtro `with_watch_providers`: solo proveedores ACTIVOS EN ESPAÑA (no los
 // desactualizados que se conservan solo para no romper datos guardados).
 const PROVIDER_FILTER = PROVIDER_FILTER_ES;

@@ -3,7 +3,7 @@
 // select a anon/authenticated y no da escritura (la escribe catalog-sync).
 //
 // NO funciona contra el simulador E2E (no tiene la tabla ni los operadores
-// cd./or/websearch_query): se prueba con un cliente Supabase MOCK (Jest),
+// cs./or/websearch_query): se prueba con un cliente Supabase MOCK (Jest),
 // igual que delete-account.test.ts. En E2E el build usa CATALOG=mock, así que
 // esta rama no se activa.
 import type { SupabaseClient } from '@supabase/supabase-js';

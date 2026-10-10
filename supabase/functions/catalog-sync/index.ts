@@ -240,6 +240,39 @@ export function toCatalogRows(
   return rows;
 }
 
+/**
+ * Une los arrays de plataformas de la fila PREVIA con los del pase actual.
+ *
+ * Por qué hace falta: `discover` NO devuelve `watch/providers` en los
+ * resultados (verificado en vivo), así que la única fuente de plataformas es el
+ * acumulado de los pases (flatrate y rent|buy son jobs SEPARADOS sobre el mismo
+ * tmdb_id). Con un upsert simple, el pase rent|buy REEMPLAZA la fila y borra
+ * `platforms_flatrate` (y al revés). La unión lo evita: cada pase solo AÑADE,
+ * nunca quita.
+ *
+ * Nota (semántica): con `resync=true` (full semanal) una plataforma de la que un
+ * título se haya caído NO se elimina (la unión no quita); es el coste aceptado
+ * de no tener una segunda fuente de disponibilidad.
+ */
+export function mergePlatformArrays(
+  prev: { platforms_flatrate?: string[]; platforms_rent?: string[]; platforms_buy?: string[] } | null | undefined,
+  next: { platforms_flatrate: string[]; platforms_rent: string[]; platforms_buy: string[] },
+  jobProvider: string,
+  monetization: 'flatrate' | 'rent|buy',
+): { platforms_flatrate: string[]; platforms_rent: string[]; platforms_buy: string[] } {
+  const union = (a: readonly string[] | undefined, b: readonly string[] | undefined) =>
+    [...new Set([...(a ?? []), ...(b ?? [])])];
+  const flat = union(prev?.platforms_flatrate, next.platforms_flatrate);
+  const rent = union(prev?.platforms_rent, next.platforms_rent);
+  const buy = union(prev?.platforms_buy, next.platforms_buy);
+  if (monetization === 'flatrate' && !flat.includes(jobProvider)) flat.push(jobProvider);
+  if (monetization === 'rent|buy') {
+    if (!rent.includes(jobProvider)) rent.push(jobProvider);
+    if (!buy.includes(jobProvider)) buy.push(jobProvider);
+  }
+  return { platforms_flatrate: flat, platforms_rent: rent, platforms_buy: buy };
+}
+
 // ---------------------------------------------------------------------------
 // Cliente TMDB con rate-limit + reintentos
 // ---------------------------------------------------------------------------
@@ -393,7 +426,40 @@ async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number, resyn
     }
     try {
       total = res.total_results ?? total;
-      const rows = toCatalogRows(res.results ?? [], job.provider, job.monetization);
+      let rows = toCatalogRows(res.results ?? [], job.provider, job.monetization);
+      // MERGE de plataformas: leer la fila previa (mismo tmdb_id + media_type)
+      // y unirla con los del pase, para que el pase rent|buy no borre
+      // platforms_flatrate (ni al revés). Ver mergePlatformArrays.
+      if (rows.length > 0) {
+        const ids = rows.map((r) => r.tmdb_id as number);
+        const existing = new Map<number, AnyRecord>();
+        for (let i = 0; i < ids.length; i += 500) {
+          const chunk = ids.slice(i, i + 500);
+          const { data, error: selErr } = (await admin
+            .from('catalog_titles')
+            .select('tmdb_id,platforms_flatrate,platforms_rent,platforms_buy')
+            .eq('media_type', job.mediaType)
+            .in('tmdb_id', chunk)) as unknown as { data: AnyRecord[] | null; error: unknown };
+          if (selErr) throw new Error(String(selErr));
+          for (const r of data ?? []) existing.set(r.tmdb_id as number, r);
+        }
+        for (const row of rows) {
+          const prev = existing.get(row.tmdb_id as number) ?? null;
+          const merged = mergePlatformArrays(
+            prev,
+            {
+              platforms_flatrate: row.platforms_flatrate as string[],
+              platforms_rent: row.platforms_rent as string[],
+              platforms_buy: row.platforms_buy as string[],
+            },
+            job.provider,
+            job.monetization,
+          );
+          row.platforms_flatrate = merged.platforms_flatrate;
+          row.platforms_rent = merged.platforms_rent;
+          row.platforms_buy = merged.platforms_buy;
+        }
+      }
       for (let i = 0; i < rows.length; i += DEFAULT_BATCH) {
         const batch = rows.slice(i, i + DEFAULT_BATCH);
         const { error } = await admin.from('catalog_titles').upsert(batch, { onConflict: 'media_type,tmdb_id' });
@@ -463,7 +529,7 @@ async function handleCatalogSync(req: Request): Promise<Response> {
     );
   }
 
-  let body: { mode?: string; pages?: number; timeMs?: number; currentYear?: number; maxJobs?: number; resync?: boolean } = {};
+  let body: { mode?: string; pages?: number; timeMs?: number; currentYear?: number; maxJobs?: number; skipJobs?: number; resync?: boolean } = {};
   try {
     body = (await req.json()) as typeof body;
   } catch {
@@ -477,20 +543,33 @@ async function handleCatalogSync(req: Request): Promise<Response> {
   const currentYear = Number(body.currentYear) || new Date().getFullYear();
   // Límite opcional de trabajos por run (debug/avanzado gradual; por defecto sin tope).
   const maxJobs = Number.isFinite(Number(body.maxJobs)) && Number(body.maxJobs) > 0 ? Math.floor(Number(body.maxJobs)) : Infinity;
+  // Saltar los N primeros trabajos (debug/avanzado; p. ej. para probar el pase
+  // rent|buy sin rehacer el flatrate).
+  const skipJobs = Number.isFinite(Number(body.skipJobs)) && Number(body.skipJobs) > 0 ? Math.floor(Number(body.skipJobs)) : 0;
   // resync=false → saltar lo ya terminado (solo avanza lo pendiente, para la
   // bomba del workflow). Por defecto (true) se re-sincroniza todo desde la
   // página 1 para capturar novedades y cambios de disponibilidad.
   const resync = body.resync !== false;
 
-  const jobs = planJobs(ES_PROVIDERS, mode, currentYear);
+  // SOLO proveedores con id TMDB verificado: los de `tmdbProviderId: null`
+  // (PENDING_VERIFICATION de providers.ts) no tienen id con el que consultar
+  // `with_watch_providers`, y planearlos haría que discoverParams lanzara
+  // «provider sin id TMDB» y tumbara el run entero (500). En cuanto el dueño
+  // verifique sus ids (scripts/verify-catalog.mjs, acción `providers`), entran
+  // en la sincronización automáticamente.
+  const syncProviders = ES_PROVIDERS.filter((p) => p.tmdbProviderId != null);
+  const jobs = planJobs(syncProviders, mode, currentYear);
   const startedAt = Date.now();
   const results: JobResult[] = [];
   let stopped = false;
+  let processedCount = 0;
   for (let i = 0; i < jobs.length; i++) {
-    if (stopped || i >= maxJobs) break;
+    if (i < skipJobs) continue;
+    if (stopped || processedCount >= maxJobs) break;
     const job = jobs[i];
     const r = await syncJob(job, budget, startedAt, resync);
     results.push(r);
+    processedCount += 1;
     if (Date.now() - startedAt > budget.timeMs) stopped = true;
   }
   return new Response(JSON.stringify({ mode, processed: results.length, stopped, results }), {

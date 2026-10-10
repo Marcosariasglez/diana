@@ -134,10 +134,10 @@ describe('repo PostgREST catalog_titles (D2-1.5) — cliente mock', () => {
     expect(rec.from).toBe('catalog_titles');
     expect(rec.select).toBe(COLUMNS);
     expect(rec.ors.length).toBe(1);
-    // Sintaxis PostgREST correcta: cd.{…} (contains) y sin paréntesis propios
-    // (supabase-js añade los paréntesis al .or()).
-    expect(rec.ors[0]).toContain('platforms_flatrate=cd.{netflix}');
-    expect(rec.ors[0]).toContain('platforms_buy=cd.{max}');
+    // Sintaxis PostgREST correcta: cs.{…} (contains @>) y sin paréntesis
+    // propios (supabase-js añade los paréntesis al .or()).
+    expect(rec.ors[0]).toContain('platforms_flatrate=cs.{netflix}');
+    expect(rec.ors[0]).toContain('platforms_buy=cs.{max}');
     expect(rec.ors[0].startsWith('(')).toBe(false);
     // El orden multi-columna se aplica UNA llamada .order() por término
     // (supabase-js no parsea strings multi-columna).
@@ -179,7 +179,7 @@ describe('repo PostgREST catalog_titles (D2-1.5) — cliente mock', () => {
     const media = await postgrestCatalogSource.candidates(['netflix'], 'movie', 5000);
     const rec = calls[0];
     expect(rec.filters).toContainEqual(['media_type', 'eq', 'movie']);
-    expect(rec.ors[0]).toContain('platforms_flatrate=cd.{netflix}');
+    expect(rec.ors[0]).toContain('platforms_flatrate=cs.{netflix}');
     expect(rec.orders[0]).toEqual({ by: 'popularity', ascending: false, nullsFirst: false });
     expect(rec.range).toEqual([0, 999]);
     expect(media.length).toBe(25); // el fixture tiene 25
