@@ -384,32 +384,42 @@ async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number, resyn
     try {
       res = await tmdbDiscover(job.mediaType, params);
     } catch (e) {
+      // Error de TMDB/red: transitorio; NO se avanza la página guardada —
+      // el próximo run reintenta la misma página.
       await admin
         .from('catalog_sync_state')
         .upsert({ ...stateKey, status: 'error', last_error: String(e), updated_at: new Date().toISOString() });
       return { ...stateKey, synced, pages: page - startPage, total, done: false, error: String(e) };
     }
-    total = res.total_results ?? total;
-    const rows = toCatalogRows(res.results ?? [], job.provider, job.monetization);
-    for (let i = 0; i < rows.length; i += DEFAULT_BATCH) {
-      const batch = rows.slice(i, i + DEFAULT_BATCH);
-      const { error } = await admin.from('catalog_titles').upsert(batch, { onConflict: 'media_type,tmdb_id' });
-      if (error) {
-        await admin
-          .from('catalog_sync_state')
-          .upsert({ ...stateKey, status: 'error', last_error: String(error), updated_at: new Date().toISOString() });
-        return { ...stateKey, synced, pages: page - startPage, total, done: false, error: String(error) };
+    try {
+      total = res.total_results ?? total;
+      const rows = toCatalogRows(res.results ?? [], job.provider, job.monetization);
+      for (let i = 0; i < rows.length; i += DEFAULT_BATCH) {
+        const batch = rows.slice(i, i + DEFAULT_BATCH);
+        const { error } = await admin.from('catalog_titles').upsert(batch, { onConflict: 'media_type,tmdb_id' });
+        if (error) throw new Error(String(error));
+        synced += batch.length;
       }
-      synced += batch.length;
-    }
-    await admin
-      .from('catalog_sync_state')
-      .upsert({ ...stateKey, status: 'running', last_page: next, last_total: total, updated_at: new Date().toISOString() });
-    page = next;
-    const pages = res.total_pages ?? 1;
-    if (!res.results || res.results.length < 20 || page >= pages) {
-      done = true;
-      break;
+      await admin
+        .from('catalog_sync_state')
+        .upsert({ ...stateKey, status: 'running', last_page: next, last_total: total, updated_at: new Date().toISOString() });
+      page = next;
+      const pages = res.total_pages ?? 1;
+      if (!res.results || res.results.length < 20 || page >= pages) {
+        done = true;
+        break;
+      }
+    } catch (e) {
+      // Error LOCAL (forma de datos imprevista, upsert rechazado, …): sería
+      // DETERMINISTA en la misma página — sin avanzar, el siguiente run
+      // volvería a caer en la misma página (500 otra vez) y la bomba no
+      // avanzaría nunca. Se registra el motivo y se AVANZA la página guardada
+      // para que el próximo run la salte (el full semanal re-barre y recupera).
+      const msg = `local ${String(e)}`;
+      await admin
+        .from('catalog_sync_state')
+        .upsert({ ...stateKey, status: 'error', last_error: msg, last_page: next, last_total: total, updated_at: new Date().toISOString() });
+      return { ...stateKey, synced, pages: page - startPage, total, done: false, error: msg };
     }
   }
   if (done) {
