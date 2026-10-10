@@ -417,7 +417,9 @@ export async function installSupabaseMock(page: Page, s: E2EState): Promise<void
 /** Captura errores de consola descartando el ruido conocido del bundle. */
 export function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
-  const NOISE = /ResizeObserver loop|favicon|404 \(Not Found\)|WebSocket connection to 'ws:\/\//i;
+  // «status of 422»: el spec de auth dispara un 422 intencionado (código
+  // OTP malo) y el navegador lo loguea como error de consola.
+  const NOISE = /ResizeObserver loop|favicon|404 \(Not Found\)|status of 422|WebSocket connection to 'ws:\/\//i;
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return;
     const text = msg.text();

@@ -1,11 +1,11 @@
 # Evaluación del recomendador (D2-2.4)
 
-> Generado por `scripts/eval-recomendador.mjs` el 2026-10-09T20:36:06.643Z.
+> Generado por `scripts/eval-recomendador.mjs` el 2026-10-10T08:40:32.960Z.
 
 ## Dataset (sintético, «dejar uno fuera»)
 
 - Catálogo: mocks del repo (122 títulos).
-- Valoraciones: 16 usuarios sintéticos con perfil de género; 40 títulos de entrenar por usuario, el resto holdout.
+- Valoraciones: 8 usuarios sintéticos con perfil de género; 40 títulos de entrenar por usuario, el resto holdout.
 - Embeddings: sintéticos (vocabulario de contenido) — la calidad del embedding real (gte-small) solo se mide en producción.
 - Heurística actual: `predictTenths` con el mismo historial (40 ratings) que el modelo content; sin mazo de onboarding (no existe en el sintético).
 - Precisión@10: por usuario, de su top-10 real (por nota verdadera dentro del holdout), cuántos caen en el top-10 ordenado por la predicción de cada modelo.
@@ -14,10 +14,10 @@
 
 | Modelo | EAM (décimas) | Precisión@10 | n holdout |
 |---|---|---|---|
-| heuristic | 5.42 | 0.569 | 800 |
-| mean | 8.803 | 0.181 | 800 |
-| random | 11.758 | 0.212 | 800 |
-| content | 3.705 | 0.444 | 800 |
+| heuristic | 5.315 | 0.512 | 400 |
+| mean | 8.06 | 0.188 | 400 |
+| random | 12.223 | 0.225 | 400 |
+| content | 3.797 | 0.362 | 400 |
 
 ## Veredicto
 

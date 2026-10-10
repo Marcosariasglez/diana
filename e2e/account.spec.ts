@@ -50,9 +50,12 @@ test.describe('cuenta (supabase simulado)', () => {
     const { s, errors } = await signedInPage(page);
     await goAccount(page);
     await page.getByRole('button', { name: 'Cerrar en todos los dispositivos' }).click();
-    // Confirmación (hoja) antes de actuar.
-    await expect(page.getByRole('button', { name: 'Cerrar' })).toBeVisible();
-    await page.getByRole('button', { name: 'Cerrar' }).last().click();
+    // Confirmación (hoja) antes de actuar. «Cerrar» es ambiguo a nivel de
+    // página (coinciden también «Cerrar sesión» y «Cerrar en todos…»):
+    // se limita a la hoja.
+    const sheet = page.getByTestId('bottom-sheet');
+    await expect(sheet.getByRole('button', { name: 'Cerrar' })).toBeVisible();
+    await sheet.getByRole('button', { name: 'Cerrar' }).click();
     await expectLogin(page);
 
     expect(s.logoutScopes).toContain('global');
@@ -66,13 +69,16 @@ test.describe('cuenta (supabase simulado)', () => {
     await goAccount(page);
     await page.getByRole('button', { name: 'Borrar mi cuenta' }).click();
 
+    // «Borrar» es ambiguo a nivel de página (coinciden también «Borrar mi
+    // cuenta» y «Borrar también mi acceso…»): se limita a la hoja.
+    const sheet = page.getByTestId('bottom-sheet');
     // Con la frase incompleta, «Borrar» queda bloqueado.
     await page.getByTestId('confirm-phrase-input').fill('BORRAR MI CUENT');
-    expect(await page.getByRole('button', { name: 'Borrar' }).isDisabled()).toBe(true);
+    expect(await sheet.getByRole('button', { name: 'Borrar' }).isDisabled()).toBe(true);
 
     // Frase exacta → llamada con everywhere:false y vuelta a /login.
     await page.getByTestId('confirm-phrase-input').fill('BORRAR MI CUENTA');
-    await page.getByRole('button', { name: 'Borrar' }).click();
+    await sheet.getByRole('button', { name: 'Borrar' }).click();
     await expectLogin(page);
 
     expect(s.deleteCalls).toHaveLength(1);
@@ -122,7 +128,9 @@ test.describe('cuenta (supabase simulado)', () => {
       .toBe('dark');
 
     await page.reload();
-    await expectInicio(page);
+    // Tras recargar volvemos a la última ruta (pantalla de Perfil), no a
+    // Inicio: expo-router conserva la URL. El tema se comprueba igualmente.
+    await expect(page.getByRole('heading', { name: 'Perfil' }).first()).toBeVisible();
     await expect
       .poll(async () => page.evaluate(() => document.documentElement.getAttribute('data-theme')))
       .toBe('dark');
