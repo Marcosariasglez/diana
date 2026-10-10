@@ -39,8 +39,11 @@ create table public.catalog_titles (
 );
 
 -- Índices de consulta del cliente (browse):
---  - disponibilidad en una plataforma: «cs.» (contained-by) sobre los arrays
---  - género: «cs.» sobre genre_ids
+--  - disponibilidad en una plataforma: «cd.» (contains) sobre los arrays
+--    (el filtro PostgREST es platforms_*=cd.{id}: el array CONTIENE la
+--    plataforma; «cs.»/contained-by daría el sentido al revés y casaría con
+--    el array vacío)
+--  - género: «cd.» sobre genre_ids
 --  - década: rango sobre year
 --  - orden: popularity / vote_average / año
 create index catalog_titles_flatrate_gin on public.catalog_titles using gin (platforms_flatrate);
@@ -71,8 +74,11 @@ create index catalog_titles_title_trgm_idx on public.catalog_titles using gin (t
 create table public.catalog_sync_state (
   provider text not null,                                 -- id de providers.ts
   media_type text not null check (media_type in ('movie', 'tv')),
+  -- 'rent|buy' es el pase 2 de la función (TMDB descubre con
+  -- with_watch_monetization_types=rent|buy en una sola pasada): la clave de
+  -- estado guarda ese valor TAL CUAL (coherente con catalog-sync e index.ts).
   monetization text not null default 'flatrate'
-    check (monetization in ('flatrate', 'rent', 'buy')),
+    check (monetization in ('flatrate', 'rent|buy')),
   range_key text not null default '',                     -- ventana «AAAA-AAAA» (o 'delta'); '' = todo
   last_page int not null default 0,
   last_total int,                                         -- total_results de TMDB (para verify-catalog)

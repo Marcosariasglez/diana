@@ -52,14 +52,24 @@ export function WatchlistButton({
 
   const onPress = () => {
     toggle(mediaType, mediaId);
-    // Espejo al servidor solo si el estado final es «en la lista».
+    // Espejo al servidor solo si el estado final es «en la lista». Al lograrlo
+    // se retira la operación de la cola de pendientes (coherencia offline):
+    // si falla, queda registrada para reintentarla en el próximo login.
     if (useWatchlistStore.getState().has(mediaType, mediaId)) {
       const item = useWatchlistStore
         .getState()
         .items.find((i) => i.mediaType === mediaType && i.mediaId === mediaId);
-      if (item) void watchlistRepository.upsert(item).catch(reportSyncError);
+      if (item) {
+        void watchlistRepository
+          .upsert(item)
+          .then(() => useWatchlistStore.getState().markPushed(mediaType, mediaId))
+          .catch(reportSyncError);
+      }
     } else {
-      void watchlistRepository.remove(mediaType, mediaId).catch(reportSyncError);
+      void watchlistRepository
+        .remove(mediaType, mediaId)
+        .then(() => useWatchlistStore.getState().markRemoved(mediaType, mediaId))
+        .catch(reportSyncError);
     }
   };
 

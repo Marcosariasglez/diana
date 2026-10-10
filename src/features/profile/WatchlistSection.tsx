@@ -110,7 +110,12 @@ export function WatchlistSection() {
 
   const onRemove = (mediaType: Media['media_type'], mediaId: number) => {
     remove(mediaType, mediaId);
-    void watchlistRepository.remove(mediaType, mediaId).catch(reportSyncError);
+    // Al lograr el borrado en el servidor se retira de la cola de pendientes
+    // (coherencia offline); si falla, queda para reintentar en el próximo login.
+    void watchlistRepository
+      .remove(mediaType, mediaId)
+      .then(() => useWatchlistStore.getState().markRemoved(mediaType, mediaId))
+      .catch(reportSyncError);
   };
 
   return (

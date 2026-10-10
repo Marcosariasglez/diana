@@ -3,7 +3,7 @@
 // select a anon/authenticated y no da escritura (la escribe catalog-sync).
 //
 // NO funciona contra el simulador E2E (no tiene la tabla ni los operadores
-// cs./or/websearch_query): se prueba con un cliente Supabase MOCK (Jest),
+// cd./or/websearch_query): se prueba con un cliente Supabase MOCK (Jest),
 // igual que delete-account.test.ts. En E2E el build usa CATALOG=mock, así que
 // esta rama no se activa.
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -43,17 +43,34 @@ export interface CatalogSource {
 type Builder = {
   filter(col: string, op: string, val: string | number): Builder;
   or(val: string): Builder;
-  order(by: string): Builder;
+  order(by: string, opts?: { ascending?: boolean; nullsFirst?: boolean }): Builder;
   range(from: number, to: number): Builder;
   then?: (resolve: (v: { data: unknown[] | null; error: { message: string } | null }) => void, reject: (e: unknown) => void) => void;
 };
+
+/**
+ * Un término de orden como lo emite `query.ts`: `columna.dir[.nullsfirst|
+ * .nullslast]` (ej. `popularity.desc`, `year.desc.nullslast`).
+ */
+function parseOrderTerm(term: string): { column: string; ascending: boolean; nullsFirst: boolean } {
+  const [column, dir, nulls] = term.split('.');
+  return { column, ascending: dir !== 'desc', nullsFirst: nulls === 'nullsfirst' };
+}
 
 function applyQuery(sb: SupabaseClient, q: PostgRestQuery): Builder {
   let builder = sb.from('catalog_titles').select(q.select) as unknown as Builder;
   for (const f of q.filters) {
     builder = applyOne(builder, f);
   }
-  return builder.order(q.order).range(q.range[0], q.range[1]);
+  // `q.order` es una lista multi-columna ya serializada
+  // (ej. 'vote_average.desc,vote_count.desc,media_type.asc,tmdb_id.asc');
+  // supabase-js no la parsea: `.order()` solo admite UNA columna + opciones,
+  // así que se encadena una llamada por término (mismo resultado PostgREST).
+  for (const term of q.order.split(',')) {
+    const { column, ascending, nullsFirst } = parseOrderTerm(term.trim());
+    builder = builder.order(column, { ascending, nullsFirst });
+  }
+  return builder.range(q.range[0], q.range[1]);
 }
 
 function applyOne(b: Builder, f: CatalogFilter): Builder {

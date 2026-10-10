@@ -124,13 +124,20 @@ function WhereToWatchRow({ label, ids, c }: { label: string; ids: string[]; c: {
 function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
   const { colors } = useTheme();
   const [data, setData] = useState<WhereToWatchData | null>(null);
-  const alive = useRef(true);
+  // Token por request (no un `alive` compartido): un ref común lo reabre el
+  // siguiente efecto, y una respuesta LENTA del título anterior pasaría la
+  // guarda y pintaría la disponibilidad sobre el título nuevo. Con un token
+  // por efecto, cada respuesta solo aplica si sigue siendo la más reciente.
+  const requestId = useRef(0);
   useEffect(() => {
-    alive.current = true;
+    const token = ++requestId.current;
+    // Al cambiar de título se descarta el bloque anterior (si el nuevo no
+    // tiene disponibilidad, el bloque no debe seguir mostrando el del viejo).
+    setData(null);
     activeCatalogSource
       .availability(type, id)
       .then((row: CatalogRow | null) => {
-        if (!alive.current || !row) return;
+        if (token !== requestId.current || !row) return;
         setData({
           flatrate: row.platforms_flatrate ?? [],
           rent: row.platforms_rent ?? [],
@@ -140,9 +147,6 @@ function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
       .catch(() => {
         /* sin disponibilidad: no se pinta el bloque */
       });
-    return () => {
-      alive.current = false;
-    };
   }, [type, id]);
 
   if (!data) return null;

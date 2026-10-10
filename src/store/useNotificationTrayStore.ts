@@ -39,7 +39,7 @@ const MAX_NOTICES = 50;
 
 export const useNotificationTrayStore = create<TrayState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       notices: [],
       add: (n) =>
         set((s) => {
@@ -55,7 +55,16 @@ export const useNotificationTrayStore = create<TrayState>()(
         set((s) => ({ notices: s.notices.map((n) => (n.read ? n : { ...n, read: true })) })),
       removeForKeys: (keys) =>
         set((s) => ({ notices: s.notices.filter((n) => !keys.has(keyOf(n.mediaType, n.mediaId))) })),
-      clear: () => set({ notices: [] }),
+      clear: () => {
+        // IMPORTANTE: el middleware persist hace storage.setItem en CADA
+        // llamada a set (aunque el estado no cambie), así que un clear sobre
+        // bandeja vacía reescribiría diana.notifications.v1 justo después de
+        // que el cierre de sesión haya borrado las claves diana.* (el efecto
+        // de limpieza y resetLocalStores llaman a clear tras el cierre).
+        // Si ya está vacía, ni se toca el store.
+        if (get().notices.length === 0) return;
+        set({ notices: [] });
+      },
     }),
     {
       name: 'diana.notifications.v1',

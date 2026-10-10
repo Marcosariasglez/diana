@@ -15,6 +15,11 @@
 #   CATALOG_SYNC_SECRET   (secret; el MISMO valor que el secreto de la función
 #                          en Supabase: `supabase secrets set CATALOG_SYNC_SECRET=…`).
 #
+# La función está protegida por la comprobación JWT POR DEFECTO del gateway de
+# Supabase, así que cada petición lleva TAMBIÉN `Authorization: Bearer <anon key>`
+# (mismo patrón que keepalive.yml): sin esa cabecera el gateway responde 401
+# antes de que la función pueda validar `x-catalog-sync-secret`.
+#
 # Alternativa a pg_cron + pg_net (documentada en INFORME.md): pg_cron ejecuta
 # el job dentro de Postgres y pg_net llama a la función con HTTP sin depender
 # de GitHub. Requiere extensión pg_cron (disponible en Supabase) y pg_net
@@ -97,6 +102,7 @@ jobs:
             code=$(curl -sS -X POST \
               "${{ vars.SUPABASE_URL }}/functions/v1/catalog-sync" \
               -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
+              -H "Authorization: Bearer ${{ vars.SUPABASE_ANON_KEY }}" \
               -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
               -H "Content-Type: application/json" \
               -d "$BODY" \

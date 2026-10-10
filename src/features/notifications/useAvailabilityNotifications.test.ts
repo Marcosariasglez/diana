@@ -92,6 +92,22 @@ describe('useAvailabilityNotifications (D2-4)', () => {
     expect(mockByIds).not.toHaveBeenCalled();
   });
 
+  it('watchlist vacía con avisos en la bandeja: limpia TODA la bandeja', async () => {
+    // Aislamiento: al vaciar la lista (misma cuenta, sin cambiar de usuario),
+    // los avisos de títulos que ya no están en la watchlist no pueden quedar
+    // visibles. Antes el efecto de limpieza saltaba con items.length === 0.
+    useNotificationTrayStore.getState().add({
+      id: 'movie:9',
+      mediaType: 'movie',
+      mediaId: 9,
+      newPlatforms: ['netflix'],
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+    useWatchlistStore.getState().setItems([]);
+    await renderHook(() => useAvailabilityNotifications());
+    await waitFor(() => expect(useNotificationTrayStore.getState().notices).toHaveLength(0));
+  });
+
   it('limpia de la bandeja los avisos de títulos fuera de la watchlist', async () => {
     useNotificationTrayStore.getState().add({
       id: 'movie:9',
