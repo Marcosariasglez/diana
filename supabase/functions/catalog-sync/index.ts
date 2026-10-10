@@ -324,9 +324,11 @@ interface JobResult {
   total: number;
   done: boolean;
   error?: string;
+  /** true si se omitió porque ya estaba terminado y la run no pedía re-sincronizar. */
+  skipped?: boolean;
 }
 
-async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number): Promise<JobResult> {
+async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number, resync: boolean): Promise<JobResult> {
   const admin = getAdmin();
   const stateKey = {
     provider: job.provider,
@@ -344,6 +346,13 @@ async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number): Prom
     .eq('range_key', job.window.key)
     .maybeSingle();
   const prevRow = prev as { last_page?: number; last_total?: number; status?: string } | null;
+  // resync=false (la «bomba» del workflow): si el trabajo ya terminó, se SALTA
+  // en vez de re-sincronizarlo desde la página 1; así un lote grande avanza
+  // solo con lo pendiente y la bomba puede terminar (re-sincronizar todo en
+  // cada iteración haría que un full nunca acabara).
+  if (!resync && prevRow?.status === 'done') {
+    return { ...stateKey, synced: 0, pages: 0, total: prevRow.last_total ?? 0, done: true, skipped: true };
+  }
   // Si la pasada se interrumpió (running/error) por el presupuesto de tiempo o
   // páginas, continúa DESDE la última página guardada. Si ya terminó (done) es
   // una re-sincronización (novedades y cambios de disponibilidad) y vuelve a
@@ -424,7 +433,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  let body: { mode?: string; pages?: number; timeMs?: number; currentYear?: number; maxJobs?: number } = {};
+  let body: { mode?: string; pages?: number; timeMs?: number; currentYear?: number; maxJobs?: number; resync?: boolean } = {};
   try {
     body = (await req.json()) as typeof body;
   } catch {
@@ -438,6 +447,10 @@ Deno.serve(async (req: Request) => {
   const currentYear = Number(body.currentYear) || new Date().getFullYear();
   // Límite opcional de trabajos por run (debug/avanzado gradual; por defecto sin tope).
   const maxJobs = Number.isFinite(Number(body.maxJobs)) && Number(body.maxJobs) > 0 ? Math.floor(Number(body.maxJobs)) : Infinity;
+  // resync=false → saltar lo ya terminado (solo avanza lo pendiente, para la
+  // bomba del workflow). Por defecto (true) se re-sincroniza todo desde la
+  // página 1 para capturar novedades y cambios de disponibilidad.
+  const resync = body.resync !== false;
 
   const jobs = planJobs(ES_PROVIDERS, mode, currentYear);
   const startedAt = Date.now();
@@ -446,7 +459,7 @@ Deno.serve(async (req: Request) => {
   for (let i = 0; i < jobs.length; i++) {
     if (stopped || i >= maxJobs) break;
     const job = jobs[i];
-    const r = await syncJob(job, budget, startedAt);
+    const r = await syncJob(job, budget, startedAt, resync);
     results.push(r);
     if (Date.now() - startedAt > budget.timeMs) stopped = true;
   }
