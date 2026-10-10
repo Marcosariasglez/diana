@@ -113,8 +113,9 @@ describe('useMoodStore', () => {
 });
 
 describe('manifiesto de rutas (5.1)', () => {
-  it('lista las 18 filas y solo 5 con bottom nav (4 pestañas y la Ficha)', () => {
-    expect(ROUTES).toHaveLength(19);
+  it('lista las filas del manifiesto y solo 5 con bottom nav (4 pestañas y la Ficha)', () => {
+    // 19 filas base + /explore (VERTICE-PLAN-2 D2-1.6).
+    expect(ROUTES).toHaveLength(20);
     expect(ROUTES.filter((r) => r.bottomNav).map((r) => r.url)).toEqual([
       '/',
       '/mood',

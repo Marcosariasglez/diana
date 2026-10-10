@@ -1,34 +1,22 @@
+import { PROVIDER_BY_ID, ES_PROVIDERS } from './providers';
+
 export interface Platform {
   id: string;
   name: string;
 }
 
-export const PLATFORMS: ReadonlyArray<Platform> = [
-  { id: 'netflix', name: 'Netflix' },
-  { id: 'prime-video', name: 'Prime Video' },
-  { id: 'max', name: 'Max' },
-  { id: 'disney-plus', name: 'Disney+' },
-  { id: 'apple-tv', name: 'Apple TV' },
-  { id: 'paramount-plus', name: 'Paramount+' },
-  { id: 'filmin', name: 'Filmin' },
-  { id: 'mubi', name: 'MUBI' },
-  { id: 'mitele', name: 'Mitele' },
-  { id: 'discovery-plus', name: 'Discovery+' },
-  { id: 'britbox', name: 'BritBox' },
-  { id: 'pluto-tv', name: 'Pluto TV' },
-  { id: 'rtve-play', name: 'RTVE Play' },
-  { id: 'starzplay', name: 'Starzplay' },
-  { id: 'hbo-es', name: 'HBO ES' },
-  { id: 'rakuten-tv', name: 'Rakuten TV' },
-  { id: 'nova-play', name: 'Nova Play' },
-  { id: 'zee5', name: 'ZEE5' },
-  { id: 'hotstar', name: 'Hotstar' },
-  { id: 'vidAngel', name: 'VidAngel' },
-  { id: 'peacock', name: 'Peacock' },
-  { id: 'criterion', name: 'Criterion' },
-];
+/**
+ * Plataformas de la app (VERTICE-PLAN-2 D2-1.1): se derivan de
+ * `./providers` (único origen de verdad). Solo las que operan en España
+ * (activas + pendientes de verificar id TMDB): son las que ofrece el selector
+ * de plataformas y la sincronización de catálogo.
+ *
+ * Los ids `es: false` (Mitele, ZEE5, Hotstar, Peacock, Criterion…) NO se
+ * muestran en el selector, pero `platformName` sigue sabiendo nombrarlos por si
+ * un perfil antiguo los guarda en `favorite_platforms`.
+ */
+export const PLATFORMS: ReadonlyArray<Platform> = ES_PROVIDERS.map((p) => ({ id: p.id, name: p.name }));
 
 export const DEFAULT_PLATFORMS = ['netflix', 'prime-video', 'max', 'disney-plus'];
 
-export const platformName = (id: string): string =>
-  PLATFORMS.find((p) => p.id === id)?.name ?? id;
+export const platformName = (id: string): string => PROVIDER_BY_ID.get(id)?.name ?? id;

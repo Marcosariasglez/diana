@@ -1,8 +1,43 @@
 import { create } from 'zustand';
-import type { FeedCategory, MediaWithAffinity } from '@/types/media';
+import type { AffinityBucket, FeedCategory, MediaWithAffinity } from '@/types/media';
 import { catalogRepository } from '@/services';
+import { activeRecommender, contentRecommend } from '@/services/recommender';
 import { getRankingContext } from './rankingContext';
 import { useProfileStore } from './useProfileStore';
+
+/** score del RPC `recommend` ([-1,1], 0 en frío) → cubo de afinidad. */
+function bucketFromScore(score: number): AffinityBucket {
+  // Mismos umbrales relativos que bucketOfTenths (alto/medio/bajo) pero sobre
+  // un score normalizado: >0.25 alto, >=0 medio, resto bajo.
+  return score > 0.25 ? 'alto' : score >= 0 ? 'medio' : 'bajo';
+}
+
+/**
+ * D2-2.6: primer página del feed con el recomendador activo. `content` →
+ * RPC `recommend` (candidatos ya ordenados por afinidad, sin vistos, dentro
+ * de las plataformas); si devuelve null (sin sesión, 0007 sin desplegar,
+ * error) DECAE a la heurística actual. En `heuristic` (defecto) no toca el
+ * servidor.
+ */
+async function loadFirstPageContent(
+  platforms: string[],
+): Promise<{ featured: MediaWithAffinity | null; categories: FeedCategory[]; hasMore: boolean } | null> {
+  const recs = await contentRecommend({ platforms, limit: 60 });
+  if (!recs || recs.length === 0) return null;
+  const [first, ...rest] = recs;
+  return {
+    featured: { media: first.media, bucket: bucketFromScore(first.score) },
+    categories: [
+      {
+        id: 'recommendations',
+        title: 'Recomendaciones',
+        media: rest.slice(0, 5).map((r) => ({ media: r.media, bucket: bucketFromScore(r.score) })),
+        hasSeeAll: false,
+      },
+    ],
+    hasMore: rest.length > 5,
+  };
+}
 
 export type { FeedCategory, MediaWithAffinity } from '@/types/media';
 
@@ -55,6 +90,24 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
     try {
       const platforms = useProfileStore.getState().profile.favoritePlatforms;
       const ctx = getRankingContext();
+      // D2-2.6: si el recomendador es 'content' y responde, usa sus
+      // candidatos (orden por afinidad real); si no (null) decae a la
+      // heurística actual sin que el usuario note nada.
+      let content: { featured: MediaWithAffinity | null; categories: FeedCategory[]; hasMore: boolean } | null = null;
+      if (activeRecommender() === 'content') {
+        content = await loadFirstPageContent(platforms);
+      }
+      if (id !== requestId) return;
+      if (content) {
+        set({
+          featured: content.featured,
+          categories: content.categories,
+          hasMore: content.hasMore,
+          page: 0,
+          status: 'ready',
+        });
+        return;
+      }
       const [featured, first] = await Promise.all([
         catalogRepository.getFeatured(platforms, ctx),
         catalogRepository.getFeedCategories(platforms, ctx, 0),

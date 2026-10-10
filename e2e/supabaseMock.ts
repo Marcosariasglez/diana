@@ -194,14 +194,34 @@ function makeDb(s: E2EState): Record<string, Table> {
 
 const KNOWN_OPS = ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in', 'is', 'like', 'ilike', 'cs', 'cd'];
 
-/** Filtros PostgREST usados por Diana: `col=eq.valor` (explícito) y `col=in.(a,b)`. */
+/**
+ * Filtros PostgREST usados por Diana. supabase-js genera la forma IMPLÍCITA
+ * del operador (en el VALOR): `id=eq.1111...`, `key=in.(a,b)`. También se
+ * admite la forma explícita (operador en la CLAVE): `id.eq=1111...`.
+ */
 function applyFilters(rows: Row[], q: URLSearchParams): Row[] {
   let out = [...rows];
   for (const [k, v] of q.entries()) {
     if (['select', 'order', 'offset', 'limit', 'on_conflict'].includes(k)) continue;
-    const [col, opRaw, ...rest] = k.split('.');
-    const op = opRaw && KNOWN_OPS.includes(opRaw) ? opRaw : 'eq';
-    const val = op === 'eq' && opRaw && !KNOWN_OPS.includes(opRaw) ? opRaw : rest.join('.') || v;
+    let col = k;
+    let opRaw: string | undefined;
+    let val = v;
+    const keyParts = k.split('.');
+    if (keyParts.length >= 2 && KNOWN_OPS.includes(keyParts[1])) {
+      // Forma explícita: col.op=val (o col.op.extra=val)
+      col = keyParts[0];
+      opRaw = keyParts[1];
+      val = keyParts.slice(2).join('.');
+    } else {
+      // Forma implícita: col=op.val (supabase-js). El valor se reparte por
+      // puntos SOLO si el primer trozo es un operador conocido.
+      const valParts = v.split('.');
+      if (valParts.length >= 2 && KNOWN_OPS.includes(valParts[0])) {
+        opRaw = valParts[0];
+        val = valParts.slice(1).join('.');
+      }
+    }
+    const op = opRaw ?? 'eq';
     if (op === 'eq') out = out.filter((r) => String(r[col]) === val);
     else if (op === 'neq') out = out.filter((r) => String(r[col]) !== val);
     else if (op === 'in') {
@@ -279,7 +299,9 @@ export async function installSupabaseMock(page: Page, s: E2EState): Promise<void
 
       if (sub === 'otp' && method === 'POST') {
         if (s.otpSendFail) return respondJson(429, { error: 'too_many_requests', error_description: 'rate limit exceeded' });
-        return route.fulfill({ status: 200, headers: { 'Content-Type': 'text/plain' }, body: '' });
+        // GoTrue real responde 200 con cuerpo JSON (auth-js hace result.json());
+        // un 200 vacío con text/plain haría fallar el parse y el envío.
+        return respondJson(200, {});
       }
 
       if (sub === 'verify' && method === 'POST') {
@@ -331,8 +353,13 @@ export async function installSupabaseMock(page: Page, s: E2EState): Promise<void
         const offset = q.has('offset') ? Number(q.get('offset')) : 0;
         const limit = q.has('limit') ? Number(q.get('limit')) : undefined;
         out = out.slice(offset, limit !== undefined ? offset + limit : undefined);
-        // .single() / .maybeSingle(): limit=1 sin offset → objeto o 406 PGRST116
-        if (limit === 1 && offset === 0) {
+        // .single() / .maybeSingle(): PostgREST lo declara con la cabecera
+        // Accept: application/vnd.pgrst.object+json (NO con limit=1 en la
+        // query, que es lo que supabase-js envía). 0 o 2+ filas → 406 PGRST116
+        // (el cliente convierte el 406 en null solo para maybeSingle).
+        const wantsObject =
+          (req.headers()['accept'] ?? '').includes('vnd.pgrst.object') || (limit === 1 && offset === 0);
+        if (wantsObject) {
           if (out.length === 1) return respondJson(200, out[0]);
           return respondJson(406, {
             message: 'JSON object requested, multiple (or no) rows returned',

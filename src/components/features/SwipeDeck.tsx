@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { EyeOff, Heart, X, type LucideIcon } from 'lucide-react-native';
 import type { SwipeDir } from '@/features/swipe/direction';
@@ -17,6 +17,8 @@ export interface SwipeDeckProps {
   max: number;
   /** Por defecto true; false en grupo (se oculta el boton central). */
   allowUnseen?: boolean;
+  /** D2-3: pieza sobre la carta de arriba (p. ej. boton «Quiero ver»). */
+  topBadge?: ReactNode;
 }
 
 interface RoundButtonProps {
@@ -44,7 +46,7 @@ function RoundButton({ icon: Icon, label, caption, primary, onPress }: RoundButt
   );
 }
 
-export function SwipeDeck({ cards, onDecide, progress, max, allowUnseen = true }: SwipeDeckProps) {
+export function SwipeDeck({ cards, onDecide, progress, max, allowUnseen = true, topBadge }: SwipeDeckProps) {
   const { colors } = useTheme();
   const top = cards[0];
   const next = cards[1];
@@ -70,6 +72,7 @@ export function SwipeDeck({ cards, onDecide, progress, max, allowUnseen = true }
           media={top}
           isTop
           allowUnseen={allowUnseen}
+          topBadge={topBadge}
           onDecide={(dir) => onDecide(top, dir)}
         />
       </View>

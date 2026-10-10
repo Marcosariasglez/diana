@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { AlertCircle, CheckCircle2, User } from 'lucide-react-native';
+import { TmdbAttribution } from '@/components/features/Attribution';
 import { MetricCard } from '@/components/features/MetricCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -13,6 +14,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { HISTORY_PAGE_SIZE, detailHref, paginateHistory } from '@/features/profile/profileLogic';
+import { WatchlistSection } from '@/features/profile/WatchlistSection';
 import { useProfileImport } from '@/features/profile/useProfileImport';
 import {
   selectAverageRating,
@@ -206,6 +208,9 @@ export default function ProfileScreen() {
           )}
         </Card>
 
+        {/* D2-3: lista «Quiero ver» (alta/baja desde ficha y mazo). */}
+        <WatchlistSection />
+
         {/* Grupo Aplicación */}
         <Text style={[textStyle('label'), styles.groupLabel]}>APLICACIÓN</Text>
         <Card style={styles.sectionGap}>
@@ -253,6 +258,7 @@ export default function ProfileScreen() {
 
         {/* Pie */}
         <View style={styles.footer}>
+          <TmdbAttribution />
           <Text style={[textStyle('bodySmall'), styles.footerText]}>
             Diana {APP_VERSION} · Una app de VERTICE
           </Text>

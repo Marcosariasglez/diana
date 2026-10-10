@@ -46,9 +46,11 @@
   --overlay: rgba(0, 0, 0, 0.6);
 }
 
-/* Simulador movil en desktop */
+/* Simulador movil en desktop (A3.5: columna centrada de 390 px en pantallas
+   anchas). El root de Expo Router web es #root (no #__next): antes de
+   plan2 (D2-0) esta regla nunca se aplicaba en desktop. */
 @media (min-width: 430px) {
-  #__next {
+  #root {
     max-width: 390px;
     margin: 0 auto;
     min-height: 100vh;

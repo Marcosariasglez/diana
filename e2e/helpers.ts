@@ -41,7 +41,8 @@ export async function expectLogin(page: Page): Promise<void> {
 
 /** Navega a Cuenta desde la pestaña Perfil («Gestionar cuenta»). */
 export async function goAccount(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Perfil', exact: true }).click();
+  // La pestaña es accessibilityRole="tab" (BottomNav), no button.
+  await page.getByRole('tab', { name: 'Perfil', exact: true }).click();
   await page.getByRole('button', { name: 'Gestionar cuenta' }).click();
   await expect(page.getByRole('heading', { name: 'Cuenta' }).first()).toBeVisible();
 }

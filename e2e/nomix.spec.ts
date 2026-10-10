@@ -62,7 +62,7 @@ test.describe('no mezcla con Norte (mismo origen)', () => {
 
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Para ti' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Perfil', exact: true }).click();
+    await page.getByRole('tab', { name: 'Perfil', exact: true }).click();
     await page.getByRole('button', { name: 'Gestionar cuenta' }).click();
     await page.getByRole('button', { name: 'Cerrar sesión' }).click();
     await expectLogin(page);
