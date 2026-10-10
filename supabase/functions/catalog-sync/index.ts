@@ -437,7 +437,7 @@ async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number, resyn
   return { ...stateKey, synced, pages: page - startPage, total, done };
 }
 
-Deno.serve(async (req: Request) => {
+async function handleCatalogSync(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return new Response('method not allowed', { status: 405, headers: CORS });
 
@@ -497,4 +497,27 @@ Deno.serve(async (req: Request) => {
     status: 200,
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
+}
+
+Deno.serve(async (req: Request) => {
+  try {
+    return await handleCatalogSync(req);
+  } catch (e) {
+    // Red de seguridad (auto-diagnóstico): un error que se ESCAPE de los
+    // bloques protegidos (lectura del estado previo, planJobs, el upsert de
+    // cierre done, el propio upsert del catch, …) ahora devuelve el motivo
+    // real en el cuerpo del 500 en vez del genérico de la plataforma
+    // ("Internal Server Error"). El endpoint está protegido por el secreto,
+    // así que el detalle diagnóstico no se fuga a nadie.
+    const err = e as { name?: string; message?: string; stack?: string };
+    return new Response(
+      JSON.stringify({
+        error: 'internal',
+        name: err?.name,
+        message: err?.message ?? String(e),
+        stack: err?.stack ?? null,
+      }),
+      { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } },
+    );
+  }
 });
