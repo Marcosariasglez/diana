@@ -150,7 +150,7 @@ con el archivo real del dueño cuando lo proporcione.
 
 ## FASE 0 · Preparación y comprobación de estado (solo lectura)
 
-- [ ] P.0.1 **Estado de producción (solo lectura, anon key)** — recuentos y despliegue real:
+- [x] P.0.1 **Estado de producción (solo lectura, anon key)** — recuentos y despliegue real:
   ```
   curl -s "https://hvjmewokgxgrshtzhdjq.supabase.co/rest/v1/catalog_titles?select=tmdb_id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $ANON"
   curl -s "https://hvjmewokgxgrshtzhdjq.supabase.co/rest/v1/catalog_features?select=tmdb_id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $ANON"
@@ -160,10 +160,10 @@ con el archivo real del dueño cuando lo proporcione.
   nº de `catalog_features` (esperado 0), si existe `watchlist`. **Hecho cuando:** cifras anotadas en el
   informe final; si `catalog_features` o `watchlist` no existieran, se aplican la 0007/0008 vía CLI/SQL
   Editor y se deja constancia.
-- [ ] P.0.2 **Git:** `git -C diana-tmp status` (notar cambios sueltos, p. ej. `scripts/.tmp-*`), crear rama
+- [x] P.0.2 **Git:** `git -C diana-tmp status` (notar cambios sueltos, p. ej. `scripts/.tmp-*`), crear rama
   `vertice/recomendador-letterboxd-tabs` desde `main`; `git branch --show-current` = la rama. **Hecho
   cuando:** rama creada y estado inicial anotado en el informe.
-- [ ] P.0.3 **Herramientas:** `npx supabase --version`, `npx supabase projects list | head` (autenticación),
+- [x] P.0.3 **Herramientas:** `npx supabase --version`, `npx supabase projects list | head` (autenticación),
   `node --version`, `docker ps` (para los SQL locales). **Hecho cuando:** versiones anotadas; si el CLI no
   está autenticado, las tareas de despliegue pasan a `- [~] bloqueada` con el paso exacto para el dueño.
 
@@ -171,7 +171,7 @@ con el archivo real del dueño cuando lo proporcione.
 
 ## FASE A · Recomendador que recomiende de verdad (PRIORIDAD)
 
-### A.1 · Edge Function `catalog-features` (Deno, reanudable, rate-limited, protegida) + tests
+### A.1 · Edge Function `catalog-features` (Deno, reanudable, rate-limited, protegida) + tests ✅
 
 Ficheros:
 - `supabase/functions/catalog-features/index.ts` (nuevo) — patrón de `catalog-backfill/index.ts`:
@@ -201,7 +201,7 @@ Ficheros:
 anti-join, el secreto o el presupuesto); batería completa verde; líneas finales pegadas abajo.
 **Verificación:** `npx jest supabase/functions/catalog-features` · `npm run verify` · `node scripts/auditoria-estilos.mjs`
 
-### A.2 · Estrategia de texto para embeddings (decisión A1) + tests
+### A.2 · Estrategia de texto para embeddings (decisión A1) + tests ✅
 
 - La lógica vive en `buildEmbedText` (A.1) y su mapa de géneros EN (`src/constants/genresEn.ts` **nuevo,
   puro datos**, para que la función y los tests lo compartan — import relativo desde Deno, como hace
@@ -212,7 +212,7 @@ anti-join, el secreto o el presupuesto); batería completa verde; líneas finale
 `src/lib/genreIndex.ts` (prueba de paridad de ids); batería verde.
 **Verificación:** `npx jest supabase/functions/catalog-features src/lib/genreIndex` · `npm run verify`
 
-### A.3 · Workflow de bombeo `catalog-features` + documentación
+### A.3 · Workflow de bombeo `catalog-features` + documentación ✅
 
 - `.github/workflows/catalog-features.yml` (nuevo) — copia del patrón `catalog-backfill.yml`:
   `schedule: - cron: '0 */6 * * *'` (red de seguridad, ver A2) + `workflow_dispatch` (inputs `timeMs`,
@@ -229,7 +229,7 @@ anti-join, el secreto o el presupuesto); batería completa verde; líneas finale
 **Verificación:** `node -e "import('yaml').then(y=>y.parse(require('fs').readFileSync('.github/workflows/catalog-features.yml','utf8')))"`
 (o `npx actionlint` si disponible) · `npm run verify`
 
-### A.4 · Backfill incremental para el delta diario
+### A.4 · Backfill incremental para el delta diario ✅
 
 - Ya es inherente al anti-join (A3/A.1); aquí se **demuestra**:
   - Test de fixture (en `catalog-features.test.ts`): se inserta un título nuevo en el catálogo fake →
@@ -241,7 +241,7 @@ anti-join, el secreto o el presupuesto); batería completa verde; líneas finale
 (salida en el informe).
 **Verificación:** `npx jest supabase/functions/catalog-features` · `node scripts/check-features.mjs` · `npm run verify`
 
-### A.5 · Backfill completo contra producción (despliegue + bombeo)
+### A.5 · Backfill completo contra producción (despliegue + bombeo) ⏳ (partial: 7,1 % al cierre; lo termina el pump/cron — ver informe)
 
 Pasos exactos (en este orden):
 1. `npx supabase functions deploy catalog-features` (después de los tests de A.1/A.2 en local).
@@ -261,7 +261,7 @@ segundo plano con `embedded > 0` en el log, recuento creciente anotado en el inf
 (`remaining = 0`); la cobertura de esa noche queda registrada en el informe final.
 **Verificación:** `node scripts/check-features.mjs` · `npm run scan:secrets` · batería completa
 
-### A.6 · Re-evaluación real + decisión heuristic/content + `evaluacion.md`
+### A.6 · Re-evaluación real + decisión heuristic/content + `evaluacion.md` ✅
 
 1. `node scripts/eval-dump.mjs` → `docs/vertice/plan2/eval-dump.json` (gitignoreado; añadir patrón a `.gitignore`).
 2. Añadir el modo `--real` a `scripts/eval-recomendador.mjs` (A4): mismos usuarios sintéticos y métricas,
@@ -278,7 +278,7 @@ segundo plano con `embedded > 0` en el log, recuento creciente anotado en el inf
 documentada, tests de `env.test.ts`/`recommender.test.ts` sin cambios de aserción rota; batería verde.
 **Verificación:** `node scripts/eval-dump.mjs` · `node scripts/eval-recomendador.mjs --real` · `npm run verify`
 
-### A.7 · Verificación en app: feed en `content` con explicación + arranque en frío
+### A.7 · Verificación en app: feed en `content` con explicación + arranque en frío ✅
 
 1. **Cablear `explanation`:** `MediaWithAffinity.explanation?: string[]` (nuevo, opcional) en
    [`src/types/media.ts`](../src/types/media.ts); `useFeedStore.loadFirstPageContent` lo propaga (featured +
@@ -308,7 +308,7 @@ responde al RPC en producción (verificable con el JWT del usuario temporal de B
 
 ## FASE B · Letterboxd contra el catálogo real (verificar y pulir)
 
-### B.1 · Flujo completo (.csv y .zip) contra `CATALOG=tmdb` con el export del dueño
+### B.1 · Flujo completo (.csv y .zip) contra `CATALOG=tmdb` con el export del dueño ✅
 
 > El export real del dueño no está en el repo (no hay con quién preguntar → ver decisión B). Se ejecuta el
 > flujo contra **servicios reales** con el export sintético del catálogo real (techo del pipeline) y el
@@ -336,7 +336,7 @@ temporal en `history_entries`, `watched`, `profiles`, `auth.users`).
 **Verificación:** `node scripts/letterboxd-real-test.mjs` (salida completa en el informe) ·
 `npm run verify`
 
-### B.2 · Tasa de coincidencia < 70 % → mejorar matching (si aplica)
+### B.2 · Tasa de coincidencia < 70 % → mejorar matching (si aplica) ✅ (99,5 % → no se toca)
 
 - Con la tasa de B.1:
   - **≥ 70 %** → documentar que no hay que tocar el matching (los casos `unmatched` se listan: suelen ser
@@ -352,7 +352,7 @@ temporal en `history_entries`, `watched`, `profiles`, `auth.users`).
 - **Hecho cuando:** se cumple una de las dos ramas, con tests; batería verde; líneas finales en el informe.
 **Verificación:** `npx jest src/services` · `npm run verify`
 
-### B.3 · Las importadas alimentan `history_entries` (`source='letterboxd'`) y las respeta el recomendador
+### B.3 · Las importadas alimentan `history_entries` (`source='letterboxd'`) y las respeta el recomendador ✅
 
 Con el usuario temporal **antes de la limpieza** (re-ordenar B.1/B.3 o re-crear el usuario):
 1. Recuento (service_role): `select count(*) from history_entries where user_id = $u and source = 'letterboxd'`
@@ -371,7 +371,7 @@ cero solapes + predicción válida).
 **Verificación:** `node scripts/letterboxd-real-test.mjs --verify` (subcomando que hace solo el punto 1–3
    sobre el usuario ya importado, sin re-importar) · `npm run verify`
 
-### B.4 · Informe: cifras reales de coincidencia y cómo repetir el test
+### B.4 · Informe: cifras reales de coincidencia y cómo repetir el test ✅
 
 - Sección en el informe final: tasa de coincidencia (ratings y watched por separado), resumen de usuario
   literal, casos `unmatched` notables, y el comando para repetir **con el archivo real del dueño**:
@@ -383,7 +383,7 @@ cero solapes + predicción válida).
 
 ## FASE C · Tabs: Mood unificada + Explorar en la nav (rediseño del dueño)
 
-### C.1 · Rediseño de `mood.tsx` + capturas 390×844 claro/oscuro
+### C.1 · Rediseño de `mood.tsx` + capturas 390×844 claro/oscuro ✅
 
 - [`app/(tabs)/mood.tsx`](../app/(tabs)/mood.tsx):
   - Tarjetas Exprés/Intermedio/Cinéfilo **siempre visibles** (se elimina la condicional `group ? null :`);
@@ -406,7 +406,7 @@ finales en el informe.
 **Verificación:** `npx jest src/__tests__ src/store/useMoodStore` · `npm run verify` ·
 `node scripts/auditoria-estilos.mjs`
 
-### C.2 · `explore` a `(tabs)/` + manifiesto + nav + navegaciones
+### C.2 · `explore` a `(tabs)/` + manifiesto + nav + navegaciones ✅
 
 - Mover `app/explore.tsx` → `app/(tabs)/explore.tsx`; **quitar el botón «Volver»** y su cabecera de
   `goBack` (es tab: cabecera tipo `screenTitle` sin back, resto idéntico: chips + FlashList).
@@ -431,7 +431,7 @@ finales en el informe.
 (incluidos `routes.test.ts` y `bottomNavVisibility.test.ts` **actualizados**, no debilitados — ver C.3).
 **Verificación:** `npm run verify` · `npx jest src/__tests__/routes src/__tests__/bottomNavVisibility`
 
-### C.3 · Eliminar `match.tsx` + redirección + tests SIN debilitar aserciones
+### C.3 · Eliminar `match.tsx` + redirección + tests SIN debilitar aserciones ✅
 
 - `git rm app/(tabs)/match.tsx` (sus acciones ya están en Mood, C.1).
 - Tests a actualizar (mismas aserciones, nuevas tablas esperadas — **sin bajar cobertura**):
@@ -451,7 +451,7 @@ finales en el informe.
 verificando lo mismo, solo con la tabla de tabs nueva); batería verde.
 **Verificación:** `npx jest src/__tests__ src/components/ui/BottomNav` · `npm run verify`
 
-### C.4 · Afinidad aplicada en sala de grupo + tests (migración 0011)
+### C.4 · Afinidad aplicada en sala de grupo + tests (migración 0012) ✅
 
 1. **`supabase/migrations/0011_room_affinity.sql`** (nueva; ver decisión C):
    `alter table rooms add column affinity text not null default 'intermedio' check (affinity in
@@ -483,7 +483,7 @@ verde; el estado del despliegue 0011 documentado en el informe (aplicada / pendi
 **Verificación:** `npx jest src/services/supabase/room.repository src/store/useRoomStore
 src/features/room` · `node scripts/sql-affinity-local.mjs` · `npm run verify`
 
-### C.5 · Batería completa + auditoría + informe
+### C.5 · Batería completa + auditoría + informe ✅
 
 - `npm run verify` (typecheck + lint + jest) — **pegar las líneas finales tal cual**.
 - `node scripts/auditoria-estilos.mjs` — **pegar la línea final tal cual**.
@@ -517,25 +517,61 @@ src/features/room` · `node scripts/sql-affinity-local.mjs` · `npm run verify`
 
 | Tarea | Estado | Commits | Evidencia / líneas finales | Qué no se pudo verificar |
 |-------|--------|---------|----------------------------|--------------------------|
-| P.0.1–P.0.3 | | | | |
-| A.1 | | | | |
-| A.2 | | | | |
-| A.3 | | | | |
-| A.4 | | | | |
-| A.5 | | | | |
-| A.6 | | | | |
-| A.7 | | | | |
-| B.1 | | | | |
-| B.2 | | | | |
-| B.3 | | | | |
-| B.4 | | | | |
-| C.1 | | | | |
-| C.2 | | | | |
-| C.3 | | | | |
-| C.4 | | | | |
-| C.5 | | | | |
+| P.0.1–P.0.3 | hecha | `430059a` | Producción (anon): `catalog_titles` 39.616 · `catalog_features` 0 (la tabla no existía; la 0011 la crea) · `watchlist` presente. Rama creada desde `main`; CLI autenticado (despliegues de este plan) | — |
+| A.1 | hecha | `6e0d09a`, `0ba2962` | `catalog-features.test.ts` verde (401 sin/con secreto malo, `buildEmbedText` a/c/b + truncado, anti-join + popularity desc, presupuesto reanudable, 429 retry, `remaining`); fix `0ba2962`: presupuesto 10 títulos/60 s (wall-clock 546 del plan gratuito); función desplegada en producción (401 sin secreto) | — |
+| A.2 | hecha | `6e0d09a` | Decisión A1 en `buildEmbedText` (overview EN → bilingüe → solo metadatos) + mapa de géneros EN; tests con fixtures | — |
+| A.3 | hecha | `6e0d09a` | `.github/workflows/catalog-features.yml` (cron 6 h + `workflow_dispatch`, patrón `catalog-backfill`, bomba ≤400 iteraciones) + sección en README | — |
+| A.4 | hecha | `6e0d09a` | Test incremental (título nuevo entra en el candidate set; feature borrada se regenera); `check-features.mjs` contra producción: `features: 2824/39616 (7.1 %) · estado error: 0` (al cierre) | El 100 % del catálogo queda pendiente del pump/cron (ver A.5) |
+| A.5 | **partial** | `6e0d09a`, `0ba2962` | Función desplegada; `CATALOG_FEATURES_SECRET` en producción (solo en `.env.local` local, gitignoreado); pump en segundo plano con `embedded > 0` (con HTTP 546 en plan gratuito, ritmo ≈300 t/h); recuento creciente durante la sesión: 2282 → 2824 | Fin del backfill (39.616 títulos): lo completa el pump local o el cron de GitHub; el dueño lo confirma con `node scripts/check-features.mjs` |
+| A.6 | hecha | `7c78e27`, `ed68462` | Eval real (`--real`, embeddings gte-small 384-d de producción; dump 1196/2000 top-popular — cobertura parcial documentada, cláusula A4): **heuristic EAM 5.827 / p@10 0.15** · mean 7.16 / 0.188 · random 11.943 / 0.188 · **content EAM 2.935 / p@10 0.50** → content gana en las dos → defecto `content` aplicado ([`src/lib/env.ts`](../src/lib/env.ts) + `env.test.ts` «el defecto es el ganador» + `.env.local` + [`evaluacion.md`](../docs/vertice/plan2/evaluacion.md)) | La nota «verdadera» sigue sintética (sin valoraciones reales de usuarios en producción aún); cobertura del dump 1196/2000 (top popularidad) |
+| A.7 | hecha | `ef064b7`, `c5cfa75` | `explanation` cableado (`MediaWithAffinity`, `useFeedStore`, `FeaturedMatchCard` con `testID="featured-explanation"`) + tests (content → «Porque te gustó…» en featured y carril; scores 0 fríos → `ready` sin crash); RPC real de producción `recommend`: 50 candidatos, **0 solapes** con lo importado (B.3); capturas 390×844 claro/oscuro `inicio-content-*.png` (build `RECOMMENDER=content` + mini-mock del RPC en `scripts/capturas-content.mjs`) | La captura full-screen usa fixtures sintéticos del RPC (el arnés de la suite e2e no implementa `recommend`): la captura con datos 100 % reales llega sola al terminar el backfill, porque `content` ya es el defecto |
+| B.1 | hecha | `a38c03b` (+ run `c5cfa75`) | **Con el export real del dueño** (`--file`, caché TMDB caliente): `filas: 212 · coincidentes: 211 (99.5 %) · notas: 208 · vistas sin nota: 3 · sin coincidencia: 1 · ya presentes: 0` · resumen de usuario literal: «Importadas 208 películas y 3 vistas sin nota · sin coincidencia 1» | — |
+| B.2 | hecha | (sin cambios) | Tasa 99,5 % ≥ 70 % → **no se toca el matching**; el único `unmatched` es un título sin entrada TMDB (no es defecto de normalización) | — |
+| B.3 | hecha | (run `c5cfa75`) | `history_entries source=letterboxd: 208 · watched: 3` (usuario temporal, antes de limpiar); `recommend`: 50 candidatos con **0 solapes**; `predict_tenths(movie:969681) → 22` (smallint 10..50); limpieza verificada: `history_entries 0 · watched 0 · profiles 0 · auth.users 0` (fix `c5cfa75`: el `getUserById` devuelve wrapper `{user}` y la verificación original siempre leía 1) | — |
+| B.4 | hecha | (este informe) | Cifras reales arriba + comando para repetir (sección de pasos pendientes) | — |
+| C.1 | hecha | `2067ec7` | [`mood.tsx`](../app/(tabs)/mood.tsx): afinidad SIEMPRE visible + botón contextual + acciones de sala en grupo («Unirme con código», «Volver a mi sala · Código», «Generar código» pasa la afinidad); `moodScreen.test.tsx` 6/6 (fallaba antes del cambio); capturas `mood-solo/-grupo-{light,dark}.png` | — |
+| C.2 | hecha | `8a15938` | `explore.tsx` → `app/(tabs)/` sin «Volver» (`git mv`); manifiesto `/explore` tab + `/match` stack-fade; `BottomNav` con `Compass`; `_layout.tsx` de tabs; las 4 pantallas de sala usan `replace('/mood')` | — |
+| C.3 | hecha | `8a15938` | `git rm app/(tabs)/match.tsx`; `app/match.tsx` = `Redirect /mood` (verificado en vivo por `capturas-tabs3.mjs`: `✓ /match redirige a …/mood`); 5 tests actualizados SIN debilitar aserciones: `tabsLayout` (tabs `['index','mood','explore','profile']`), `bottomNavVisibility`, `routes`, `BottomNav` (`navigate('explore')`), `feedMood` (bottomNav 5 rutas, sigue `toHaveLength(20)`) | — |
+| C.4 | hecha | `7b4ee9d` | Migración **0012** (`rooms.affinity` + `create_room(p_name, p_affinity default 'intermedio')` + `confirm_mood` por banco de la afinidad) **desplegada en producción** (verificado: `rooms.affinity` existe vía anon); cliente: `createRoom(affinity)`, `p_affinity` en el RPC, `RoomSnapshot.affinity`, `getQuestionsFor(affinity)`, `selectMoodComplete(affinity)`; tests: firma RPC vs SQL, sala exprés (2) y cinéfilo (6), `useGroupMood` por snapshot; batería Docker `sql-affinity-local.mjs` verde (0001+0003+0012 + 3 DO blocks con `perform set_config`) | — |
+| C.5 | hecha | (batería final) | Líneas finales tal cual (bloqueo siguiente): 98 suites / 636 tests, auditoría limpia, secretos limpios (295 ficheros). `npm run e2e` no forma parte de la batería obligatoria (igual que en fases previas); `dist/` queda listo vía `e2e/ensure-dist.mjs` (bundle verificado) | — |
+
+**Líneas finales de la batería (C.5, tal cual):**
+
+```
+Test Suites: 98 passed, 98 total
+Tests:       636 passed, 636 total
+Snapshots:   0 total
+Ran all test suites.
+✓ Auditoría de estilos: todo limpio.
+✓ service_role no filtrada: 295 ficheros revisados en [app, src, public, dist]
+```
+
+(Referencia: la batería intermedia del cierre de C era `98 passed / 635 tests`; la +1 es el test
+«el defecto es el ganador» de `env.test.ts` añadido en A.6.)
+
+### Cifras reales de producción (al cierre, 2026-10-12)
+
+| Métrica | Valor |
+|---|---|
+| `catalog_titles` | 39.616 |
+| `catalog_features` (embeddings gte-small 384-d) | 2.824 (7,1 %) · `estado error: 0` — pump aún corriendo (≈300 t/h, plan gratuito) |
+| Evaluación real (A.6) | content **EAM 2.935 / p@10 0.50** vs heuristic 5.827 / 0.15 (holdout 400, 8 usuarios sintéticos, embeddings reales; nota «verdadera» sintética) |
+| Letterboxd (B.1, export real del dueño) | **99,5 %** (211/212): 208 valoradas + 3 vistas · 1 sin coincidencia TMDB · 0 ya presentes |
+| B.3 (recomendador respeta el import) | 50 candidatos · **0 solapes** · `predict_tenths` → 22 · limpieza 0/0/0/0 |
+| Migraciones en producción | 0011 (`catalog_features_state`) ✓ · 0012 (`rooms.affinity`) ✓ · 0013–0021 (perf/recomendador) ✓ |
 
 ### Pasos pendientes del dueño (con comandos exactos, si aplican)
-(relleno: p. ej. aplicar 0011 si el CLI no pudo; push/merge de la rama; repetir B con el export real
-`node scripts/letterboxd-real-test.mjs --file=…`; comprobar el fin del backfill con
-`node scripts/check-features.mjs`)
+
+1. **Push/merge de la rama** `vertice/recomendador-letterboxd-tabs` — **no se ha hecho ningún push**
+   (aviso expreso antes de cualquier push, ya dado en la conversación).
+2. **Comprobar el fin del backfill de features** (el pump local sigue corriendo en segundo plano
+   desde esta sesión; el cron de GitHub `catalog-features.yml` cada 6 h es la red de seguridad):
+   `node scripts/check-features.mjs` → objetivo `remaining = 0`. Mientras tanto, el feed `content`
+   ya funciona (degrada a popularidad lo que no tiene feature, sin crashear).
+3. **Re-validar A.6 con cobertura completa** (opcional, recomendado al llegar a ~100 %):
+   `node scripts/eval-dump.mjs && node scripts/eval-recomendador.mjs --real`
+   → la decisión (defecto `content`) se reconfirma o se documenta si cambia.
+4. **Repetir B con un export mayor/diferente** (opcional):
+   `node scripts/letterboxd-real-test.mjs --file=C:\ruta\letterboxd\export.zip`
+   (el script es idempotente: crea un usuario temporal, importa, verifica B.3 y limpia con
+   verificación de 0 filas).
