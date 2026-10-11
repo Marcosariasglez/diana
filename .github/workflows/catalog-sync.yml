@@ -44,7 +44,7 @@ on:
           - full
         default: delta
       resync:
-        description: 'true = re-barre TODO desde la página 1 (novedades, lento). false = AVANZAR lo pendiente + re-barre solo lo terminado hace más de 7 días (convergente: el full semanal lo usa para actualizarse sin rehacer lo fresco)'
+        description: 'true = re-barre TODO desde la página 1 (novedades, lento). false = AVANZAR lo pendiente + re-barre solo lo terminado hace más de 14 días (convergente: el full semanal lo usa para actualizarse sin rehacer lo fresco)'
         type: boolean
         default: false
       pages:
