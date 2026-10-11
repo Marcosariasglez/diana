@@ -82,15 +82,72 @@ Deno.serve(async (req: Request) => {
   if (!expected || secret !== expected) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
-  let body: { count?: number; timeMs?: number } = {};
+  let body: { count?: number; timeMs?: number; cleanup?: boolean } = {};
   try {
     body = (await req.json()) as typeof body;
   } catch {
     body = {};
   }
+  const admin = getAdmin();
+
+  // LIMPIEZA UNICA (2026-10-11): el primer full completo (run #7) corrió con
+  // los ids TMDB ERRÓNEOS del PROVIDER_MAP antiguo: prime-video(9), max(384),
+  // apple-tv(531), filmin(275), mubi(387), rtve-play(179) y pluto-tv(362)
+  // devolvían 0 resultados en discover (quedaron marcados done con total=0 y
+  // con resync=false NUNCA se re-ejecutarían), y rakuten-tv(350) devolvía en
+  // realidad el catálogo de Apple TV+ (contenido etiquetado como rakuten-tv).
+  // Con los ids correctos verificados en vivo (2026-10-11) esas plataformas
+  // sí tienen contenido (thousands of titles). La limpieza: (a) borra el
+  // estado de sync de esas plataformas — el próximo `full` resync=false
+  // (cron del domingo) las re-ejecuta desde la página 1 con los ids correctos;
+  // (b) retira la etiqueta 'rakuten-tv' de todas las filas — cuando los jobs
+  // de rakuten-tv (id 35, el real) se re-ejecuten, re-etiquetarán las filas
+  // correctas; las falsas (que en realidad son Apple TV+) pierden el label.
+  if (body.cleanup) {
+    const BAD_PROVIDERS = ['prime-video', 'max', 'apple-tv', 'filmin', 'mubi', 'rtve-play', 'pluto-tv', 'rakuten-tv'];
+    const FAKE_LABEL = 'rakuten-tv';
+    const { data: st, error: stErr } = (await admin
+      .from('catalog_sync_state')
+      .select('provider')
+      .in('provider', BAD_PROVIDERS)) as unknown as { data: AnyRecord[] | null; error: unknown };
+    if (stErr) throw new Error(String(stErr));
+    const stateDeleted = st?.length ?? 0;
+    const { error: delErr } = await admin.from('catalog_sync_state').delete().in('provider', BAD_PROVIDERS);
+    if (delErr) throw new Error(String(delErr));
+    let rowsUnlabeled = 0;
+    for (;;) {
+      const { data: rows, error: selErr } = (await admin
+        .from('catalog_titles')
+        .select('tmdb_id,media_type,platforms_flatrate,platforms_rent,platforms_buy')
+        .or(`platforms_flatrate.cs.{${FAKE_LABEL}},platforms_rent.cs.{${FAKE_LABEL}},platforms_buy.cs.{${FAKE_LABEL}}`)
+        .limit(100)) as unknown as { data: AnyRecord[] | null; error: unknown };
+      if (selErr) throw new Error(String(selErr));
+      if (!rows || rows.length === 0) break;
+      for (const row of rows) {
+        const strip = (a: string[] | null | undefined) => (a ?? []).filter((x) => x !== FAKE_LABEL);
+        const { error: upErr } = await admin
+          .from('catalog_titles')
+          .update({
+            platforms_flatrate: strip(row.platforms_flatrate),
+            platforms_rent: strip(row.platforms_rent),
+            platforms_buy: strip(row.platforms_buy),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('tmdb_id', row.tmdb_id)
+          .eq('media_type', row.media_type);
+        if (upErr) throw new Error(String(upErr));
+        rowsUnlabeled += 1;
+      }
+      if (rows.length < 100) break;
+    }
+    return new Response(JSON.stringify({ cleanup: true, stateDeleted, rowsUnlabeled }), {
+      status: 200,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
+
   const maxTitles = Math.max(1, Math.min(Number(body.count) || DEFAULT_TITLES, 200));
   const budgetMs = Math.max(5000, Math.min(Number(body.timeMs) || DEFAULT_BUDGET_MS, MAX_BUDGET_MS));
-  const admin = getAdmin();
   const startedAt = Date.now();
   let processed = 0;
   let fixed = 0;
