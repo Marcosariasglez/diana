@@ -79,7 +79,7 @@ describe('useFeedStore con recomendador (D2-2.6)', () => {
     activeRecommender.mockReturnValue('content');
     const recs = [
       { media: movie(21, 'C1'), score: 0.6, explanation: ['Porque te gustó X'] },
-      { media: movie(22, 'C2'), score: 0.1, explanation: [] },
+      { media: movie(22, 'C2'), score: 0.1, explanation: ['Porque te gustó Y'] },
     ];
     contentRecommend.mockResolvedValue(recs);
     await useFeedStore.getState().loadFirstPage();
@@ -87,11 +87,28 @@ describe('useFeedStore con recomendador (D2-2.6)', () => {
     expect(s.status).toBe('ready');
     expect(s.featured?.media.id).toBe(21);
     expect(s.featured?.bucket).toBe('alto'); // score > 0.25
+    // A.7: la explicación del RPC viaja con el item (featured y carril).
+    expect(s.featured?.explanation).toEqual(['Porque te gustó X']);
     expect(s.categories).toHaveLength(1);
     expect(s.categories[0].id).toBe('recommendations');
     expect(s.categories[0].media.map((m) => m.media.id)).toEqual([22]);
+    expect(s.categories[0].media[0].explanation).toEqual(['Porque te gustó Y']);
     expect(mockGetFeatured).not.toHaveBeenCalled();
     expect(contentRecommend).toHaveBeenCalledWith({ platforms: ['netflix'], limit: 60 });
+  });
+
+  it('en content en frío (scores 0, sin explicación) pinta populares sin crashear', async () => {
+    activeRecommender.mockReturnValue('content');
+    contentRecommend.mockResolvedValue([
+      { media: movie(31, 'P1'), score: 0, explanation: [] },
+      { media: movie(32, 'P2'), score: 0, explanation: [] },
+    ]);
+    await useFeedStore.getState().loadFirstPage();
+    const s = useFeedStore.getState();
+    expect(s.status).toBe('ready');
+    expect(s.featured?.media.id).toBe(31);
+    expect(s.featured?.bucket).toBe('medio'); // score 0 → no alto
+    expect(s.featured?.explanation).toEqual([]);
   });
 
   it('en content con null (RPC sin desplegar) decae a la heurística', async () => {

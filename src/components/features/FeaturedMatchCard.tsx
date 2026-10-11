@@ -13,6 +13,8 @@ export interface FeaturedMatchCardProps {
   eyebrow?: string;
   /** Texto del badge verde. Por defecto "Recomendación Top". */
   badge?: string;
+  /** A.7: explicación del recomendador «content» (1ª línea de item.explanation). */
+  explanation?: string;
   onPress?: () => void;
 }
 
@@ -26,18 +28,20 @@ export function FeaturedMatchCard({
   item,
   eyebrow = 'MEJOR MATCH ESTA NOCHE',
   badge = 'Recomendación Top',
+  explanation,
   onPress,
 }: FeaturedMatchCardProps) {
   const { colors } = useTheme();
   const { media, bucket } = item;
   const title = mediaTitle(media);
   const platform = media.platforms[0];
+  const why = explanation?.trim() ? explanation : undefined;
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={`${eyebrow}: ${title}. ${BUCKET_LABEL[bucket]}, nota de IA oculta`}
+      accessibilityLabel={`${eyebrow}: ${title}. ${BUCKET_LABEL[bucket]}, nota de IA oculta${why ? `, ${why}` : ''}`}
       style={[styles.card, { backgroundColor: colors.card }]}
     >
       <View style={[styles.badge, { backgroundColor: colors.accSoft }]} accessibilityElementsHidden importantForAccessibility="no">
@@ -62,6 +66,15 @@ export function FeaturedMatchCard({
             {platform ? (
               <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                 {platformName(platform)}
+              </Text>
+            ) : null}
+            {why ? (
+              <Text
+                testID="featured-explanation"
+                numberOfLines={1}
+                style={textStyle('bodySmall', { color: colors.textSecondary, marginTop: 2 })}
+              >
+                {why}
               </Text>
             ) : null}
           </View>

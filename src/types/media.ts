@@ -53,6 +53,9 @@ export type AffinityBucket = 'alto' | 'medio' | 'bajo';
 export interface MediaWithAffinity {
   media: Media;
   bucket: AffinityBucket;
+  /** A.7: explicación del recomendador «content» (RPC recommend: «Porque te
+   *  gustó X»). Solo la pinta la tarjeta destacada; vacío en la heurística. */
+  explanation?: string[];
 }
 
 export interface FeedCategory {

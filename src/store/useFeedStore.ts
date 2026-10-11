@@ -26,12 +26,13 @@ async function loadFirstPageContent(
   if (!recs || recs.length === 0) return null;
   const [first, ...rest] = recs;
   return {
-    featured: { media: first.media, bucket: bucketFromScore(first.score) },
+    // A.7: la explicación del RPC viaja con el item (la pinta la tarjeta destacada).
+    featured: { media: first.media, bucket: bucketFromScore(first.score), explanation: first.explanation },
     categories: [
       {
         id: 'recommendations',
         title: 'Recomendaciones',
-        media: rest.slice(0, 5).map((r) => ({ media: r.media, bucket: bucketFromScore(r.score) })),
+        media: rest.slice(0, 5).map((r) => ({ media: r.media, bucket: bucketFromScore(r.score), explanation: r.explanation })),
         hasSeeAll: false,
       },
     ],

@@ -198,7 +198,12 @@ export default function HomeScreen() {
           <View style={styles.sections}>
             {featured ? (
               <View style={styles.featured}>
-                <FeaturedMatchCard item={featured} onPress={() => openDetail(featured.media)} />
+                {/* A.7: la explicación del recomendador «content» (1ª línea del RPC). */}
+                <FeaturedMatchCard
+                  item={featured}
+                  explanation={featured.explanation?.[0]}
+                  onPress={() => openDetail(featured.media)}
+                />
               </View>
             ) : null}
             {categories.map((cat) => (
