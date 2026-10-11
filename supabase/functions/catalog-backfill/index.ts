@@ -41,9 +41,13 @@ export function _setFetchForTest(f: unknown): void {
   fetchImpl = f as typeof fetch;
 }
 
-let adminClient: ReturnType<typeof createClient> | null = null;
+// Cliente admin a propósito SIN tipos de tabla (misma razón que catalog-sync):
+// se despliega con esbuild (sin typecheck) y un genérico Database sin definir
+// haría que el editor marque `upsert` con comprobaciones de literal falsas.
+// deno-lint-ignore no-explicit-any
+let adminClient: any = null;
 export function _setSupabaseForTest(c: unknown): void {
-  adminClient = c as typeof adminClient;
+  adminClient = c;
 }
 function getAdmin() {
   if (!adminClient) adminClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);

@@ -22,7 +22,11 @@ const rpcCalls: Array<{ fn: string; params: unknown }> = [];
 const authDeleteCalls: string[] = [];
 let jwtUser: { id: string } | null = { id: 'user-1' };
 
-const mockCreateClient = jest.fn(() => ({
+// Los dos argumentos (url, key) no se usan: el mock es independiente de la
+// configuración. Se declaran para que la firma sea compatible con
+// createClient(url, key) sin TS2554.
+// deno-lint-ignore no-explicit-any
+const mockCreateClient = jest.fn((_url?: any, _key?: any) => ({
   auth: {
     getUser: jest.fn(async (jwt: string) => ({
       data: { user: jwt ? jwtUser : null },

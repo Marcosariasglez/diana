@@ -359,9 +359,14 @@ interface RunBudget {
   timeMs: number;
 }
 
-let adminClient: ReturnType<typeof createClient> | null = null;
+// Cliente admin a propósito SIN tipos de tabla: estas funciones se despliegan
+// con esbuild (sin typecheck) y el genérico Database de supabase-js no aporta
+// nada aquí; un tipo estricto hace que el editor marque `upsert` con
+// comprobaciones de literal falsas (Database sin definir).
+// deno-lint-ignore no-explicit-any
+let adminClient: any = null;
 export function _setSupabaseForTest(c: unknown): void {
-  adminClient = c as ReturnType<typeof createClient>;
+  adminClient = c;
 }
 function getAdmin() {
   if (!adminClient) {
