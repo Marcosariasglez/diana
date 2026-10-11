@@ -84,36 +84,88 @@ function loadTsFile(rel) {
   if (!file) throw new Error(`eval: no existe ${rel}`);
   return loadTs(file, dirname(file));
 }
-const { CATALOG, mediaKeyOf } = loadTsFile('src/mocks/data/catalog.ts');
+const { mediaKeyOf } = loadTsFile('src/mocks/data/catalog.ts');
 const { predictTenths } = loadTsFile('src/mocks/mock-ai/predict.ts');
 const { buildTasteProfile } = loadTsFile('src/mocks/mock-ai/taste.ts');
 
 // ---------------------------------------------------------------------------
-// Vocabulario de contenido sintético (proxy del embedding real de gte-small:
-// la LÓGICA del modelo se mide con embeddings deterministas del contenido).
+// Modo --real (fase A, A.6): catálogo y EMBEDDINGS REALES de gte-small,
+// volcados con `node scripts/eval-dump.mjs` (docs/vertice/plan2/eval-dump.json,
+// gitignoreado). Sin --real se usa el catálogo de mocks y el vocabulario
+// sintético (proxy del embedding: mide la LÓGICA del modelo).
 // ---------------------------------------------------------------------------
-const DIM = 256;
-const STOP = new Set(['de', 'la', 'el', 'en', 'y', 'un', 'una', 'a', 'los', 'las', 'que', 'por', 'con', 'su', 'es', 'para']);
-const vocab = new Map();
-function tok(text) {
-  return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !STOP.has(w));
-}
-function docVec(title, original, overview) {
-  const v = new Array(DIM).fill(0);
-  const words = [...tok(title), ...tok(original), ...tok(overview)];
-  for (const w of words) {
-    let h = vocab.get(w);
-    if (h === undefined) { h = vocab.size; vocab.set(w, h); }
-    v[h % DIM] += 1;
+const argvAll = process.argv.slice(2);
+const REAL = argvAll.includes('--real');
+let CATALOG;
+let EMB;
+let DIM = 256;
+let catalogDesc = 'mocks del repo (122 títulos)';
+let embDesc = 'sintéticos (vocabulario de contenido) — la calidad del embedding real (gte-small) solo se mide en producción';
+if (REAL) {
+  const dumpPath = join(root, 'docs', 'vertice', 'plan2', 'eval-dump.json');
+  if (!existsSync(dumpPath)) {
+    console.error('Falta el dump: lanzar antes `node scripts/eval-dump.mjs` (cuando el backfill tenga cobertura).');
+    process.exit(1);
   }
-  const n = Math.sqrt(v.reduce((a, b) => a + b * b, 0));
-  if (n > 0) for (let i = 0; i < DIM; i++) v[i] /= n;
-  return v;
-}
-const EMB = new Map();
-for (const m of CATALOG) {
-  EMB.set(mediaKeyOf(m), docVec(m.title ?? m.name ?? '', m.title ?? m.name ?? '', m.overview ?? ''));
+  const dump = JSON.parse(readFileSync(dumpPath, 'utf8'));
+  DIM = 384;
+  CATALOG = [];
+  EMB = new Map();
+  for (const it of dump.items) {
+    const base = {
+      id: it.id,
+      poster_path: null,
+      backdrop_path: null,
+      genres: (it.genre_ids ?? []).map((g) => ({ id: g, name: '' })),
+      overview: it.overview ?? '',
+      vote_average: it.vote_average ?? 0,
+      vote_count: it.vote_count ?? 0,
+      popularity: it.popularity ?? 0,
+      platforms: [],
+      alt_titles: it.original_title && it.original_title !== it.title ? [it.original_title] : [],
+    };
+    const m =
+      it.type === 'movie'
+        ? { ...base, media_type: 'movie', title: it.title, release_date: it.year ? `${it.year}-01-01` : '', runtime: 0 }
+        : { ...base, media_type: 'tv', name: it.title, first_air_date: it.year ? `${it.year}-01-01` : '', episode_run_time: [], seasons: [] };
+    CATALOG.push(m);
+    EMB.set(mediaKeyOf(m), it.embedding);
+  }
+  catalogDesc = `real de producción (catalog_titles, ${dump.n} títulos más populares con feature)`;
+  embDesc = `REALES gte-small 384-d de producción (dump del ${dump.date})`;
+} else {
+  const { CATALOG: MOCK_CATALOG } = loadTsFile('src/mocks/data/catalog.ts');
+  CATALOG = MOCK_CATALOG;
+  // Vocabulario de contenido sintético (proxy del embedding real de gte-small:
+  // la LÓGICA del modelo se mide con embeddings deterministas del contenido).
+  const STOP = new Set(['de', 'la', 'el', 'en', 'y', 'un', 'una', 'a', 'los', 'las', 'que', 'por', 'con', 'su', 'es', 'para']);
+  const vocab = new Map();
+  const tok = (text) =>
+    String(text)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 3 && !STOP.has(w));
+  const docVec = (title, original, overview) => {
+    const v = new Array(DIM).fill(0);
+    const words = [...tok(title), ...tok(original), ...tok(overview)];
+    for (const w of words) {
+      let h = vocab.get(w);
+      if (h === undefined) {
+        h = vocab.size;
+        vocab.set(w, h);
+      }
+      v[h % DIM] += 1;
+    }
+    const n = Math.sqrt(v.reduce((a, b) => a + b * b, 0));
+    if (n > 0) for (let i = 0; i < DIM; i++) v[i] /= n;
+    return v;
+  };
+  EMB = new Map();
+  for (const m of CATALOG) {
+    EMB.set(mediaKeyOf(m), docVec(m.title ?? m.name ?? '', m.title ?? m.name ?? '', m.overview ?? ''));
+  }
 }
 function cos(a, b) {
   let s = 0;
@@ -323,8 +375,9 @@ const contentWins = summary.content.eamDecimas < summary.heuristic.eamDecimas
 const out = {
   fecha: new Date().toISOString(),
   dataset: {
-    catalogo: 'mocks del repo (122 títulos)',
-    embeddings: 'sintéticos (vocabulario de contenido) — la calidad del embedding real (gte-small) solo se mide en producción',
+    modo: REAL ? 'real (embeddings gte-small de producción)' : 'sintético (proxy del embedding)',
+    catalogo: catalogDesc,
+    embeddings: embDesc,
     usuarios: N_USERS,
     trainPorUsuario: N_TRAIN,
     seed: SEED0,
@@ -341,9 +394,9 @@ mkdirSync(docDir, { recursive: true });
 const md = [
   '# Evaluación del recomendador (D2-2.4)',
   '',
-  `> Generado por \`scripts/eval-recomendador.mjs\` el ${out.fecha}.`,
+  `> Generado por \`scripts/eval-recomendador.mjs\${REAL ? ' --real' : ''}\` el ${out.fecha}.`,
   '',
-  '## Dataset (sintético, «dejar uno fuera»)',
+  `## Dataset (${out.dataset.modo}, «dejar uno fuera»)`,
   '',
   `- Catálogo: ${out.dataset.catalogo}.`,
   `- Valoraciones: ${out.dataset.usuarios} usuarios sintéticos con perfil de género; ${out.dataset.trainPorUsuario} títulos de entrenar por usuario, el resto holdout.`,
@@ -364,13 +417,18 @@ const md = [
   '',
   '### Nota de validez',
   '',
-  'La evaluación mide la **lógica** del modelo (vector de gusto centrado, prior con',
-  'shrinkage, umbral de 20 valoraciones, regresión simple) con embeddings',
-  'sintéticos deterministas del contenido del mock. **No mide la calidad del',
-  'embedding real** (gte-small sobre sinopsis), que solo se cuantificará en',
-  'producción tras la primera sincronización con features. Por eso el veredicto',
-  'no fuerza el interruptor: el dueño puede pasar a `content` cuando quiera,',
-  'y el cliente degrada a `heuristic` si el RPC falla (red de seguridad).',
+  REAL
+    ? 'Evaluación con **embeddings REALES de gte-small** (dump de producción) sobre el' +
+      ' catálogo real. La nota «verdadera» sigue siendo sintética (perfil de género + ruido):' +
+      ' mide si el embedding real mejora la LÓGICA del modelo frente a la línea base; no es una' +
+      ' métrica de usuarios reales, que llegará con las valoraciones de producción.'
+    : 'La evaluación mide la **lógica** del modelo (vector de gusto centrado, prior con' +
+      ' shrinkage, umbral de 20 valoraciones, regresión simple) con embeddings' +
+      ' sintéticos deterministas del contenido del mock. **No mide la calidad del**' +
+      ' embedding real (gte-small sobre sinopsis), que solo se cuantificará en' +
+      ' producción tras la primera sincronización con features. Por eso el veredicto' +
+      ' no fuerza el interruptor: el dueño puede pasar a `content` cuando quiera,' +
+      ' y el cliente degrada a `heuristic` si el RPC falla (red de seguridad).',
   '',
 ].join('\n');
 writeFileSync(join(docDir, 'evaluacion.md'), md);
