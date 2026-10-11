@@ -61,8 +61,19 @@ jobs:
     runs-on: ubuntu-latest
     # El bombeo de un `full` inicial puede tardar horas; 350 < tope de GitHub (360).
     timeout-minutes: 350
+    # NUNCA dos bombas en paralelo (duplicarían las peticiones a TMDB, ~2x
+    # contra el límite de 60/min, y el full iría a media velocidad): si hay
+    # un run activo, el nuevo espera en cola (cancel-in-progress: false).
+    concurrency:
+      group: catalog-sync
+      cancel-in-progress: false
+    # permissions: workflow:write → el GITHUB_TOKEN puede lanzar el auto-rele
+    # (endpoint workflow_dispatch) con la API de Actions.
+    permissions:
+      contents: read
+      workflow: write
     steps:
-      - name: 'Sincronización (bomba: repite mientras quede trabajo)'
+      - name: 'Sincronización (bomba: repite mientras quede trabajo + auto-rele)'
         env:
           EVENT_NAME: ${{ github.event_name }}
           SCHEDULE: ${{ github.event.schedule }}
@@ -70,6 +81,8 @@ jobs:
           IN_RESYNC: ${{ github.event.inputs.resync }}
           IN_PAGES: ${{ github.event.inputs.pages }}
           IN_TIME_MS: ${{ github.event.inputs.timeMs }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
         run: |
           set -uo pipefail
           # Modo según el evento: schedule → por el cron; dispatch → por el input.
@@ -91,6 +104,17 @@ jobs:
           if [ -n "${TIME_MS}" ]; then BODY="{\"mode\":\"${MODE}\",\"resync\":${RESYNC},\"timeMs\":${TIME_MS}}"; fi
           if [ -n "${PAGES}" ] && [ -n "${TIME_MS}" ]; then BODY="{\"mode\":\"${MODE}\",\"resync\":${RESYNC},\"pages\":${PAGES},\"timeMs\":${TIME_MS}}"; fi
           echo "Modo: ${MODE} | Re-sincronizar: ${RESYNC} | Cuerpo: ${BODY}"
+          START_EPOCH=$(date +%s)
+          # AUTO-RELE: solo para runs MANUALES (workflow_dispatch). Un dispatch no
+          # tiene otro cron a su espalda: si el full no cabe en el timeout de
+          # GitHub (350 min), el run se RELE a sí mismo (lanza el siguiente con
+          # la API de Actions) antes de acabar, para que el catálogo termine SIN
+          # que nadie lo relance a mano. En cron el rele no hace falta: el
+          # próximo schedule recoge el testigo solo (full semanal convergente +
+          # delta diario).
+          SELF_RELAY_ENABLED="false"
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then SELF_RELAY_ENABLED="true"; fi
+          echo "Run ${GITHUB_RUN_ID} | auto-rele: ${SELF_RELAY_ENABLED}"
 
           # BOMBA: cada llamada procesa un presupuesto (~2 min) y es REANUDABLE.
           # Con resync=false, la función SALTA lo ya terminado y solo avanza lo
@@ -138,6 +162,31 @@ jobs:
             if [ "$stopped" != "true" ]; then
               echo "SINCRONIZACIÓN COMPLETA: lote entero procesado, sin trabajo pendiente."
               break
+            fi
+            # AUTO-RELE (solo runs manuales): un dispatch no tiene cron a su
+            # espalda, así que con 15 min de holgura al timeout (350 min) este
+            # run lanza el SIGUIENTE con la API de Actions (mismo modo/resync)
+            # y termina con éxito: el full manual termina sin que nadie lo
+            # relance a mano. Los cron no necesitan rele: el próximo schedule
+            # recoge el testigo solo.
+            if [ "${SELF_RELAY_ENABLED}" = "true" ]; then
+              ELAPSED=$(( $(date +%s) - START_EPOCH ))
+              if [ "${ELAPSED}" -ge 20100 ]; then
+                echo "iteración ${i}: llevamos $(( ELAPSED / 60 )) min; lanzo el siguiente run (auto-rele) antes del timeout de 350 min..."
+                RELAY_INPUTS=$(jq -n --arg m "${MODE}" --argjson r "${RESYNC}" --arg p "${PAGES}" --arg t "${TIME_MS}" \
+                  '{mode: $m, resync: $r} + (if $p != "" then {pages: $p} else {} end) + (if $t != "" then {timeMs: $t} else {} end)')
+                RELAY_BODY=$(jq -n --arg ref "${GITHUB_REF_NAME:-main}" --argjson inputs "${RELAY_INPUTS}" '{ref: $ref, inputs: $inputs}')
+                RELAY_CODE=$(curl -sS -X POST \
+                  "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/catalog-sync.yml/dispatches" \
+                  -H "Authorization: Bearer ${{ github.token }}" \
+                  -H "Accept: application/vnd.github+json" \
+                  -d "${RELAY_BODY}" -o /tmp/relay.json -w "%{http_code}") || RELAY_CODE=000
+                if [ "${RELAY_CODE}" = "204" ]; then
+                  echo "AUTO-RELE OK: siguiente run lanzado (${MODE}, resync=${RESYNC}); este run termina aquí (éxito)."
+                  break
+                fi
+                echo "AUTO-RELE falló (HTTP ${RELAY_CODE}); seguiré bombeando hasta el timeout:"; cat /tmp/relay.json
+              fi
             fi
             sleep 5
           done
