@@ -11,8 +11,10 @@
 // Sintaxis PostgREST: para arrays se usa `cs` (contains: `@>`, «el array
 // contiene estos elementos»), NO `cd` (contained: `<@`, que además casaría
 // con el array vacío {}), y el valor va como literal de array `{a,b}`.
-// `.or()` recibe los términos `col.cs.{...}` SEPARADOS POR COMAS sin
-// paréntesis: supabase-js añade los paréntesis él mismo.
+// `.or()` recibe los términos SEPARADOS POR COMAS y SIN paréntesis propios
+// (supabase-js los añade): dentro de `or=(...)` el separador columna/op es
+// el PUNTO (`col.cs.{…}`), NO el `=` (`col=cs.{…}` → PGRST100 400, verificado
+// contra el PostgREST real de Supabase el 2026-10-11).
 import { MAX_PAGE_SIZE, type BrowseParams, type CatalogSort, type SearchParams } from './types';
 
 /** Operadores PostgREST que usa el catálogo. */
@@ -51,15 +53,19 @@ function clampLimit(limit?: number): number {
 /**
  * «Disponible en mis plataformas»: el título está en CUALQUIER modalidad.
  * PostgREST no tiene UNION, así que se traduce a un `or` con los términos
- * `columna.cs.{plataforma}` de los tres arrays (supabase-js añade los
- * paréntesis; `cs` + literal `{…}` es la sintaxis correcta de contains @>).
+ * `columna.cs.{plataforma}` de los tres arrays.
+ *
+ * IMPORTANTE (verificado en el PostgREST real, 2026-10-11): dentro de
+ * `or=(...)` el separador es el PUNTO —`platforms_flatrate.cs.{netflix}`—;
+ * la forma `platforms_flatrate=cs.{netflix}` (con `=`) es válida como filtro
+ * suelto pero PostgREST la rechaza con PGRST100 (400) dentro de un `or`.
  */
 export function platformFilter(platforms: readonly string[]): string {
   const combos: string[] = [];
   for (const p of platforms) {
-    combos.push(`platforms_flatrate=cs.{${p}}`);
-    combos.push(`platforms_rent=cs.{${p}}`);
-    combos.push(`platforms_buy=cs.{${p}}`);
+    combos.push(`platforms_flatrate.cs.{${p}}`);
+    combos.push(`platforms_rent.cs.{${p}}`);
+    combos.push(`platforms_buy.cs.{${p}}`);
   }
   return combos.join(',');
 }

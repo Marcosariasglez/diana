@@ -116,15 +116,18 @@ describe('catálogo paginado (D2-1.5) — motor', () => {
 });
 
 describe('catálogo paginado (D2-1.5) — builder PostgREST', () => {
-  it('buildBrowseQuery: plataformas → or con cs.{…} sobre los tres arrays (sin paréntesis)', () => {
+  it('buildBrowseQuery: plataformas → or con col.cs.{…} sobre los tres arrays (punto, sin paréntesis)', () => {
     const q = buildBrowseQuery({ platforms: ['netflix', 'max'] });
     const orFilter = q.filters.find((f) => f.op === 'or');
     expect(orFilter).toBeDefined();
     const s = platformFilter(['netflix', 'max']);
     expect(orFilter!.val).toBe(s);
-    expect(s).toContain('platforms_flatrate=cs.{netflix}');
-    expect(s).toContain('platforms_rent=cs.{netflix}');
-    expect(s).toContain('platforms_buy=cs.{max}');
+    // Dentro de or=(…) PostgREST exige el separador PUNTO (col.cs.{…}); la
+    // forma col=cs.{…} la rechaza con PGRST100 (verificado 2026-10-11).
+    expect(s).toContain('platforms_flatrate.cs.{netflix}');
+    expect(s).toContain('platforms_rent.cs.{netflix}');
+    expect(s).toContain('platforms_buy.cs.{max}');
+    expect(s).not.toContain('=cs.');
     // supabase-js añade los paréntesis: el valor de .or() no los lleva.
     expect(s.startsWith('(')).toBe(false);
     expect(s.endsWith(')')).toBe(false);

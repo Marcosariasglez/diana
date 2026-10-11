@@ -463,6 +463,18 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
     expect(titles.length).toBe(1); // el reintento terminó sincronizando
   });
 
+  it('los «stubs» de TMDB (sin title ni original_title) se SALTAN (no se escriben filas vacías)', async () => {
+    page('movie', 1, [titleRow(1), titleRow(2, { title: '', original_title: '' })], 1, 1);
+    page('tv', 1, [], 0, 1);
+
+    const res = await post({ mode: 'full', currentYear: 1949, pages: 5, timeMs: 60_000, maxJobs: 1 });
+    expect(res.status).toBe(200);
+    // El item 1 (con título) sí se escribe…
+    expect(titles.some((t) => t.tmdb_id === 1)).toBe(true);
+    // …y el stub (id 2, sin título) NO.
+    expect(titles.some((t) => t.tmdb_id === 2)).toBe(false);
+  });
+
   it('las filas derivan de providers (ids estables de Diana, no ids de TMDB)', async () => {
     page('movie', 1, [titleRow(1)], 1, 1);
     page('tv', 1, [], 0, 1);

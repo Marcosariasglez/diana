@@ -1,0 +1,64 @@
+# Relleno de filas de catálogo con título vacío (stubs de TMDB discover,
+# 2026-10-11). Llama a la Edge Function `catalog-backfill` (reanudable:
+# cada llamada rellena ~60 títulos y devuelve `remaining`).
+#
+# BOMBA: repite mientras `remaining > 0`. El primer relleno (6.121 filas)
+# dura ~35-40 min; los cron diarios posteriores son no-ops (remaining=0 →
+# una sola llamada y sale).
+#
+# Requiere las MISMAS variables/secrets que catalog-sync.yml
+# (SUPABASE_URL, SUPABASE_ANON_KEY, CATALOG_SYNC_SECRET).
+name: catalog-backfill
+
+on:
+  schedule:
+    # Mantenimiento diario 06:15 Madrid (04:15 UTC).
+    - cron: '15 4 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    # Nunca 2 rellenos en paralelo (rate-limit de TMDB).
+    concurrency:
+      group: catalog-backfill
+      cancel-in-progress: false
+    steps:
+      - name: 'Relleno (bomba: repite mientras queden filas vacías)'
+        run: |
+          set -uo pipefail
+          # BOMBA: cada llamada procesa un presupuesto (~2 min) y es REANUDABLE
+          # (sigue donde quedó: siempre lee las filas con title='').
+          for i in $(seq 1 400); do
+            ok=0
+            for attempt in 1 2 3 4 5; do
+              code=$(curl -sS -X POST \
+                "${{ vars.SUPABASE_URL }}/functions/v1/catalog-backfill" \
+                -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
+                -H "Authorization: Bearer ${{ vars.SUPABASE_ANON_KEY }}" \
+                -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
+                -H "Content-Type: application/json" \
+                -d '{"count":60}' \
+                -o /tmp/backfill.json -w "%{http_code}") || code=000
+              case "$code" in
+                200) ok=1; break ;;
+                401|403|422) echo "HTTP ${code} (error real, no reintento):"; cat /tmp/backfill.json; exit 1 ;;
+                *) echo "iteración ${i}: HTTP ${code} (infraestructura), reintento ${attempt}/5 en $((30 * attempt)) s..."
+                   sleep $((30 * attempt)) ;;
+              esac
+            done
+            if [ "$ok" != 1 ]; then
+              echo "iteración ${i}: 5 reintentos fallidos (HTTP último: ${code}); detengo la bomba:"; cat /tmp/backfill.json; exit 1
+            fi
+            remaining=$(jq -r '.remaining // 0' /tmp/backfill.json)
+            fixed=$(jq -r '.fixed // 0' /tmp/backfill.json)
+            echo "[iteración $i] fixed=${fixed} remaining=${remaining}"
+            if [ "${remaining}" = "0" ]; then
+              echo "BACKFILL COMPLETO: no quedan filas con título vacío."
+              break
+            fi
+            sleep 5
+          done
+          echo "--- última respuesta ---"
+          cat /tmp/backfill.json

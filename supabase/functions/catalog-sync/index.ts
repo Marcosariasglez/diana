@@ -206,6 +206,15 @@ export function toCatalogRows(
     if (!r.id) continue;
     const mediaType = r.media_type === 'tv' ? 'tv' : 'movie';
     const date = mediaType === 'movie' ? (r.release_date ?? '') : (r.first_air_date ?? '');
+    const title = mediaType === 'movie' ? (r.title ?? '') : (r.name ?? '');
+    const originalTitle =
+      mediaType === 'movie' ? (r.original_title ?? r.title ?? '') : (r.original_name ?? r.name ?? '');
+    // TMDB discover devuelve de vez en cuando «stubs» (id/popularity/poster sí,
+    // title/release_date no) — verificado en producción 2026-10-11 (6.121 filas
+    // con title vacío). Escribirlos dejaría tarjetas vacías en el feed, así que
+    // se SALTAN: si un job posterior re-descubre el mismo id con los campos
+    // completos, la fila se creará entonces.
+    if (!title && !originalTitle) continue;
     const esProviders = r['watch/providers']?.results?.[REGION];
     const toIds = (list?: { provider_id: number }[]) =>
       (list ?? []).map((x) => tmdbIdToProvider.get(x.provider_id)).filter((x): x is string => x !== undefined);
@@ -226,8 +235,8 @@ export function toCatalogRows(
     rows.push({
       tmdb_id: r.id,
       media_type: mediaType,
-      title: mediaType === 'movie' ? (r.title ?? '') : (r.name ?? ''),
-      original_title: mediaType === 'movie' ? (r.original_title ?? r.title ?? '') : (r.original_name ?? r.name ?? ''),
+      title,
+      original_title: originalTitle,
       year: date ? Number(date.slice(0, 4)) : null,
       overview: '',
       genre_ids: r.genre_ids ?? [],
