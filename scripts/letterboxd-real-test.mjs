@@ -270,12 +270,15 @@ if (argFile) {
   const name = argFile.split(/[\\/]/).pop();
   const result = await tmdbImportRepository.parseLetterboxd({ uri: `data:${mime};base64,${b64}`, name });
   // Para el total de filas del fichero, reportResult usa el retorno del repo
-  // (totalRows + unmatched + alreadyPresent) cuando no se puede contar líneas
-  // fiables (zip binario). En .csv suelto se cuentan las líneas menos cabecera.
-  let total = result.totalRows + result.unmatched + result.alreadyPresent;
+  // cuando no se puede contar líneas fiables (zip binario): totalRows YA incluye
+  // unmatched y alreadyPresent; lo único que no lleva es watchedOnlyMatched.
+  // (antes sumaba unmatched otra vez → tasa >100 %). En .csv/zip se cuentan
+  // las filas reales con countRows (robusto al \n final ausente).
+  let total = result.totalRows + result.watchedOnlyMatched;
+  const countRows = (text) => Math.max(0, text.split(/\r?\n/).filter((l) => l.trim()).length - 1);
   if (!argFile.toLowerCase().endsWith('.zip')) {
     const text = readFileSync(argFile, 'latin1');
-    total = Math.max(0, (text.match(/\n/g) || []).length - 1);
+    total = countRows(text);
   } else {
     // En el zip se cuentan las filas REALES de ratings.csv + watched.csv
     // (el retorno del repo no incluye las watched ya valoradas).
@@ -291,7 +294,7 @@ if (argFile) {
     let n = 0;
     for (const name of ['ratings.csv', 'watched.csv']) {
       const entry = findEntry(name);
-      if (entry) n += Math.max(0, ((await entry.async('string')).match(/\n/g) || []).length - 1);
+      if (entry) n += countRows(await entry.async('string'));
     }
     if (n > 0) total = n;
   }
@@ -426,8 +429,13 @@ async function cleanup() {
   const { count: c1 } = await adminClient.from('history_entries').select('key', { count: 'exact', head: true }).eq('user_id', userId);
   const { count: c2 } = await adminClient.from('watched').select('key', { count: 'exact', head: true }).eq('user_id', userId);
   const { count: c3 } = await adminClient.from('profiles').select('id', { count: 'exact', head: true }).eq('id', userId);
-  const { data: gu } = await adminClient.auth.admin.getUserById(userId);
-  const c4 = gu ? 1 : 0;
+  // getUserById devuelve un WRAPPER { user, identities } (o null con error):
+  // `gu ? 1 : 0` era SIEMPRE 1 → falso positivo de limpieza («auth.users: 1»).
+  const { data: gu, error: guErr } = await adminClient.auth.admin.getUserById(userId);
+  const c4 = gu?.user ? 1 : 0;
+  if (guErr && !/User not found/i.test(guErr.message)) {
+    console.log(`⚠️ getUserById: ${guErr.message} (contar a mano)`);
+  }
   console.log(`\n=== LIMPIEZA ===`);
   console.log(`history_entries: ${c1} | watched: ${c2} | profiles: ${c3} | auth.users: ${c4} (todo debe ser 0)`);
   if (c1 + c2 + c3 + c4 !== 0) {
