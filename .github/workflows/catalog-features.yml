@@ -44,7 +44,9 @@ jobs:
           set -uo pipefail
           IN_MAX="${{ github.event.inputs.maxTitles }}"
           IN_TIME="${{ github.event.inputs.timeMs }}"
-          BODY='{}'
+          # Presupuesto ajustado al plan gratuito: con 40/120 s y 20/90 s la
+          # worker era matada a 546 (wall-clock/memoria). 10/60 s cabe.
+          BODY='{"maxTitles":10,"timeMs":60000}'
           if [ -n "${IN_MAX}" ]; then BODY="{\"maxTitles\":${IN_MAX}}"; fi
           if [ -n "${IN_TIME}" ]; then
             if [ -n "${IN_MAX}" ]; then BODY="{\"maxTitles\":${IN_MAX},\"timeMs\":${IN_TIME}}"; else BODY="{\"timeMs\":${IN_TIME}}"; fi

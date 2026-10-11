@@ -40,7 +40,10 @@ for (let i = 1; i <= 20000; i++) {
           'x-catalog-sync-secret': secret,
           'Content-Type': 'application/json',
         },
-        body: '{}',
+        // Presupuesto ajustado al plan gratuito: con 40/120 s y 20/90 s la
+        // worker era matada a 546 (wall-clock/memoria; los upserts previos SÍ
+        // persistían, pero se perdía el tiempo en reintentos). 10/60 s cabe.
+        body: '{"maxTitles":10,"timeMs":60000}',
       });
       code = res.status;
       if (code === 200) {
@@ -70,5 +73,7 @@ for (let i = 1; i <= 20000; i++) {
     console.log('FEATURES COMPLETAS: catálogo entero embebido.');
     break;
   }
-  await sleep(3000);
+  // Pausa larga: el worker del plan gratuito tardía en «enfriarse»; evitar
+  // llamadas sobre un worker medio-muerto (546).
+  await sleep(8000);
 }
