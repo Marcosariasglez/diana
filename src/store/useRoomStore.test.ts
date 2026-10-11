@@ -39,6 +39,46 @@ describe('useRoomStore: crear sala (escenario A)', () => {
     expect(selectIsHost(s, 'user-me')).toBe(true);
     expect(s.members).toEqual([{ userId: 'user-me', name: 'Juan', initial: 'J', isReady: true }]);
     expect(s.phase).toBe('lobby');
+    // 0012: sin afinidad explicita, la sala queda intermedio (default del SQL).
+    expect(s.affinity).toBe('intermedio');
+  });
+
+  it('createRoom(affinity) guarda la afinidad de la sala (0012)', async () => {
+    const code = await useRoomStore.getState().createRoom('express');
+    expect(code).toMatch(/^[A-HJ-NP-Z2-9]{4}$/);
+    expect(useRoomStore.getState().affinity).toBe('express');
+  });
+
+  it('sala express: confirmMood exige solo time+energy y acepta con 2 (0012)', async () => {
+    await useRoomStore.getState().createRoom('express');
+    await useRoomStore.getState().startMatch();
+    expect(useRoomStore.getState().affinity).toBe('express');
+    await expect(useRoomStore.getState().confirmMood()).rejects.toThrow('mood-incomplete');
+    await useRoomStore.getState().setMoodAnswer('time', 'h2');
+    await expect(useRoomStore.getState().confirmMood()).rejects.toThrow('mood-incomplete');
+    await useRoomStore.getState().setMoodAnswer('energy', 'calm');
+    await useRoomStore.getState().confirmMood();
+    expect(useRoomStore.getState().phase).toBe('swipe');
+    expect(useRoomStore.getState().mood.confirmed).toBe(true);
+  });
+
+  it('sala cinefilo: confirmMood exige las 6 preguntas del banco (0012)', async () => {
+    await useRoomStore.getState().createRoom('cinefilo');
+    await useRoomStore.getState().startMatch();
+    for (const [q, a] of [
+      ['time', 'h2'],
+      ['energy', 'calm'],
+      ['company', 'friends'],
+      ['platforms', 'netflix'],
+    ]) {
+      await useRoomStore.getState().setMoodAnswer(q, a);
+    }
+    await expect(useRoomStore.getState().confirmMood()).rejects.toThrow('mood-incomplete');
+    await useRoomStore.getState().setMoodAnswer('era', 'classic');
+    await expect(useRoomStore.getState().confirmMood()).rejects.toThrow('mood-incomplete');
+    await useRoomStore.getState().setMoodAnswer('pace', 'fast');
+    await useRoomStore.getState().confirmMood();
+    expect(useRoomStore.getState().phase).toBe('swipe');
   });
 
   it('entran amigos mock: Maria a los 2 s (2 de 6), luego todos listos', async () => {

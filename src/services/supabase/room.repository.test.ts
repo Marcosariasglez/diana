@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { RoomError } from '@/mocks/fakeSocket';
 
 const mockRpc = jest.fn().mockResolvedValue({ data: null, error: null });
@@ -27,6 +29,42 @@ describe('supabaseRoomRepository', () => {
   beforeEach(() => {
     mockRpc.mockClear();
     mockFrom.mockClear();
+  });
+
+  it('createRoom llama a create_room con p_name Y p_affinity (migración 0012)', async () => {
+    mockRpc.mockResolvedValueOnce({ data: 'X49B', error: null });
+    await supabaseRoomRepository.createRoom('u', 'express');
+    expect(mockRpc).toHaveBeenCalledWith('create_room', { p_name: 'Test User', p_affinity: 'express' });
+  });
+
+  it('createRoom sin afinidad explicita pasa p_affinity intermedio (default 0012)', async () => {
+    mockRpc.mockResolvedValueOnce({ data: 'X49B', error: null });
+    await supabaseRoomRepository.createRoom('u');
+    expect(mockRpc).toHaveBeenCalledWith('create_room', { p_name: 'Test User', p_affinity: 'intermedio' });
+  });
+
+  it('la firma del RPC coincide con el SQL 0012 (create_room p_name, p_affinity default intermedio)', () => {
+    // Lección del plan 2: el test lee el fichero de la migración y compara con
+    // lo que el cliente envía, para que un cambio de firma en el SQL rompa aquí.
+    const sql = readFileSync(
+      join(__dirname, '..', '..', '..', 'supabase', 'migrations', '0012_room_affinity.sql'),
+      'utf8',
+    );
+    const m = sql.match(/create function public\.create_room\(([^)]*)\)/);
+    expect(m).not.toBeNull();
+    const params = (m as RegExpMatchArray)[1]
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    // p_name (sin default) y p_affinity (default 'intermedio'), en ese orden.
+    expect(params[0]).toMatch(/^p_name text$/);
+    expect(params[1]).toMatch(/^p_affinity text default 'intermedio'$/);
+    // Lo que el cliente envía (ver test anterior): p_name + p_affinity.
+    mockRpc.mockClear();
+    mockRpc.mockResolvedValueOnce({ data: 'X49B', error: null });
+    void supabaseRoomRepository.createRoom('u', 'cinefilo');
+    const args = mockRpc.mock.calls[0][1] as Record<string, string>;
+    expect(Object.keys(args).sort()).toEqual(['p_affinity', 'p_name']);
   });
 
   it('joinRoom normaliza el codigo y llama a join_room', async () => {

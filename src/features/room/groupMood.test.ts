@@ -1,3 +1,4 @@
+import { act, renderHook } from '@testing-library/react-native';
 import { ROUTES } from '@/constants/routes';
 import { GROUP_DECK_COUNT, SEEDED_ROOM_CODE } from '@/constants/room';
 import { MOCK_HOST_MOOD_ANSWERS, MOCK_TIMELINE } from '@/mocks/fakeSocket';
@@ -6,7 +7,7 @@ import { resetMockRooms } from '@/services/room.repository';
 import { createDefaultProfile, useProfileStore } from '@/store/useProfileStore';
 import { selectGroupFilters, selectMoodComplete, useRoomStore } from '@/store/useRoomStore';
 import { loadGroupDeck } from './useGroupSwipe';
-import { selectedOptions, toggleMultiAnswer } from './useGroupMood';
+import { selectedOptions, toggleMultiAnswer, useGroupMood } from './useGroupMood';
 import { getQuestionsFor } from '@/features/mood/questions';
 
 jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
@@ -100,6 +101,38 @@ describe('Mood de grupo: filtros hacia getGroupDeck', () => {
     expect(arg.excludeKeys.has('movie:1')).toBe(true);
     expect(deck.length).toBeLessThanOrEqual(GROUP_DECK_COUNT);
     for (const m of deck) expect(arg.excludeKeys.has(`movie:${m.id}`)).toBe(false);
+  });
+});
+
+describe('Mood de grupo: afinidad de la sala (0012)', () => {
+  it('las preguntas del hook siguen el banco de la afinidad del snapshot (express -> 2)', async () => {
+    await useRoomStore.getState().createRoom('express');
+    await useRoomStore.getState().startMatch();
+    const { result } = await renderHook(() => useGroupMood());
+    expect(result.current.questions.map((q) => q.id)).toEqual(['time', 'energy']);
+    expect(result.current.moodComplete).toBe(false);
+    await act(async () => {
+      await result.current.selectAnswer('time', 'h2');
+    });
+    expect(result.current.moodComplete).toBe(false);
+    await act(async () => {
+      await result.current.selectAnswer('energy', 'calm');
+    });
+    expect(result.current.moodComplete).toBe(true);
+  });
+
+  it('sala cinefilo: el hook expone las 6 preguntas (0012)', async () => {
+    await useRoomStore.getState().createRoom('cinefilo');
+    await useRoomStore.getState().startMatch();
+    const { result } = await renderHook(() => useGroupMood());
+    expect(result.current.questions.map((q) => q.id)).toEqual(['time', 'energy', 'company', 'era', 'pace', 'platforms']);
+  });
+
+  it('sala intermedia (default): sigue exponiendo las 4 preguntas de siempre', async () => {
+    await useRoomStore.getState().createRoom();
+    await useRoomStore.getState().startMatch();
+    const { result } = await renderHook(() => useGroupMood());
+    expect(result.current.questions.map((q) => q.id)).toEqual(['time', 'energy', 'company', 'platforms']);
   });
 });
 

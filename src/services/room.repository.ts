@@ -1,5 +1,6 @@
 import type { Media } from '@/types/media';
 import type { GroupDecision, RoomSnapshot } from '@/types/room';
+import type { Complexity } from '@/types/mood';
 import type { MediaKey } from '@/types/rating';
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, SEEDED_ROOM_CODE } from '@/constants/room';
 import { createFakeRoom, RoomError, type FakeRoom } from '@/mocks/fakeSocket';
@@ -12,7 +13,9 @@ export type { RoomErrorCode } from '@/mocks/fakeSocket';
 export type { RoomSnapshot } from '@/types/room';
 
 export interface RoomRepository {
-  createRoom(hostId: string): Promise<string>;
+  /** Crea la sala. `affinity` (0012): banco de preguntas del mood de grupo;
+   *  por defecto la sala queda 'intermedio' (SQL y mock). */
+  createRoom(hostId: string, affinity?: Complexity): Promise<string>;
   /** Lanza RoomError con code 'not-found' | 'full'. Si ya es miembro, devuelve el estado actual. */
   joinRoom(code: string, user: { userId: string; name: string }): Promise<RoomSnapshot>;
   setReady(code: string, userId: string, ready: boolean): Promise<void>;
@@ -65,12 +68,12 @@ function newCode(): string {
 }
 
 export const roomRepository: RoomRepository = {
-  async createRoom(hostId) {
+  async createRoom(hostId, affinity) {
     await fakeDelay();
     const code = newCode();
     const { profile } = useProfileStore.getState();
     const name = profile.id === hostId ? profile.displayName : 'Anfitrión';
-    rooms.set(code, createFakeRoom(code, 'A', { host: { userId: hostId, name } }));
+    rooms.set(code, createFakeRoom(code, 'A', { host: { userId: hostId, name }, affinity }));
     return code;
   },
   async joinRoom(code, user) {

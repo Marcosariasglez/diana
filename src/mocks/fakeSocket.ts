@@ -1,5 +1,6 @@
 import type { Media } from '@/types/media';
 import type { MediaKey } from '@/types/rating';
+import type { Complexity } from '@/types/mood';
 import type { GroupDecision, GroupMoodState, RoomMember, RoomPhase, RoomSnapshot } from '@/types/room';
 import { MAX_ROOM_MEMBERS } from '@/constants/room';
 import { QUESTIONS_BY_COMPLEXITY } from '@/features/mood/questions';
@@ -53,6 +54,8 @@ export interface FakeRoomOptions {
   host?: FakeRoomUser;
   /** Sustituible por ceros en tests. */
   timeline?: Timeline;
+  /** Afinidad de la sala (banco de preguntas). Default 'intermedio' (0012). */
+  affinity?: Complexity;
 }
 
 export interface FakeRoom {
@@ -109,6 +112,7 @@ export function createFakeRoom(
 
   let phase: RoomPhase = 'lobby';
   let mood: GroupMoodState = { answers: {}, confirmed: false };
+  const affinity: Complexity = options.affinity ?? 'intermedio';
   let swipeBegun = false;
   let hostStartScheduled = false;
   let closed = false;
@@ -129,6 +133,7 @@ export function createFakeRoom(
     members: members.map((m) => ({ ...m })),
     phase,
     mood: { answers: { ...mood.answers }, confirmed: mood.confirmed },
+    affinity,
   });
   const emit = () => {
     const s = snapshot();
@@ -154,7 +159,8 @@ export function createFakeRoom(
     members = members.map((m) => (m.userId === userId ? { ...m, isReady: ready } : m));
   };
 
-  const intermedio = QUESTIONS_BY_COMPLEXITY.intermedio;
+  // Banco de preguntas segun la afinidad de la sala (0012).
+  const intermedio = QUESTIONS_BY_COMPLEXITY[affinity];
 
   const applyMoodAnswer = (questionId: string, answerId: string) => {
     mood = { ...mood, answers: { ...mood.answers, [questionId]: answerId } };

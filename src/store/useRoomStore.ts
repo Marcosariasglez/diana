@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import type { GroupDecision, GroupMoodState, RoomMember, RoomPhase, RoomSnapshot } from '@/types/room';
-import type { MoodFilters } from '@/types/mood';
+import type { Complexity, MoodFilters } from '@/types/mood';
 import type { MediaKey, MediaRef } from '@/types/rating';
 import { GROUP_DECK_COUNT, MAX_ROOM_MEMBERS } from '@/constants/room';
 import { QUESTIONS_BY_COMPLEXITY } from '@/features/mood/questions';
 import { catalogRepository, roomRepository } from '@/services';
+import { useMoodStore } from './useMoodStore';
 import { useProfileStore } from './useProfileStore';
 
 export type RoomStoreErrorCode = 'not-found' | 'full';
@@ -15,11 +16,16 @@ export interface RoomState {
   members: RoomMember[];
   phase: RoomPhase;
   mood: GroupMoodState;
+  /** Afinidad de la sala (banco de preguntas del mood). Default 'intermedio'
+   *  (migración 0012; salas antiguas no la traen en el snapshot). */
+  affinity: Complexity;
   deck: MediaRef[];
   decisions: GroupDecision[];
   status: 'idle' | 'joining' | 'active' | 'error';
   error: RoomStoreErrorCode | null;
-  createRoom: () => Promise<string>;
+  /** Crea la sala. `affinity` (opcional): banco de preguntas; por defecto
+   *  la de `useMoodStore.complexity` (se pasa desde Mood, C.1). */
+  createRoom: (affinity?: Complexity) => Promise<string>;
   joinRoom: (code: string) => Promise<boolean>;
   setReady: (ready: boolean) => void;
   leaveRoom: () => void;
@@ -40,9 +46,12 @@ export const selectAllReady = (s: Pick<RoomState, 'members'>): boolean =>
   s.members.length >= 2 && s.members.every((m) => m.isReady);
 export const selectFreeSlots = (s: Pick<RoomState, 'members'>): number =>
   MAX_ROOM_MEMBERS - s.members.length;
-/** Todas las preguntas del banco Intermedio tienen respuesta no vacia. */
-export const selectMoodComplete = (s: Pick<RoomState, 'mood'>): boolean =>
-  QUESTIONS_BY_COMPLEXITY.intermedio.every((q) => (s.mood.answers[q] ?? '') !== '');
+/** Las preguntas del banco de la afinidad de la sala (0012) tienen respuesta
+ *  no vacia. Default 'intermedio' (salas antiguas / snapshot sin afinidad). */
+export const selectMoodComplete = (
+  s: Pick<RoomState, 'mood'>,
+  affinity: Complexity = 'intermedio',
+): boolean => QUESTIONS_BY_COMPLEXITY[affinity].every((q) => (s.mood.answers[q] ?? '') !== '');
 export const selectGroupFilters = (
   s: Pick<RoomState, 'mood'>,
   favoritePlatforms: string[],
@@ -56,6 +65,7 @@ const CLEAN = {
   members: [] as RoomMember[],
   phase: 'lobby' as RoomPhase,
   mood: EMPTY_MOOD,
+  affinity: 'intermedio' as Complexity,
   deck: [] as MediaRef[],
   decisions: [] as GroupDecision[],
   status: 'idle' as const,
@@ -85,7 +95,14 @@ class StoreRoomError extends Error {
 export const useRoomStore = create<RoomState>()((set, get) => {
   const me = () => useProfileStore.getState().profile;
   const applySnapshot = (snap: RoomSnapshot) =>
-    set({ hostId: snap.hostId, members: snap.members, phase: snap.phase, mood: snap.mood, deck: snap.deck ?? [] });
+    set({
+      hostId: snap.hostId,
+      members: snap.members,
+      phase: snap.phase,
+      mood: snap.mood,
+      affinity: snap.affinity ?? 'intermedio',
+      deck: snap.deck ?? [],
+    });
   const connect = (code: string) => {
     dropSubscriptions();
     unsubscribers = [
@@ -104,12 +121,13 @@ export const useRoomStore = create<RoomState>()((set, get) => {
 
   return {
     ...CLEAN,
-    createRoom: async () => {
+    createRoom: async (affinity) => {
       const user = me();
       if (get().code) get().leaveRoom();
-      set({ ...CLEAN, status: 'joining' });
+      // Por defecto la afinidad (complexity) que el usuario eligió en Mood (C.1).
+      set({ ...CLEAN, status: 'joining', affinity: affinity ?? useMoodStore.getState().complexity });
       try {
-        const code = await roomRepository.createRoom(user.id);
+        const code = await roomRepository.createRoom(user.id, affinity);
         const snap = await roomRepository.joinRoom(code, { userId: user.id, name: user.displayName });
         connect(code);
         set({ code, status: 'active', error: null });
@@ -162,7 +180,7 @@ export const useRoomStore = create<RoomState>()((set, get) => {
     },
     confirmMood: async () => {
       const code = requireHost();
-      if (!selectMoodComplete(get())) throw new StoreRoomError('mood-incomplete');
+      if (!selectMoodComplete(get(), get().affinity)) throw new StoreRoomError('mood-incomplete');
       let deck: MediaRef[] | undefined;
       if (roomRepository.getGroupSeenKeys) {
         const exclude = new Set(await roomRepository.getGroupSeenKeys(code));

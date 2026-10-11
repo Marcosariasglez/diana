@@ -25,18 +25,21 @@ export function selectedOptions(question: MoodQuestion, answer: string | undefin
 }
 
 /**
- * Mood de grupo (siempre banco Intermedio). El anfitrion responde y confirma; el resto
- * ve `answers` actualizarse en tiempo real desde el RoomSnapshot.
+ * Mood de grupo: las preguntas siguen el BANCO DE LA AFINIDAD de la sala (0012;
+ * `RoomSnapshot.affinity`, default 'intermedio'). El anfitrion responde y
+ * confirma; el resto ve `answers` actualizarse en tiempo real desde el
+ * RoomSnapshot.
  */
 export function useGroupMood() {
-  const questions = useMemo(() => getQuestionsFor('intermedio'), []);
   const answers = useRoomStore((s) => s.mood.answers);
   const phase = useRoomStore((s) => s.phase);
   const hostId = useRoomStore((s) => s.hostId);
+  const affinity = useRoomStore((s) => s.affinity);
+  const questions = useMemo(() => getQuestionsFor(affinity), [affinity]);
   const currentUserId = useProfileStore((s) => s.profile.id);
   const favoritePlatforms = useProfileStore((s) => s.profile.favoritePlatforms);
   const isHost = selectIsHost({ hostId }, currentUserId);
-  const moodComplete = selectMoodComplete({ mood: { answers, confirmed: false } });
+  const moodComplete = selectMoodComplete({ mood: { answers, confirmed: false } }, affinity);
 
   // La pregunta de plataformas del anfitrion parte preseleccionada con el filtro global.
   const needsPlatformSeed = isHost && phase === 'mood' && !answers.platforms && favoritePlatforms.length > 0;

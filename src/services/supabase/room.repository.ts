@@ -21,7 +21,7 @@ async function rpc(fn: string, args: Record<string, unknown>): Promise<unknown> 
 async function fetchSnapshot(code: string): Promise<RoomSnapshot> {
   const sb = getSupabase();
   const [room, members] = await Promise.all([
-    sb.from('rooms').select('host_id, phase, mood, deck').eq('code', code).single(),
+    sb.from('rooms').select('host_id, phase, mood, deck, affinity').eq('code', code).single(),
     sb.from('room_members').select('user_id, name, is_ready, joined_at').eq('code', code).order('joined_at'),
   ]);
   if (room.error) throw new RoomError('not-found');
@@ -31,6 +31,9 @@ async function fetchSnapshot(code: string): Promise<RoomSnapshot> {
     hostId: room.data.host_id,
     phase: room.data.phase,
     mood: { answers: mood.answers ?? {}, confirmed: !!mood.confirmed },
+    // 0012: rooms.affinity tiene default 'intermedio'; las salas antiguas
+    // (pre-0012) la traen con el default de la columna.
+    affinity: (room.data.affinity ?? 'intermedio') as RoomSnapshot['affinity'],
     members: (members.data ?? []).map((m) => ({
       userId: m.user_id,
       name: m.name,
@@ -42,9 +45,11 @@ async function fetchSnapshot(code: string): Promise<RoomSnapshot> {
 }
 
 export const supabaseRoomRepository: RoomRepository = {
-  async createRoom() {
+  async createRoom(_hostId, affinity) {
+    // 0012: create_room(p_name, p_affinity); p_affinity es opcional en el SQL
+    // (default 'intermedio'), pero SIEMPRE se pasa explícita desde el cliente.
     const name = useProfileStore.getState().profile.displayName;
-    return (await rpc('create_room', { p_name: name })) as string;
+    return (await rpc('create_room', { p_name: name, p_affinity: affinity ?? 'intermedio' })) as string;
   },
   async joinRoom(code, user) {
     const c = code.trim().toUpperCase();
