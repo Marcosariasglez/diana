@@ -67,11 +67,6 @@ jobs:
     concurrency:
       group: catalog-sync
       cancel-in-progress: false
-    # permissions: workflow:write → el GITHUB_TOKEN puede lanzar el auto-rele
-    # (endpoint workflow_dispatch) con la API de Actions.
-    permissions:
-      contents: read
-      workflow: write
     steps:
       - name: 'Sincronización (bomba: repite mientras quede trabajo + auto-rele)'
         env:
@@ -83,6 +78,13 @@ jobs:
           IN_TIME_MS: ${{ github.event.inputs.timeMs }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
+          # AUTO-RELE: el token por defecto (GITHUB_TOKEN) NO puede lanzar
+          # workflow_dispatch (GitHub lo bloquea para evitar bucles infinitos).
+          # Para que el auto-rele funcione, define el secret GITHUB_PAT
+          # (Personal Access Token con scope `workflow` sobre este repo).
+          # Sin él, RELAY_TOKEN queda vacío, el rele se desactiva y el run
+          # termina en el timeout (comportamiento degradado, no error).
+          RELAY_TOKEN: ${{ secrets.GITHUB_PAT }}
         run: |
           set -uo pipefail
           # Modo según el evento: schedule → por el cron; dispatch → por el input.
@@ -105,15 +107,16 @@ jobs:
           if [ -n "${PAGES}" ] && [ -n "${TIME_MS}" ]; then BODY="{\"mode\":\"${MODE}\",\"resync\":${RESYNC},\"pages\":${PAGES},\"timeMs\":${TIME_MS}}"; fi
           echo "Modo: ${MODE} | Re-sincronizar: ${RESYNC} | Cuerpo: ${BODY}"
           START_EPOCH=$(date +%s)
-          # AUTO-RELE: solo para runs MANUALES (workflow_dispatch). Un dispatch no
-          # tiene otro cron a su espalda: si el full no cabe en el timeout de
-          # GitHub (350 min), el run se RELE a sí mismo (lanza el siguiente con
-          # la API de Actions) antes de acabar, para que el catálogo termine SIN
-          # que nadie lo relance a mano. En cron el rele no hace falta: el
-          # próximo schedule recoge el testigo solo (full semanal convergente +
-          # delta diario).
+          # AUTO-RELE: solo para runs MANUALES (workflow_dispatch) Y solo si hay
+          # un PAT (GITHUB_PAT) — el token por defecto no puede lanzar
+          # workflow_dispatch. Un dispatch no tiene otro cron a su espalda: si
+          # el full no cabe en el timeout de GitHub (350 min), el run se RELE a
+          # sí mismo (lanza el siguiente con la API de Actions) antes de
+          # acabar, para que el catálogo termine SIN que nadie lo relance a
+          # mano. En cron el rele no hace falta: el próximo schedule recoge el
+          # testigo solo (full semanal convergente + delta diario).
           SELF_RELAY_ENABLED="false"
-          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then SELF_RELAY_ENABLED="true"; fi
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${RELAY_TOKEN}" ]; then SELF_RELAY_ENABLED="true"; fi
           echo "Run ${GITHUB_RUN_ID} | auto-rele: ${SELF_RELAY_ENABLED}"
 
           # BOMBA: cada llamada procesa un presupuesto (~2 min) y es REANUDABLE.
@@ -178,7 +181,7 @@ jobs:
                 RELAY_BODY=$(jq -n --arg ref "${GITHUB_REF_NAME:-main}" --argjson inputs "${RELAY_INPUTS}" '{ref: $ref, inputs: $inputs}')
                 RELAY_CODE=$(curl -sS -X POST \
                   "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/catalog-sync.yml/dispatches" \
-                  -H "Authorization: Bearer ${{ github.token }}" \
+                  -H "Authorization: Bearer ${RELAY_TOKEN}" \
                   -H "Accept: application/vnd.github+json" \
                   -d "${RELAY_BODY}" -o /tmp/relay.json -w "%{http_code}") || RELAY_CODE=000
                 if [ "${RELAY_CODE}" = "204" ]; then
