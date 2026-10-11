@@ -1,0 +1,97 @@
+# Generación de features del catálogo (embeddings gte-small) — VERTICE-PLAN-2,
+# fase A. Llama a la Edge Function `catalog-features` (reanudable: cada
+# llamada procesa un presupuesto de ~2 min y devuelve `remaining`).
+#
+# BOMBA: repite mientras `remaining > 0`. El primer backfill (~40.000 títulos,
+# 1 llamada TMDB + 1 embedding por título a 250 ms de ritmo) dura decenas de
+# horas; el cron cada 6 h bombea ~6 h cada vez y el siguiente cron continúa
+# donde quedó (el anti-join es la fuente de verdad: no hay estado que perder).
+# `workflow_dispatch` permite una bomba larga manual (tope 350 min del job).
+#
+# Requiere las MISMAS variables/secrets que catalog-sync.yml
+# (SUPABASE_URL, SUPABASE_ANON_KEY, CATALOG_SYNC_SECRET): la función valida la
+# cabecera contra CATALOG_SYNC_SECRET **o** CATALOG_FEATURES_SECRET, así que
+# NO hace falta ningún secret nuevo.
+name: catalog-features
+
+on:
+  schedule:
+    # Cada 6 h (00:20, 06:20, 12:20, 18:20 UTC): ~3 h de bombeo cada vez
+    # (tope del job 350 min) con 3 h de holgura hasta el siguiente.
+    - cron: '20 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      maxTitles:
+        description: 'Títulos por run (opcional, máx 200; defecto 40)'
+        type: string
+        default: ''
+      timeMs:
+        description: 'Presupuesto de milisegundos por run (opcional, máx 140000)'
+        type: string
+        default: ''
+
+jobs:
+  features:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    # Nunca dos bombas en paralelo (rate-limit de TMDB compartido con la sync).
+    concurrency:
+      group: catalog-features
+      cancel-in-progress: false
+    steps:
+      - name: 'Features (bomba: repite mientras queden títulos)'
+        run: |
+          set -uo pipefail
+          IN_MAX="${{ github.event.inputs.maxTitles }}"
+          IN_TIME="${{ github.event.inputs.timeMs }}"
+          BODY='{}'
+          if [ -n "${IN_MAX}" ]; then BODY="{\"maxTitles\":${IN_MAX}}"; fi
+          if [ -n "${IN_TIME}" ]; then
+            if [ -n "${IN_MAX}" ]; then BODY="{\"maxTitles\":${IN_MAX},\"timeMs\":${IN_TIME}}"; else BODY="{\"timeMs\":${IN_TIME}}"; fi
+          fi
+          echo "Cuerpo: ${BODY}"
+          # BOMBA: cada llamada procesa un presupuesto (~2 min) y es REANUDABLE
+          # (el anti-join siempre devuelve lo que falta; los errores se
+          # reintentan en pasadas siguientes).
+          # Robustez (igual que catalog-sync): 5xx de Supabase (pico de CPU del
+          # plan gratuito) y 000 (red) se reintentan con espera progresiva;
+          # 4xx (401 secreto, 422) son errores REALES y fallan al vuelo.
+          for i in $(seq 1 400); do
+            ok=0
+            for attempt in 1 2 3 4 5; do
+              code=$(curl -sS -X POST \
+                "${{ vars.SUPABASE_URL }}/functions/v1/catalog-features" \
+                -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}" \
+                -H "Authorization: Bearer ${{ vars.SUPABASE_ANON_KEY }}" \
+                -H "x-catalog-sync-secret: ${{ secrets.CATALOG_SYNC_SECRET }}" \
+                -H "Content-Type: application/json" \
+                -d "$BODY" \
+                -o /tmp/features.json -w "%{http_code}") || code=000
+              case "$code" in
+                200) ok=1; break ;;
+                401|403|422) echo "HTTP ${code} (error real, no reintento):"; cat /tmp/features.json; exit 1 ;;
+                *) echo "iteración ${i}: HTTP ${code} (infraestructura), reintento ${attempt}/5 en $((30 * attempt)) s..."
+                   sleep $((30 * attempt)) ;;
+              esac
+            done
+            if [ "$ok" != 1 ]; then
+              echo "iteración ${i}: 5 reintentos fallidos (HTTP último: ${code}); detengo la bomba:"; cat /tmp/features.json; exit 1
+            fi
+            remaining=$(jq -r '.remaining // 0' /tmp/features.json)
+            processed=$(jq -r '.processed // 0' /tmp/features.json)
+            nerr=$(jq -r '.errors // 0' /tmp/features.json)
+            echo "[iteración $i] processed=${processed} remaining=${remaining} errores=${nerr}"
+            if [ "$nerr" != "0" ]; then
+              # Errores (embedding caído, TMDB persistente): se detiene el
+              # bombeo agresivo; los títulos afectados se reintentan solos en
+              # la pasada siguiente (están en el anti-join).
+              echo "Hay errores en el lote; sigo con el siguiente (se reintentan):"
+            fi
+            if [ "$remaining" = "0" ]; then
+              echo "FEATURES COMPLETAS: catálogo entero embebido."
+              break
+            fi
+            sleep 5
+          done
+          echo "--- última respuesta de la función ---"
+          cat /tmp/features.json

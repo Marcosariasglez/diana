@@ -117,8 +117,8 @@ watchlist y avisos): [`docs/vertice/plan2/ARQUITECTURA.md`](docs/vertice/plan2/A
 1. **Prerrequisitos** (ver también [`supabase/README.md`](supabase/README.md)):
    - extensiones activadas en Supabase → Database → Extensions: `pg_trgm`,
      `unaccent` y `vector` (pgvector);
-   - migraciones **0006**, **0007** y **0008** aplicadas a mano en el SQL Editor
-     (0005 también si aún no está; 0001–0004 ya están en producción);
+   - migraciones **0006**, **0007**, **0008** y **0011** aplicadas a mano en el
+     SQL Editor (0005 también si aún no está; 0001–0004 ya están en producción);
    - `npx supabase functions deploy catalog-sync` y
      `npx supabase functions deploy tmdb`;
    - secretos: `npx supabase secrets set CATALOG_SYNC_SECRET=<valor>` y el mismo
@@ -138,6 +138,29 @@ watchlist y avisos): [`docs/vertice/plan2/ARQUITECTURA.md`](docs/vertice/plan2/A
    0007 ya están aplicados en el paso 1). La evaluación que justifica el valor
    por defecto: [`docs/vertice/plan2/evaluacion.md`](docs/vertice/plan2/evaluacion.md)
    (`node scripts/eval-recomendador.mjs` para repetirla).
+
+### Cómo lanzar la generación de features del catálogo (fase A; la app no la lanza)
+
+Las `catalog_features` (embeddings gte-small de 384 dims que alimenta el
+recomendador `content`) se generan con la Edge Function
+[`catalog-features`](supabase/functions/catalog-features/index.ts)
+(migración **0011** para sus RPCs):
+
+1. **Prerrequisitos**: migración 0011 aplicada; `npx supabase functions deploy
+  catalog-features`; `npx supabase secrets set CATALOG_FEATURES_SECRET=<valor>`
+  (la función valida `CATALOG_SYNC_SECRET` **o** `CATALOG_FEATURES_SECRET`,
+  así que el workflow reutiliza el secreto de sync sin crear otro).
+2. **Bombeo automático**: el cron de
+  [`.github/workflows/catalog-features.yml`](.github/workflows/catalog-features.yml)
+  (cada 6 h) o `workflow_dispatch` manual. Cada run de la función procesa un
+  presupuesto de ~2 min y es **reanudable e incremental** (siempre toma lo que
+  falta por `features_candidates`, ordenado por popularidad; el delta diario
+  entra solo en la pasada siguiente).
+3. **Bombeo local** (máquina del dueño, en 2º plano):
+  `node scripts/features-pump.mjs` (lee el secreto de `.env.local`).
+4. **Comprobar el progreso**: `node scripts/check-features.mjs` (solo lectura;
+  imprime `features: X/Y (Z %)` y, si hay `SUPABASE_SERVICE_ROLE_KEY` en
+  `.env.local`, el nº de errores).
 
 ## E2E (Playwright)
 
