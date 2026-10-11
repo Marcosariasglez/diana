@@ -392,4 +392,320 @@ begin
 end
 $$;
 
-select 'OK 0007: recommend/predict_tenths verificados contra Postgres+pgvector local' as resultado;
+-- ---------------------------------------------------------------------------
+-- TEST 5 · 0012: afinidad de sala (create_room + confirm_mood por banco).
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_alba uuid := '11111111-1111-1111-1111-111111111111';
+  v_code text;
+  v_affinity text;
+begin
+  set role auth_test;
+  perform set_config('request.jwt.claim.sub', v_alba::text, false);
+
+  -- (a) Sala exprés: se confirma con sus 2 preguntas (con la 0003 fallaría:
+  --     confirm_mood exigía siempre las 4 fijas).
+  v_code := public.create_room('Alba', 'express');
+  select affinity into v_affinity from public.rooms where code = v_code;
+  perform public._assert(v_affinity = 'express', '0012: affinity no se guardó: ' || v_affinity);
+  perform public.start_match(v_code);
+  perform public.set_mood_answer(v_code, 'time', 'h2');
+  perform public.set_mood_answer(v_code, 'energy', 'calm');
+  perform public.confirm_mood(v_code, '[{"mediaType":"movie","mediaId":1001}]'::jsonb);
+  select phase into v_affinity from public.rooms where code = v_code;
+  perform public._assert(v_affinity = 'swipe', '0012: sala exprés no se confirmó con 2 respuestas (phase ' || v_affinity || ')');
+
+  -- (b) Sala cinéfilo: exige 6; con 4 → mood-incomplete; con 6 → OK.
+  v_code := public.create_room('Alba C', 'cinefilo');
+  perform public.start_match(v_code);
+  perform public.set_mood_answer(v_code, 'time', 'h2');
+  perform public.set_mood_answer(v_code, 'energy', 'intense');
+  perform public.set_mood_answer(v_code, 'company', 'friends');
+  perform public.set_mood_answer(v_code, 'platforms', 'netflix');
+  begin
+    perform public.confirm_mood(v_code, '[]'::jsonb);
+    perform public._assert(false, '0012: sala cinéfilo se confirmó sin era/pace');
+  exception when raise_exception then
+    null; -- esperado: mood-incomplete
+  end;
+  perform public.set_mood_answer(v_code, 'era', 'classic');
+  perform public.set_mood_answer(v_code, 'pace', 'fast');
+  perform public.confirm_mood(v_code, '[]'::jsonb);
+  select phase into v_affinity from public.rooms where code = v_code;
+  perform public._assert(v_affinity = 'swipe', '0012: sala cinéfilo no se confirmó con 6 respuestas (phase ' || v_affinity || ')');
+
+  -- (c) Llamada LEGADA de 1 argumento (clientes ya desplegados) → intermedio.
+  v_code := public.create_room('Legacy');
+  select affinity into v_affinity from public.rooms where code = v_code;
+  perform public._assert(v_affinity = 'intermedio', '0012: create_room de 1 arg no crea intermedio: ' || v_affinity);
+
+  -- (d) Afinidad inválida → bad-input.
+  begin
+    perform public.create_room('Mala', 'turbo');
+    perform public._assert(false, '0012: se aceptó una afinidad inválida');
+  exception when raise_exception then
+    null; -- esperado
+  end;
+
+  reset role;
+end
+$$;
+
+-- ---------------------------------------------------------------------------
+-- TEST 6 · 0013: recommend no devuelve «stubs» (title='') y responde con
+--          historial grande. (El stub entra en los candidatos por plataforma;
+--          sin el filtro de 0013 aparecería en el feed.)
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_alba uuid := '11111111-1111-1111-1111-111111111111';
+  n int;
+begin
+  insert into public.catalog_titles
+    (tmdb_id, media_type, title, year, genre_ids, vote_average, vote_count, popularity, platforms_flatrate)
+  values (8001, 'movie', '', null, '{18}', 7.0, 500, 999999, '{netflix}')
+  on conflict (media_type, tmdb_id) do nothing;
+
+  set role auth_test;
+  perform set_config('request.jwt.claim.sub', v_alba::text, false);
+  select count(*) into n from public.recommend('{netflix}'::text[], 50, 0, null);
+  perform public._assert(n > 0, '0013: recommend no devolvió candidatos: ' || n);
+  select count(*) into n
+  from public.recommend('{netflix}'::text[], 50, 0, null) where tmdb_id = 8001;
+  perform public._assert(n = 0, '0013: el stub (title vacío) aparece en el feed: ' || n);
+  select count(*) into n
+  from public.recommend('{netflix}'::text[], 50, 0, null) where coalesce(title, '') = '';
+  perform public._assert(n = 0, '0013: hay filas del feed sin título: ' || n);
+  reset role;
+end
+$$;
+
+-- ---------------------------------------------------------------------------
+-- TEST 7 · 0014: features_candidates/remaining saltan los stubs.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  n int;
+  v_manual int;
+  v_found boolean;
+begin
+  insert into public.catalog_titles
+    (tmdb_id, media_type, title, year, genre_ids, vote_average, vote_count, popularity, platforms_flatrate)
+  values (8002, 'movie', 'Película Real', 2019, '{35}', 6.0, 100, 50, '{netflix}')
+  on conflict (media_type, tmdb_id) do nothing;
+
+  -- El stub 8001 (title '', popularity 999999) ya existe por el TEST 6.
+  -- (La función no usa auth.uid(): en Supabase la llama service_role; aquí
+  -- corre como postgres, que tiene lectura sobre catalog_.*.)
+  select exists (select 1 from public.features_candidates(10) where tmdb_id = 8002) into v_found;
+  perform public._assert(v_found, '0014: features_candidates no devuelve el título real sin feature');
+  select exists (select 1 from public.features_candidates(10) where tmdb_id = 8001) into v_found;
+  perform public._assert(not v_found, '0014: features_candidates devuelve el stub (title vacío)');
+  select public.features_remaining() into n;
+  select count(*) into v_manual
+  from public.catalog_titles c
+  where c.title is not null and c.title <> ''
+    and not exists (select 1 from public.catalog_features f
+                    where f.tmdb_id = c.tmdb_id and f.media_type = c.media_type);
+  perform public._assert(n = v_manual, '0014: features_remaining ' || n || ' != ' || v_manual || ' (títulos reales sin feature)');
+end
+$$;
+
+-- ---------------------------------------------------------------------------
+-- TEST 8 · 0015: seen CTE — la semántica de exclusión se mantiene (un
+--          episodio visto excluye la serie entera; una película vista
+--          excluye la película) y el orden no cambia.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_alba uuid := '11111111-1111-1111-1111-111111111111';
+  n int;
+begin
+  -- Títulos de prueba (con plataformas, para que entren en el feed):
+  -- 9001 'Serie V' (tv) con un episodio visto por Alba → debe EXCLUIRSE.
+  -- 9002 'Peli V' (movie) vista entera → debe EXCLUIRSE.
+  -- 9003 'Peli N' (movie) sin ver → debe APLICAR.
+  insert into public.catalog_titles
+    (tmdb_id, media_type, title, year, genre_ids, vote_average, vote_count, popularity, platforms_flatrate)
+  values
+    (9001, 'tv', 'Serie V', 2021, '{18}', 8.0, 1000, 70, '{netflix}'),
+    (9002, 'movie', 'Peli V', 2021, '{18}', 8.0, 1000, 71, '{netflix}'),
+    (9003, 'movie', 'Peli N', 2021, '{18}', 8.0, 1000, 72, '{netflix}')
+  on conflict (media_type, tmdb_id) do nothing;
+
+  insert into public.watched (user_id, key)
+  values
+    (v_alba, 'tv:9001:1:e2'),   -- un episodio de la serie
+    (v_alba, 'movie:9002')      -- película vista entera
+  on conflict (user_id, key) do nothing;
+
+  set role auth_test;
+  perform set_config('request.jwt.claim.sub', v_alba::text, false);
+  select count(*) into n
+  from public.recommend('{netflix}'::text[], 100, 0, null) where tmdb_id = 9001;
+  perform public._assert(n = 0, '0015: la serie con un episodio visto SÍ aparece (esperado 0): ' || n);
+  select count(*) into n
+  from public.recommend('{netflix}'::text[], 100, 0, null) where tmdb_id = 9002;
+  perform public._assert(n = 0, '0015: la película vista SÍ aparece (esperado 0): ' || n);
+  select count(*) into n
+  from public.recommend('{netflix}'::text[], 100, 0, null) where tmdb_id = 9003;
+  perform public._assert(n = 1, '0015: la película no vista NO aparece (esperado 1): ' || n);
+  reset role;
+end
+$$;
+
+-- ---------------------------------------------------------------------------
+-- TEST 9 · 0016 (escala): recommend() responde con un historial grande
+--          (250 valoraciones con embedding) y ~2.000 candidatos, dentro del
+--          statement timeout de PostgREST (5 s). Sin el top-N materializado
+--          (0016), la explicación se corría por cada candidato y el timeout
+--          saltaba (reproducido en producción: 208 valoraciones → error).
+--          Con la 0020 este test cubre el camino ANN (el vector de gusto
+--          deja de ser NULL); sin la 0020 corría el camino frío.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_carlos uuid := '33333333-3333-3333-3333-333333333333';
+  i int;
+  n int;
+begin
+  insert into auth.users (id, email) values (v_carlos, 'carlos@example.com')
+  on conflict (id) do nothing;
+
+  -- 250 títulos valorados por Carlos (con feature/embedding → el vector de
+  -- gusto se calcula y la explicación tiene 250 candidatos delta>0: el
+  -- caso MÁS caro).
+  for i in 0..249 loop
+    insert into public.catalog_titles
+      (tmdb_id, media_type, title, year, genre_ids, vote_average, vote_count, popularity, platforms_flatrate)
+    values (10000 + i, 'movie', 'Visto ' || i, 2010 + (i % 15), '{18}', 6.5, 200, 10, '{netflix}')
+    on conflict (media_type, tmdb_id) do nothing;
+    insert into public.catalog_features (tmdb_id, media_type, keywords, director, cast_names, embedding)
+    values (10000 + i, 'movie', '{drama}', 'Dir V', '{Actor V}',
+            (('[0.1,0.1' || (select string_agg(',0', '') from generate_series(1, 381)) || ',0]'::text)::vector))
+    on conflict (media_type, tmdb_id) do nothing;
+    insert into public.history_entries
+      (user_id, key, media_type, media_id, title, genre_ids, user_rating, ai_prediction_tenths)
+    values (v_carlos, 'movie:' || (10000 + i), 'movie', 10000 + i, 'Visto ' || i, '{18}', 4.5, 40)
+    on conflict (user_id, key) do nothing;
+  end loop;
+
+  -- ~2.000 candidatos no vistos (con feature/embedding): el CTE de
+  -- candidatos es grande y cada fila sin el fix disparaba la explicación.
+  for i in 0..1999 loop
+    insert into public.catalog_titles
+      (tmdb_id, media_type, title, year, genre_ids, vote_average, vote_count, popularity, platforms_flatrate)
+    values (20000 + i, 'movie', 'Candidato ' || i, 2015 + (i % 10), '{18,35}', 6.5, 200, 5 + (i % 50), '{netflix}')
+    on conflict (media_type, tmdb_id) do nothing;
+    insert into public.catalog_features (tmdb_id, media_type, keywords, director, cast_names, embedding)
+    values (20000 + i, 'movie', '{drama}', 'Dir C', '{Actor C}',
+            (('[0.08,0.1' || (select string_agg(',0', '') from generate_series(1, 381)) || ',0]'::text)::vector))
+    on conflict (media_type, tmdb_id) do nothing;
+  end loop;
+
+  -- Como usuario autenticado, con el MISMO statement timeout que PostgREST
+  -- (5 s en producción): si recommend no responde a tiempo, el DO falla.
+  set role auth_test;
+  perform set_config('request.jwt.claim.sub', v_carlos::text, false);
+  perform set_config('statement_timeout', '5000', true);   -- local a la sesión
+  select count(*) into n
+  from public.recommend('{netflix}'::text[], 50, 0, null);
+  perform public._assert(n = 50,
+    '0016: recommend(250 valoraciones, 2.000 candidatos) no devolvió 50 en <5 s (devolvió ' || n || ')');
+  reset role;
+end
+$$;
+
+-- ---------------------------------------------------------------------------
+-- TEST 10 · 0020: _user_taste_vector no es NULL para un usuario con mezcla de
+--          notas sobre títulos con feature (regresión: la comprobación «vector
+--          cero» de la 0007 era `l2(v, v) = 0`, SIEMPRE cierta → NULL para
+--          todos los usuarios y la ruta de contenido estaba muerta; en
+--          producción el backfill tenía 290 features con embedding no nulo
+--          y el diagnóstico medió taste_ok=false para 208 valoraciones).
+--          (b) Degenerado (todas las notas iguales → vector centrado = 0):
+--          NULL de forma determinista. (c) Sin valoraciones: NULL.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_dani uuid := '44444444-5555-4444-4444-555555555555';
+  v_elena uuid := '55555555-6666-4666-4666-666666666666';
+  v_zero extensions.vector;
+  v_dist numeric;
+begin
+  insert into auth.users (id, email) values
+    (v_dani, 'dani@example.com'),
+    (v_elena, 'elena@example.com')
+  on conflict (id) do nothing;
+
+  v_zero := ('[0' || (select string_agg(',0', '') from generate_series(1, 383)) || ']')::vector;
+
+  -- Dani: 4 valoraciones CON feature, mezcladas (5.0, 5.0, 4.5, 1.0) → señal real.
+  insert into public.catalog_titles
+    (tmdb_id, media_type, title, year, genre_ids, vote_average, vote_count, popularity, platforms_flatrate)
+  values
+    (8101, 'movie', 'Drama Mix 1', 2015, '{18}', 6.5, 100, 10, '{netflix}'),
+    (8102, 'movie', 'Drama Mix 2', 2016, '{18}', 6.5, 100, 10, '{netflix}'),
+    (8103, 'movie', 'Terror Mix', 2017, '{27}', 6.5, 100, 10, '{netflix}'),
+    (8104, 'movie', 'Comedia Mix', 2018, '{35}', 6.5, 100, 10, '{netflix}')
+  on conflict (media_type, tmdb_id) do nothing;
+  insert into public.catalog_features (tmdb_id, media_type, keywords, director, cast_names, embedding)
+  values
+    (8101, 'movie', '{drama}', 'D', '{A}',
+     ('[0.1,0.1' || (select string_agg(',0', '') from generate_series(1, 381)) || ',0]')::vector),
+    (8102, 'movie', '{drama}', 'D', '{A}',
+     ('[0.1,0.1' || (select string_agg(',0', '') from generate_series(1, 381)) || ',0]')::vector),
+    (8103, 'movie', '{terror}', 'T', '{C}',
+     ('[-0.05,0.02' || (select string_agg(',0.02', '') from generate_series(1, 381)) || ',0]')::vector),
+    (8104, 'movie', '{comedia}', 'C', '{E}',
+     ('[-0.1,0.01' || (select string_agg(',0.01', '') from generate_series(1, 381)) || ',0]')::vector)
+  on conflict (media_type, tmdb_id) do nothing;
+  insert into public.history_entries
+    (user_id, key, media_type, media_id, title, genre_ids, user_rating, ai_prediction_tenths)
+  values
+    (v_dani, 'movie:8101', 'movie', 8101, 'Drama Mix 1', '{18}', 5.0, 45),
+    (v_dani, 'movie:8102', 'movie', 8102, 'Drama Mix 2', '{18}', 5.0, 45),
+    (v_dani, 'movie:8103', 'movie', 8103, 'Terror Mix', '{27}', 4.5, 40),
+    (v_dani, 'movie:8104', 'movie', 8104, 'Comedia Mix', '{35}', 1.0, 20)
+  on conflict (user_id, key) do nothing;
+
+  -- Elena: 3 valoraciones CON feature, TODAS iguales (4.0) → vector centrado 0.
+  insert into public.history_entries
+    (user_id, key, media_type, media_id, title, genre_ids, user_rating, ai_prediction_tenths)
+  values
+    (v_elena, 'movie:8101', 'movie', 8101, 'Drama Mix 1', '{18}', 4.0, 40),
+    (v_elena, 'movie:8102', 'movie', 8102, 'Drama Mix 2', '{18}', 4.0, 40),
+    (v_elena, 'movie:8103', 'movie', 8103, 'Terror Mix', '{27}', 4.0, 40)
+  on conflict (user_id, key) do nothing;
+
+  set role auth_test;
+
+  -- (a) Mezcla de notas → vector NO nulo y normalizado (distancia al 0 ≈ 1).
+  perform set_config('request.jwt.claim.sub', v_dani::text, false);
+  perform public._assert(
+    public._user_taste_vector(v_dani) is not null,
+    '0020: _user_taste_vector es NULL con mezcla de notas sobre títulos con feature '
+      || '(regresión 0007: l2(v, v) = 0 era siempre cierta)');
+  select extensions.l2_distance(public._user_taste_vector(v_dani), v_zero) into v_dist;
+  perform public._assert(v_dist is not null and abs(v_dist - 1.0) < 1e-3,
+    '0020: el vector de gusto no está normalizado (distancia al 0: ' || coalesce(v_dist::text, 'null') || ')');
+
+  -- (b) Todas las notas iguales → vector centrado 0 → NULL determinista.
+  perform set_config('request.jwt.claim.sub', v_elena::text, false);
+  perform public._assert(
+    public._user_taste_vector(v_elena) is null,
+    '0020: _user_taste_vector no es NULL con todas las notas iguales (vector centrado 0)');
+
+  -- (c) Sin valoraciones → NULL (arranque en frío, comportamiento previo).
+  perform set_config('request.jwt.claim.sub',
+    '22222222-2222-2222-2222-222222222222'::text, false);
+  perform public._assert(
+    public._user_taste_vector('22222222-2222-2222-2222-222222222222') is null,
+    '0020: _user_taste_vector no es NULL para un usuario sin valoraciones');
+
+  reset role;
+end
+$$;
+
+select 'OK 0007+0012+0013+0014+0015+0016+0020: recommend/predict_tenths/afinidad/stubs/seen/top-N/vector-gusto verificados contra Postgres+pgvector local' as resultado;
