@@ -354,7 +354,7 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
     expect(st!.status).toBe('done');
   });
 
-  it('resync:false: un trabajo ya terminado (done) se SALTA (la bomba solo avanza lo pendiente)', async () => {
+  it('resync:false: un trabajo done Y FRESCO (recién terminado) se SALTA (la bomba avanza lo pendiente)', async () => {
     syncState.push({
       provider: 'netflix',
       media_type: 'movie',
@@ -364,8 +364,9 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
       last_total: 40,
       status: 'done',
       last_error: null,
-      last_synced_at: '2026-10-01T00:00:00.000Z',
-      updated_at: '2026-10-01T00:00:00.000Z',
+      // Fresco (hace 1 h): dentro de DONE_FRESH_MS (7 días).
+      last_synced_at: new Date(Date.now() - 3600_000).toISOString(),
+      updated_at: new Date(Date.now() - 3600_000).toISOString(),
     });
 
     const res = await post({ mode: 'full', currentYear: 1949, pages: 5, timeMs: 60_000, maxJobs: 1, resync: false });
@@ -377,6 +378,32 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
     expect(body.stopped).toBe(false);
     // Nada pendiente: no se debe llamar a TMDB.
     expect(tmdbRequests.length).toBe(0);
+  });
+
+  it('resync:false: un trabajo done pero OBSOLETO (hace más de 7 días) se RE-BARRA desde la página 1 (full convergente)', async () => {
+    syncState.push({
+      provider: 'netflix',
+      media_type: 'movie',
+      monetization: 'flatrate',
+      range_key: '1940-1949',
+      last_page: 3,
+      last_total: 60,
+      status: 'done',
+      last_error: null,
+      // Obsoleto (hace 8 días): fuera de DONE_FRESH_MS → se re-barre.
+      last_synced_at: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(),
+    });
+    page('movie', 1, [titleRow(610)], 1, 1);
+
+    const res = await post({ mode: 'full', currentYear: 1949, pages: 5, timeMs: 60_000, maxJobs: 1, resync: false });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as SyncBody;
+    expect(body.results[0].skipped).toBeUndefined();
+    expect(body.results[0].done).toBe(true);
+    // Re-barrido desde la página 1 (no desde la 3 guardada).
+    expect(tmdbRequests.some((u) => /page=1/.test(u) && u.includes('/discover/movie'))).toBe(true);
+    expect(titles.some((t) => t.tmdb_id === 610)).toBe(true);
   });
 
   it('resync:false con un trabajo pendiente (running): sí lo REANUDA (la bomba avanza)', async () => {

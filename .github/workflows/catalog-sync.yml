@@ -44,9 +44,9 @@ on:
           - full
         default: delta
       resync:
-        description: 'true = re-sincronizar TODO desde la página 1 (novedades). false = solo AVANZAR lo pendiente (la bomba termina cuando el lote está completo; úsalo para el full inicial)'
+        description: 'true = re-barre TODO desde la página 1 (novedades, lento). false = AVANZAR lo pendiente + re-barre solo lo terminado hace más de 7 días (convergente: el full semanal lo usa para actualizarse sin rehacer lo fresco)'
         type: boolean
-        default: true
+        default: false
       pages:
         description: 'Presupuesto de páginas por run (opcional)'
         type: string
@@ -73,13 +73,16 @@ jobs:
         run: |
           set -uo pipefail
           # Modo según el evento: schedule → por el cron; dispatch → por el input.
-          # El cron SIEMPRE re-sincroniza (true): el delta captura novedades y
-          # el full semanal actualiza todo el catálogo.
+          # - delta diario: resync=true (barrido completo de las ventanas
+          #   recientes: pocas páginas, captura novedades y cambios).
+          # - full semanal: resync=false (CONVERGENTE: avanza lo pendiente y
+          #   re-barra solo lo terminado hace más de 7 días; así aunque un run
+          #   muera por el timeout de GitHub, el catálogo se completa y se
+          #   mantiene fresco a lo largo de los días, sin rehacer lo fresco).
           MODE="${IN_MODE}"
           RESYNC="${IN_RESYNC}"
           if [ "${EVENT_NAME}" = "schedule" ]; then
-            if [ "${SCHEDULE}" = "30 3 * * *" ]; then MODE="delta"; else MODE="full"; fi
-            RESYNC="true"
+            if [ "${SCHEDULE}" = "30 3 * * *" ]; then MODE="delta"; RESYNC="true"; else MODE="full"; RESYNC="false"; fi
           fi
           PAGES="${IN_PAGES}"
           TIME_MS="${IN_TIME_MS}"

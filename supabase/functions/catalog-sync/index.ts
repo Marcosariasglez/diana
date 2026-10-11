@@ -48,6 +48,12 @@ const LANG = 'es-ES';
 //     recupera en la siguiente ejecución (workflow cron/dispatch) gracias a
 //     catalog_sync_state.
 const DEFAULT_PAGE_BUDGET = 200;                  // páginas de discover por run
+// Un job `done` se considera «fresco» (resync=false lo SALTA) hasta que pasa
+// este tiempo. El `full` semanal (resync=false) re-barra desde la página 1 los
+// jobs whose done tiene más de 7 días → el catálogo se mantiene actualizado
+// (novedades + cambios de disponibilidad) de forma CONVERGENTE: cada run
+// termina aunque no dé tiempo a todo, sin rehacer lo recién barrido.
+const DONE_FRESH_MS = 7 * 24 * 60 * 60 * 1000;
 const DEFAULT_TIME_BUDGET_MS = 2 * 60 * 1000;     // 2 min por run (< 150 s idle)
 const MAX_TIME_BUDGET_MS = 4 * 60 * 1000;         // tope de la opción timeMs
 const DEFAULT_BATCH = 100;                        // filas por upsert
@@ -380,24 +386,31 @@ async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number, resyn
   // REANUDABLE: lee el estado anterior de este trabajo.
   const { data: prev } = await admin
     .from('catalog_sync_state')
-    .select('last_page, last_total, status')
+    .select('last_page, last_total, status, last_synced_at')
     .eq('provider', job.provider)
     .eq('media_type', job.mediaType)
     .eq('monetization', job.monetization)
     .eq('range_key', job.window.key)
     .maybeSingle();
-  const prevRow = prev as { last_page?: number; last_total?: number; status?: string } | null;
-  // resync=false (la «bomba» del workflow): si el trabajo ya terminó, se SALTA
-  // en vez de re-sincronizarlo desde la página 1; así un lote grande avanza
-  // solo con lo pendiente y la bomba puede terminar (re-sincronizar todo en
-  // cada iteración haría que un full nunca acabara).
-  if (!resync && prevRow?.status === 'done') {
+  const prevRow = prev as { last_page?: number; last_total?: number; status?: string; last_synced_at?: string | null } | null;
+  // resync=false (la «bomba» del workflow): se SALTA solo los jobs «done Y
+  // FRESCOS» (last_synced_at dentro de DONE_FRESH_MS). Un job whose done tiene
+  // más de 7 días se considera OBSOLETO y se re-barre desde la página 1
+  // (novedades + cambios de disponibilidad). Así el `full` semanal con
+  // resync=false es CONVERGENTE: aunque un solo run (timeout de GitHub) no
+  // alcance a todo, el lote completo termina a lo largo de los días y el
+  // catálogo se mantiene fresco sin re-hacer lo recién barrido.
+  const fresh =
+    prevRow?.last_synced_at != null &&
+    !Number.isNaN(Date.parse(prevRow.last_synced_at)) &&
+    Date.now() - Date.parse(prevRow.last_synced_at) <= DONE_FRESH_MS;
+  if (!resync && prevRow?.status === 'done' && fresh) {
     return { ...stateKey, synced: 0, pages: 0, total: prevRow.last_total ?? 0, done: true, skipped: true };
   }
   // Si la pasada se interrumpió (running/error) por el presupuesto de tiempo o
-  // páginas, continúa DESDE la última página guardada. Si ya terminó (done) es
-  // una re-sincronización (novedades y cambios de disponibilidad) y vuelve a
-  // empezar por la página 1 para capturar lo nuevo.
+  // páginas, continúa DESDE la última página guardada. Si ya terminó (done)
+  // hace más de DONE_FRESH_MS —o es resync=true— se re-sincroniza desde la
+  // página 1 para capturar lo nuevo.
   const incomplete = prevRow != null && (prevRow.status === 'running' || prevRow.status === 'error');
   const startPage = incomplete ? (prevRow.last_page ?? 0) : 0;
   let total = incomplete ? (prevRow.last_total ?? 0) : 0;
