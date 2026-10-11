@@ -380,7 +380,7 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
     expect(tmdbRequests.length).toBe(0);
   });
 
-  it('resync:false: un trabajo done pero OBSOLETO (hace más de 7 días) se RE-BARRA desde la página 1 (full convergente)', async () => {
+  it('resync:false: un trabajo done pero OBSOLETO (hace más de 14 días) se RE-BARRA desde la página 1 (full convergente)', async () => {
     syncState.push({
       provider: 'netflix',
       media_type: 'movie',
@@ -390,9 +390,9 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
       last_total: 60,
       status: 'done',
       last_error: null,
-      // Obsoleto (hace 8 días): fuera de DONE_FRESH_MS → se re-barre.
-      last_synced_at: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(),
-      updated_at: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(),
+      // Obsoleto (hace 15 días): fuera de DONE_FRESH_MS (14) → se re-barre.
+      last_synced_at: new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString(),
     });
     page('movie', 1, [titleRow(610)], 1, 1);
 

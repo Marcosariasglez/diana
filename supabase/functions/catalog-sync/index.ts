@@ -50,10 +50,14 @@ const LANG = 'es-ES';
 const DEFAULT_PAGE_BUDGET = 200;                  // páginas de discover por run
 // Un job `done` se considera «fresco» (resync=false lo SALTA) hasta que pasa
 // este tiempo. El `full` semanal (resync=false) re-barra desde la página 1 los
-// jobs whose done tiene más de 7 días → el catálogo se mantiene actualizado
+// jobs whose done tiene más de 14 días → el catálogo se mantiene actualizado
 // (novedades + cambios de disponibilidad) de forma CONVERGENTE: cada run
 // termina aunque no dé tiempo a todo, sin rehacer lo recién barrido.
-const DONE_FRESH_MS = 7 * 24 * 60 * 60 * 1000;
+// 14 días (no 7) porque con UN full por semana (tope 350 min) re-barrelo TODO
+// cada 7 días pediría ~720 min/semana (más de lo que cabe); con 14 días la
+// demanda es ~360 min/semana, justo dentro de la capacidad: el run del
+// domingo termina con «SINCRONIZACIÓN COMPLETA» y no queda en catch-up.
+const DONE_FRESH_MS = 14 * 24 * 60 * 60 * 1000;
 const DEFAULT_TIME_BUDGET_MS = 2 * 60 * 1000;     // 2 min por run (< 150 s idle)
 const MAX_TIME_BUDGET_MS = 4 * 60 * 1000;         // tope de la opción timeMs
 const DEFAULT_BATCH = 100;                        // filas por upsert
