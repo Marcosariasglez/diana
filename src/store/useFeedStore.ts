@@ -13,11 +13,11 @@ function bucketFromScore(score: number): AffinityBucket {
 }
 
 /**
- * D2-2.6: primer página del feed con el recomendador activo. `content` →
- * RPC `recommend` (candidatos ya ordenados por afinidad, sin vistos, dentro
- * de las plataformas); si devuelve null (sin sesión, 0007 sin desplegar,
- * error) DECAE a la heurística actual. En `heuristic` (defecto) no toca el
- * servidor.
+ * D2-2.6: primer página del feed con el recomendador activo. `content`
+ * (defecto desde A.6) → RPC `recommend` (candidatos ya ordenados por
+ * afinidad, sin vistos, dentro de las plataformas); si devuelve null (sin
+ * sesión, 0007 sin desplegar, error) DECAE a la heurística actual. En
+ * `heuristic` (opt-out) no toca el servidor.
  */
 async function loadFirstPageContent(
   platforms: string[],

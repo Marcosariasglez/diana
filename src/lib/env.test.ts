@@ -1,6 +1,9 @@
-// D2-2.6: interruptor del recomendador EXPO_PUBLIC_RECOMMENDER (defecto 'heuristic').
-// El módulo lee process.env al importarse: se usa jest.isolateModules por caso
-// con las variables fijadas explícitamente (no depende de .env.local).
+// D2-2.6: interruptor del recomendador EXPO_PUBLIC_RECOMMENDER.
+// Defecto 'content' (A.6: gana a la heurística en EAM y p@10, ver
+// docs/vertice/plan2/evaluacion.md); 'heuristic' sigue disponible como
+// opt-out explícito. El módulo lee process.env al importarse: se usa
+// jest.isolateModules por caso con las variables fijadas explícitamente
+// (no depende de .env.local).
 describe('env: EXPO_PUBLIC_RECOMMENDER (D2-2.6)', () => {
   const KEYS = ['EXPO_PUBLIC_RECOMMENDER', 'EXPO_PUBLIC_BACKEND', 'EXPO_PUBLIC_CATALOG'] as const;
   // Snapshot ORIGINAL capturado UNA sola vez (beforeAll): si se capturara en
@@ -35,18 +38,23 @@ describe('env: EXPO_PUBLIC_RECOMMENDER (D2-2.6)', () => {
     return mod;
   }
 
-  it('por defecto es heuristic cuando la variable no existe', () => {
-    expect(loadEnv().RECOMMENDER).toBe('heuristic');
+  it('por defecto es content cuando la variable no existe (A.6: el defecto es el ganador)', () => {
+    expect(loadEnv().RECOMMENDER).toBe('content');
   });
 
-  it('acepta "content"', () => {
+  it('acepta "content" explícito', () => {
     process.env.EXPO_PUBLIC_RECOMMENDER = 'content';
     expect(loadEnv().RECOMMENDER).toBe('content');
   });
 
-  it('cualquier otro valor cae a heuristic (defecto seguro)', () => {
-    process.env.EXPO_PUBLIC_RECOMMENDER = 'otro-valor';
+  it('acepta "heuristic" como opt-out explícito', () => {
+    process.env.EXPO_PUBLIC_RECOMMENDER = 'heuristic';
     expect(loadEnv().RECOMMENDER).toBe('heuristic');
+  });
+
+  it('cualquier otro valor cae al defecto content (la degradación la hace activeRecommender)', () => {
+    process.env.EXPO_PUBLIC_RECOMMENDER = 'otro-valor';
+    expect(loadEnv().RECOMMENDER).toBe('content');
   });
 
   it('BACKEND y CATALOG se parsean de sus variables', () => {

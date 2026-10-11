@@ -1,12 +1,12 @@
 # Evaluación del recomendador (D2-2.4)
 
-> Generado por `scripts/eval-recomendador.mjs` el 2026-10-10T08:40:32.960Z.
+> Generado por `scripts/eval-recomendador.mjs${REAL ? ' --real' : ''}` el 2026-10-11T21:25:09.546Z.
 
-## Dataset (sintético, «dejar uno fuera»)
+## Dataset (real (embeddings gte-small de producción), «dejar uno fuera»)
 
-- Catálogo: mocks del repo (122 títulos).
+- Catálogo: real de producción (catalog_titles, 1196 títulos más populares con feature).
 - Valoraciones: 8 usuarios sintéticos con perfil de género; 40 títulos de entrenar por usuario, el resto holdout.
-- Embeddings: sintéticos (vocabulario de contenido) — la calidad del embedding real (gte-small) solo se mide en producción.
+- Embeddings: REALES gte-small 384-d de producción (dump del 2026-10-11T21:25:09.126Z).
 - Heurística actual: `predictTenths` con el mismo historial (40 ratings) que el modelo content; sin mazo de onboarding (no existe en el sintético).
 - Precisión@10: por usuario, de su top-10 real (por nota verdadera dentro del holdout), cuántos caen en el top-10 ordenado por la predicción de cada modelo.
 
@@ -14,21 +14,15 @@
 
 | Modelo | EAM (décimas) | Precisión@10 | n holdout |
 |---|---|---|---|
-| heuristic | 5.315 | 0.512 | 400 |
-| mean | 8.06 | 0.188 | 400 |
-| random | 12.223 | 0.225 | 400 |
-| content | 3.797 | 0.362 | 400 |
+| heuristic | 5.827 | 0.15 | 400 |
+| mean | 7.16 | 0.188 | 400 |
+| random | 11.943 | 0.188 | 400 |
+| content | 2.935 | 0.5 | 400 |
 
 ## Veredicto
 
-CONTENT no gana a la heurística en las dos métricas (gana en EAM: predicción de nota; la heurística gana en precisión@10: ranking) → se deja EXPO_PUBLIC_RECOMMENDER=heuristic (defecto) y se documenta; el dueño puede pasar a content cuando se mida el embedding real de gte-small en producción
+CONTENT gana a la heurística en EAM y precisión@10 → EXPO_PUBLIC_RECOMMENDER=content por defecto
 
 ### Nota de validez
 
-La evaluación mide la **lógica** del modelo (vector de gusto centrado, prior con
-shrinkage, umbral de 20 valoraciones, regresión simple) con embeddings
-sintéticos deterministas del contenido del mock. **No mide la calidad del
-embedding real** (gte-small sobre sinopsis), que solo se cuantificará en
-producción tras la primera sincronización con features. Por eso el veredicto
-no fuerza el interruptor: el dueño puede pasar a `content` cuando quiera,
-y el cliente degrada a `heuristic` si el RPC falla (red de seguridad).
+Evaluación con **embeddings REALES de gte-small** (dump de producción) sobre el catálogo real. La nota «verdadera» sigue siendo sintética (perfil de género + ruido): mide si el embedding real mejora la LÓGICA del modelo frente a la línea base; no es una métrica de usuarios reales, que llegará con las valoraciones de producción.

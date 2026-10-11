@@ -26,18 +26,34 @@ const argN = (() => {
 })();
 
 async function fetchPage(from, to) {
-  const res = await fetch(`${base}/rest/v1/catalog_titles?select=*`, {
-    headers: {
-      apikey: anon,
-      Authorization: `Bearer ${anon}`,
-      Range: `${from}-${to}`,
-      RangeUnit: 'items',
-      'x-order': 'popularity.desc,tmdb_id.asc',
-      'x-limit': to - from + 1,
+  // PostgREST: el orden se pide con el parámetro `order=` (no existe cabecera x-order).
+  const res = await fetch(
+    `${base}/rest/v1/catalog_titles?select=*&order=popularity.desc,tmdb_id.asc`,
+    {
+      headers: {
+        apikey: anon,
+        Authorization: `Bearer ${anon}`,
+        Range: `${from}-${to}`,
+        RangeUnit: 'items',
+      },
     },
-  });
+  );
   if (res.status !== 200) throw new Error(`catalog_titles ${res.status}`);
   return res.json();
+}
+
+// La columna vector llega por REST como string "[-0.1,0.2,...]"; se normaliza a array.
+function parseEmbedding(v) {
+  if (Array.isArray(v)) return v;
+  if (typeof v === 'string' && v.length > 2) {
+    try {
+      const arr = JSON.parse(v);
+      return Array.isArray(arr) ? arr : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 // 1) Títulos populares (la misma población que usa el feed).
@@ -68,7 +84,9 @@ for (const [type, ids] of Object.entries(byType)) {
 const out = [];
 for (const t of titles) {
   const f = features.get(`${t.media_type}:${t.tmdb_id}`);
-  if (!f || !Array.isArray(f.embedding) || f.embedding.length !== 384) continue;
+  if (!f) continue;
+  const embedding = parseEmbedding(f.embedding);
+  if (!embedding || embedding.length !== 384) continue;
   out.push({
     id: t.tmdb_id,
     type: t.media_type,
@@ -80,7 +98,7 @@ for (const t of titles) {
     vote_average: t.vote_average,
     vote_count: t.vote_count,
     popularity: t.popularity,
-    embedding: f.embedding,
+    embedding,
   });
 }
 

@@ -1,15 +1,16 @@
 // VERTICE-PLAN-2, D2-2: recomendador real (contenido) + interruptor.
 //
 // Dos modos:
-//   - 'heuristic' (defecto): la heurística de géneros actual (mock-ai). Sin
-//     servidor; se usa siempre que CATALOG=mock o BACKEND=mock.
-//   - 'content': los RPC de la migración 0007 (`recommend` y `predict_tenths`,
-//     ambos security invoker → el cliente solo ve lo suyo por RLS).
+//   - 'content' (defecto desde A.6, ver env.ts): los RPC de la migración
+//     0007 (`recommend` y `predict_tenths`, ambos security invoker → el
+//     cliente solo ve lo suyo por RLS).
+//   - 'heuristic': la heurística de géneros actual (mock-ai). Sin servidor;
+//     opt-out explícito y red de seguridad.
 //
 // `activeRecommender()` degrada a 'heuristic' cuando 'content' no tiene
-// sentido (CATALOG=mock, BACKEND=mock, sin cliente Supabase). Así el cambio
-// de variable nunca rompe la app: la heurística sigue siendo la red de
-// seguridad.
+// sentido (CATALOG=mock, BACKEND=mock, sin cliente Supabase) o cuando el
+// RPC devuelve null (sin sesión, sin features…). Así el cambio de variable
+// nunca rompe la app: la heurística sigue siendo la red de seguridad.
 import { CATALOG, RECOMMENDER } from '@/lib/env';
 import type { Media, MediaType } from '@/types/media';
 import { getSupabase } from '@/lib/supabase';
