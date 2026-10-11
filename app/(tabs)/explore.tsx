@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Film } from 'lucide-react-native';
+import { Film } from 'lucide-react-native';
 import { Poster } from '@/components/features/Poster';
 import { mediaTitle } from '@/components/features/mediaHelpers';
 import { EmptyState, ErrorState, Screen, Skeleton } from '@/components/ui';
@@ -25,12 +25,6 @@ const DECADES: Array<{ label: string; decade: number | null }> = [
 ];
 
 const keyOf = (m: Media) => `${m.media_type}-${m.id}`;
-
-function goBack() {
-  const r = useRouter();
-  if (r.canGoBack()) r.back();
-  else r.replace('/');
-}
 
 /**
  * VERTICE-PLAN-2 D2-1.6: «Explorar por plataforma». Chips de plataforma →
@@ -132,14 +126,6 @@ export default function ExploreScreen() {
       paddingTop: 16,
       paddingBottom: 12,
     },
-    back: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: c.card,
-      alignItems: 'center' as const,
-      justifyContent: 'center' as const,
-    },
     chipRow: { flexGrow: 0 },
     chipRowContent: { paddingHorizontal: 20, gap: 8, paddingVertical: 8 },
     chip: {
@@ -173,16 +159,8 @@ export default function ExploreScreen() {
   );
 
   return (
-    <Screen safe={false}>
+    <Screen>
       <View style={styles.header}>
-        <Pressable
-          onPress={goBack}
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          style={[styles.back, SHADOWS.card]}
-        >
-          <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
-        </Pressable>
         <Text accessibilityRole="header" style={textStyle('screenTitle', { color: colors.ink })}>
           Explorar
         </Text>

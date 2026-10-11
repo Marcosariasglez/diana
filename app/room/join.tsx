@@ -58,7 +58,7 @@ export default function JoinRoomScreen() {
 
   const back = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/match');
+    else router.replace('/mood');
   };
 
   return (

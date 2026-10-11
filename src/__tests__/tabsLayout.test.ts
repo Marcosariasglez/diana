@@ -11,7 +11,7 @@ describe('Layout de pestanas', () => {
   });
 
   it('declara 4 pestanas y la Ficha oculta con href null', () => {
-    for (const name of ['index', 'mood', 'match', 'profile']) {
+    for (const name of ['index', 'mood', 'explore', 'profile']) {
       expect(src).toContain(`name="${name}"`);
     }
     expect(src).toMatch(/name="detail\/\[id\]"\s+options=\{\{\s*href:\s*null/);

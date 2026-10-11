@@ -1,7 +1,7 @@
 import { useContext, useRef } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { Home, SlidersHorizontal, User, Users, type LucideIcon } from 'lucide-react-native';
+import { Compass, Home, SlidersHorizontal, User, type LucideIcon } from 'lucide-react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs/types';
 import { webBlur, withAlpha } from '@/theme/alpha';
@@ -15,10 +15,12 @@ interface TabDef {
   Icon: LucideIcon;
 }
 
+// VERTICE-PLAN-2 C.2: 4 tabs — Inicio · Mood · Explorar · Perfil (Match desaparece;
+// su contenido vive ahora en la pestaña Mood, modo «Con amigos»).
 export const NAV_TABS: readonly TabDef[] = [
   { name: 'index', label: 'Inicio', Icon: Home },
   { name: 'mood', label: 'Mood', Icon: SlidersHorizontal },
-  { name: 'match', label: 'Match', Icon: Users },
+  { name: 'explore', label: 'Explorar', Icon: Compass },
   { name: 'profile', label: 'Perfil', Icon: User },
 ];
 

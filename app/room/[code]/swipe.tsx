@@ -55,7 +55,7 @@ export default function GroupSwipeScreen() {
 
   const leave = () => {
     useRoomStore.getState().leaveRoom();
-    router.replace('/match');
+    router.replace('/mood');
   };
   const confirmLeave = () =>
     confirmDialog({ title: '¿Salir de la sala?', confirmLabel: 'Salir', onConfirm: leave });

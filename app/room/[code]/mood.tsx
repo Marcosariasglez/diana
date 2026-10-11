@@ -37,7 +37,7 @@ export default function GroupMoodScreen() {
       confirmLabel: 'Salir',
       onConfirm: () => {
         useRoomStore.getState().leaveRoom();
-        router.replace('/match');
+        router.replace('/mood');
       },
     });
 

@@ -22,7 +22,8 @@ export const ROUTES: ReadonlyArray<RouteEntry> = [
   },
   { url: '/', file: 'app/(tabs)/index.tsx', presentation: 'tab', bottomNav: true },
   { url: '/mood', file: 'app/(tabs)/mood.tsx', presentation: 'tab', bottomNav: true },
-  { url: '/match', file: 'app/(tabs)/match.tsx', presentation: 'tab', bottomNav: true },
+  { url: '/explore', file: 'app/(tabs)/explore.tsx', presentation: 'tab', bottomNav: true },
+  { url: '/match', file: 'app/match.tsx', presentation: 'stack-fade', bottomNav: false },
   { url: '/profile', file: 'app/(tabs)/profile.tsx', presentation: 'tab', bottomNav: true },
   { url: '/detail/[id]', file: 'app/(tabs)/detail/[id].tsx', presentation: 'tab-hidden', bottomNav: true },
   { url: '/mood-wizard', file: 'app/mood-wizard.tsx', presentation: 'fullScreenModal-fade', bottomNav: false },
@@ -30,7 +31,6 @@ export const ROUTES: ReadonlyArray<RouteEntry> = [
   { url: '/daily-log', file: 'app/daily-log.tsx', presentation: 'modal', bottomNav: false },
   { url: '/notifications', file: 'app/notifications.tsx', presentation: 'card', bottomNav: false },
   { url: '/see-all/[category]', file: 'app/see-all/[category].tsx', presentation: 'card', bottomNav: false },
-  { url: '/explore', file: 'app/explore.tsx', presentation: 'stack-push', bottomNav: false },
   { url: '/room/join', file: 'app/room/join.tsx', presentation: 'card', bottomNav: false },
   { url: '/room/[code]', file: 'app/room/[code]/index.tsx', presentation: 'card', bottomNav: false },
   {

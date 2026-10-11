@@ -17,7 +17,7 @@ describe('Bottom nav', () => {
     };
     walk(dir);
     expect(files.sort()).toEqual(
-      ['detail/[id].tsx', 'index.tsx', 'match.tsx', 'mood.tsx', 'profile.tsx'].sort(),
+      ['detail/[id].tsx', 'explore.tsx', 'index.tsx', 'mood.tsx', 'profile.tsx'].sort(),
     );
   });
 

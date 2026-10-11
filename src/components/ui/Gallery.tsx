@@ -44,7 +44,7 @@ const NAV_PROPS = {
     routes: [
       { key: 'index-k', name: 'index' },
       { key: 'mood-k', name: 'mood' },
-      { key: 'match-k', name: 'match' },
+      { key: 'explore-k', name: 'explore' },
       { key: 'profile-k', name: 'profile' },
     ],
   },

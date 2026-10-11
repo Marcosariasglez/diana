@@ -14,13 +14,13 @@ function makeProps(index: number, names: string[]) {
   return { props, emit, navigate };
 }
 
-const TABS = ['index', 'mood', 'match', 'profile', 'detail/[id]'];
+const TABS = ['index', 'mood', 'explore', 'profile', 'detail/[id]'];
 
 describe('BottomNav', () => {
   it('pinta 4 pestanas fijas y resalta la enfocada', async () => {
     const { props } = makeProps(1, TABS);
     await render(<BottomNav {...props} />);
-    for (const l of ['Inicio', 'Mood', 'Match', 'Perfil']) {
+    for (const l of ['Inicio', 'Mood', 'Explorar', 'Perfil']) {
       expect(screen.getByLabelText(l)).toBeTruthy();
     }
     expect(screen.getByLabelText('Mood').props.accessibilityState.selected).toBe(true);
@@ -36,9 +36,9 @@ describe('BottomNav', () => {
   it('pulsar pestana emite tabPress y navega', async () => {
     const { props, emit, navigate } = makeProps(0, TABS);
     await render(<BottomNav {...props} />);
-    await fireEvent.press(screen.getByLabelText('Match'));
+    await fireEvent.press(screen.getByLabelText('Explorar'));
     expect(emit).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith('match');
+    expect(navigate).toHaveBeenCalledWith('explore');
   });
   it('FAB navega a /daily-log', async () => {
     const { props } = makeProps(0, TABS);

@@ -18,7 +18,7 @@ export default function LobbyScreen() {
 
   const exit = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/match');
+    else router.replace('/mood');
   };
 
   const onBack = () =>

@@ -32,14 +32,13 @@ const SCREENS = [
   { name: 'welcome', path: '/welcome', onboarded: false },
   { name: 'inicio', path: '/', onboarded: true },
   { name: 'mood', path: '/mood', onboarded: true },
-  { name: 'match', path: '/match', onboarded: true },
+  { name: 'explorar', path: '/explore', onboarded: true },
   { name: 'perfil', path: '/profile', onboarded: true },
   { name: 'cuenta', path: '/account', onboarded: true },
   // Secundarias
   { name: 'daily-log', path: '/daily-log', onboarded: true },
   { name: 'notifications', path: '/notifications', onboarded: true },
-  // Plan 2 (D2-1.6): explorar por plataforma + ficha con «Dónde verla»
-  { name: 'explorar', path: '/explore', onboarded: true },
+  // Plan 2 (D2-1.6): ficha con «Dónde verla»
   { name: 'ficha-donde-verla', path: '/detail/1?type=movie', onboarded: true },
   { name: 'not-found', path: '/__not-found__', onboarded: true },
   // Estados especiales (se capturan pero pueden redirigir)

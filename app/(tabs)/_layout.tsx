@@ -14,7 +14,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="mood" />
-      <Tabs.Screen name="match" />
+      <Tabs.Screen name="explore" />
       <Tabs.Screen name="profile" />
       <Tabs.Screen name="detail/[id]" options={{ href: null }} />
     </Tabs>
