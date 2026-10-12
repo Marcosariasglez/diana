@@ -339,7 +339,7 @@ export default function DetailScreen() {
     return (
       <Screen>
         <View style={FALLBACK_STYLES.center}>
-          <ErrorState message="Este título no existe" retryLabel="Volver" onRetry={goBack} />
+          <ErrorState message="No se ha podido cargar la ficha" retryLabel="Volver" onRetry={goBack} />
         </View>
       </Screen>
     );
