@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { AlertCircle, CheckCircle2, User } from 'lucide-react-native';
+import { AlertCircle, Calendar, CheckCircle2, User } from 'lucide-react-native';
 import { TmdbAttribution } from '@/components/features/Attribution';
 import { MetricCard } from '@/components/features/MetricCard';
 import { Button } from '@/components/ui/Button';
@@ -13,7 +13,7 @@ import { ProfileCard } from '@/components/ui/ProfileCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { HISTORY_PAGE_SIZE, detailHref, paginateHistory } from '@/features/profile/profileLogic';
+import { detailHref, sortHistory } from '@/features/profile/profileLogic';
 import { WatchlistSection } from '@/features/profile/WatchlistSection';
 import { useProfileImport } from '@/features/profile/useProfileImport';
 import {
@@ -28,6 +28,9 @@ import { BACKEND } from '@/lib/env';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import { formatRating } from '@/utils/format';
+
+// Cuántas entradas mostrar inicialmente en historial y diario
+const COLLAPSED_COUNT = 5;
 
 const APPEARANCE_OPTIONS = [
   { label: 'Claro', value: 'light' },
@@ -97,7 +100,6 @@ export default function ProfileScreen() {
 
   const seen = useMemo(() => selectSeenCount({ entries, watched }), [entries, watched]);
   const average = useMemo(() => selectAverageRating({ entries }), [entries]);
-  const { visible, hasMore } = useMemo(() => paginateHistory(entries, pages), [entries, pages]);
 
   const empty = seen === 0;
   const seenText = empty ? '—' : String(seen);
@@ -179,6 +181,10 @@ export default function ProfileScreen() {
           />
         </Card>
 
+        {/* D2-3: lista «Quiero ver» (alta/baja desde ficha y mazo). */}
+        <WatchlistSection />
+
+        {/* Historial colapsable (6.2): muestra solo las 5 últimas por defecto */}
         <Card style={styles.card}>
           <View style={styles.historyHeader}>
             <Text style={[textStyle('body', { fontFamily: 'Manrope-ExtraBold', fontSize: 20 }), styles.cardTitle]}>
@@ -190,17 +196,18 @@ export default function ProfileScreen() {
             <Text style={[textStyle('body'), styles.emptyText]}>Aún no has valorado nada</Text>
           ) : (
             <View>
-              {visible.map((entry, i) => (
+              {/* Historial ordenado (más reciente primero) */}
+              {sortHistory(entries).slice(0, pages === 1 ? COLLAPSED_COUNT : undefined).map((entry, i) => (
                 <View key={entry.key} style={i > 0 ? styles.separator : undefined}>
                   <HistoryRow entry={entry} onPress={() => router.push(detailHref(entry))} />
                 </View>
               ))}
-              {hasMore ? (
+              {pages === 1 && entries.length > COLLAPSED_COUNT ? (
                 <Button
                   variant="secondary"
-                  label="Mostrar más"
-                  accessibilityLabel={`Mostrar ${HISTORY_PAGE_SIZE} más`}
-                  onPress={() => setPages((p) => p + 1)}
+                  label="Ver todo el historial"
+                  accessibilityLabel={`Ver todo el historial (${entries.length} entradas)`}
+                  onPress={() => setPages(2)}
                   style={styles.more}
                 />
               ) : null}
@@ -208,8 +215,20 @@ export default function ProfileScreen() {
           )}
         </Card>
 
-        {/* D2-3: lista «Quiero ver» (alta/baja desde ficha y mazo). */}
-        <WatchlistSection />
+        {/* Diario (6.3): entradas añadidas manualmente con fecha */}
+        <Card style={styles.card}>
+          <View style={styles.historyHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Calendar size={18} color={colors.acc} strokeWidth={2} />
+              <Text style={[textStyle('body', { fontFamily: 'Manrope-ExtraBold', fontSize: 20 }), styles.cardTitle]}>
+                Diario
+              </Text>
+            </View>
+          </View>
+          <Text style={[textStyle('body'), styles.emptyText]}>
+            Registra las películas que ves día a día desde el botón «+».
+          </Text>
+        </Card>
 
         {/* Grupo Aplicación */}
         <Text style={[textStyle('label'), styles.groupLabel]}>APLICACIÓN</Text>

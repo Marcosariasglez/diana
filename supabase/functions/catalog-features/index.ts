@@ -215,7 +215,7 @@ Deno.serve(async (req: Request) => {
   const admin = getAdmin();
   const stateUpsert = (
     tmdbId: number,
-    mediaType: 'movie' | 'tv',
+    mediaType: 'movie' | 'tv' | 'short' | 'documentary',
     status: 'running' | 'done' | 'error',
     lastError: string | null,
   ) =>

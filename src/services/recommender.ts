@@ -60,6 +60,7 @@ export async function contentRecommend(params: RecommendParams): Promise<Content
       media_type: MediaType;
       tmdb_id: number;
       title: string;
+      original_title?: string;
       poster_path: string | null;
       score: number | string;
       explanation: string[];
@@ -112,11 +113,14 @@ function mediaFromRpcRow(row: {
   media_type: MediaType;
   tmdb_id: number;
   title: string;
+  original_title?: string;
   poster_path: string | null;
 }): Media | null {
   // Reutiliza el Media del catálogo mock si existe (ids 1-122 en desarrollo).
   const inMock = MOCK_CATALOG.find((m) => m.media_type === row.media_type && m.id === row.tmdb_id);
   if (inMock) return inMock;
+  // Fallback: title puede estar vacío cuando sync solo guardó original_title.
+  const resolvedTitle = row.title || row.original_title || '';
   const base = {
     id: row.tmdb_id,
     poster_path: row.poster_path,
@@ -130,7 +134,7 @@ function mediaFromRpcRow(row: {
     alt_titles: [] as string[],
   };
   if (row.media_type === 'movie') {
-    return { ...base, media_type: 'movie', title: row.title, release_date: '', runtime: 0 };
+    return { ...base, media_type: 'movie', title: resolvedTitle || `Película ${row.tmdb_id}`, release_date: '', runtime: 0 };
   }
-  return { ...base, media_type: 'tv', name: row.title, first_air_date: '', episode_run_time: [], seasons: [] };
+  return { ...base, media_type: 'tv', name: resolvedTitle || `Serie ${row.tmdb_id}`, first_air_date: '', episode_run_time: [], seasons: [] };
 }

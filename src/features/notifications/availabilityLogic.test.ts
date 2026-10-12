@@ -2,7 +2,7 @@
 // Reglas clave: sin base no se avisa (solo se guarda); solo cuentan las
 // plataformas del usuario; se avisa de las plataformas NUEVAS; si el título
 // desaparece del catálogo se actualiza la base a [] (re-avisa si vuelve).
-import type { Media, Movie } from '@/types/media';
+import type { Media, MediaType, Movie } from '@/types/media';
 import { detectNewlyAvailable, availabilityMessage, keyOf } from './availabilityLogic';
 
 function movie(id: number, platforms: string[]): Movie {
@@ -25,7 +25,7 @@ function movie(id: number, platforms: string[]): Movie {
 }
 
 const OWN = ['netflix', 'prime-video'];
-const resolveFor = (map: Record<number, string[]>): ((t: 'movie' | 'tv', id: number) => Media | undefined) =>
+const resolveFor = (map: Record<number, string[]>): ((t: MediaType, id: number) => Media | undefined) =>
   (t, id) => (t === 'movie' && map[id] ? movie(id, map[id]) : undefined);
 
 describe('detectNewlyAvailable (D2-4)', () => {

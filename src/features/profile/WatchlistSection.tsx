@@ -12,7 +12,7 @@ import { useProfileStore } from '@/store/useProfileStore';
 import { useWatchlistStore, type WatchlistItem } from '@/store/useWatchlistStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
-import type { Media } from '@/types/media';
+import type { Media, MediaType } from '@/types/media';
 import { posterColor } from '@/utils/posterColor';
 
 /**
@@ -108,7 +108,7 @@ export function WatchlistSection() {
     return list.filter((i) => i.media && i.media.platforms.some((p) => platforms.includes(p)));
   }, [items, resolved, onlyAvailable, platforms]);
 
-  const onRemove = (mediaType: Media['media_type'], mediaId: number) => {
+  const onRemove = (mediaType: MediaType, mediaId: number) => {
     remove(mediaType, mediaId);
     // Al lograr el borrado en el servidor se retira de la cola de pendientes
     // (coherencia offline); si falla, queda para reintentar en el próximo login.

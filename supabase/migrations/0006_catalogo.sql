@@ -18,7 +18,7 @@ create extension if not exists unaccent;
 -- ---------------------------------------------------------------------------
 create table public.catalog_titles (
   tmdb_id int not null,
-  media_type text not null check (media_type in ('movie', 'tv')),
+  media_type text not null check (media_type in ('movie', 'tv', 'short', 'documentary')),
   title text not null default '',
   original_title text not null default '',
   year int,                                              -- año de estreno/emisión (para décadas)

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { MediaType } from '@/types/media';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -16,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface TrayNotice {
   id: string;
   /** Clave del título: `${mediaType}:${mediaId}`. */
-  mediaType: 'movie' | 'tv';
+  mediaType: MediaType;
   mediaId: number;
   /** Plataformas nuevas donde se ha detectado el título. */
   newPlatforms: string[];
@@ -32,7 +33,7 @@ interface TrayState {
   clear: () => void;
 }
 
-export const keyOf = (mediaType: 'movie' | 'tv', mediaId: number): string =>
+export const keyOf = (mediaType: MediaType, mediaId: number): string =>
   `${mediaType}:${mediaId}`;
 
 const MAX_NOTICES = 50;

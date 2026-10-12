@@ -5,9 +5,13 @@
 import type { MediaType } from '@/types/media';
 
 /** Una fila de `catalog_titles` (PostgREST la devuelve así). */
+export type PrimaryMediaType = 'movie' | 'tv' | 'short' | 'documentary';
+
 export interface CatalogRow {
   tmdb_id: number;
   media_type: MediaType;
+  /** Sub-tipo dentro del media_type: movie, tv, short o documentary. */
+  primary_media_type?: PrimaryMediaType;
   title: string;
   original_title: string;
   year: number | null;

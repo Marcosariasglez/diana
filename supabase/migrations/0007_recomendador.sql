@@ -57,7 +57,7 @@ select set_config('search_path', 'public, extensions', false);
 -- ---------------------------------------------------------------------------
 create table public.catalog_features (
   tmdb_id int not null,
-  media_type text not null check (media_type in ('movie', 'tv')),
+  media_type text not null check (media_type in ('movie', 'tv', 'short', 'documentary')),
   keywords text[] not null default '{}',
   director text not null default '',
   cast_names text[] not null default '{}',   -- nombres de los primeros actores (columna `cast`: reservada en Postgres)
@@ -81,7 +81,7 @@ revoke insert, update, delete on public.catalog_features from anon, authenticate
 -- Invisible para el cliente: sin políticas ni privilegios.
 create table public.catalog_features_state (
   tmdb_id int not null,
-  media_type text not null check (media_type in ('movie', 'tv')),
+  media_type text not null check (media_type in ('movie', 'tv', 'short', 'documentary')),
   status text not null default 'pending'
     check (status in ('pending', 'running', 'done', 'error')),
   last_error text,
@@ -271,6 +271,7 @@ create function public.recommend(
   media_type text,
   tmdb_id int,
   title text,
+  original_title text,
   poster_path text,
   score numeric,
   explanation text[]
@@ -322,6 +323,7 @@ as $$
     c.media_type,
     c.tmdb_id,
     c.title,
+    c.original_title,
     c.poster_path,
     round(c.score, 4) as score,
     (

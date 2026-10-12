@@ -1,7 +1,9 @@
+import type { MediaType } from '@/types/media';
+
 export type Rating = 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 3.5 | 4 | 4.5 | 5;
 
 export interface MediaRef {
-  mediaType: 'movie' | 'tv';
+  mediaType: MediaType;
   mediaId: number;
   season?: number;
   episode?: number;

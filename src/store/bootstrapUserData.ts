@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_PLATFORMS } from '@/constants/platforms';
+import type { MediaType } from '@/types/media';
 import { createDefaultProfile, useProfileStore } from './useProfileStore';
 import { useHistoryStore } from './useHistoryStore';
 import { useFeedStore } from './useFeedStore';
@@ -58,8 +59,8 @@ async function pushPendingWatchlist(): Promise<void> {
     const [mediaType, mediaId] = key.split(':');
     if (!mediaType || !mediaId) continue;
     try {
-      await watchlistRepository.remove(mediaType as 'movie' | 'tv', Number(mediaId));
-      store.markRemoved(mediaType as 'movie' | 'tv', Number(mediaId));
+      await watchlistRepository.remove(mediaType as MediaType, Number(mediaId));
+      store.markRemoved(mediaType as MediaType, Number(mediaId));
     } catch (e) {
       reportSyncError(e);
       return;

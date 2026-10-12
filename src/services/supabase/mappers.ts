@@ -1,8 +1,9 @@
 import type { HistoryEntry, Rating } from '@/types/rating';
+import type { MediaType } from '@/types/media';
 import { posterColor } from '@/utils/posterColor';
 
 export interface HistoryRow {
-  user_id: string; key: string; media_type: 'movie' | 'tv'; media_id: number;
+  user_id: string; key: string; media_type: MediaType; media_id: number;
   season: number | null; episode: number | null; title: string; genre_ids: number[];
   user_rating: number; ai_prediction_tenths: number; prediction_seen: boolean;
   source: 'app' | 'letterboxd'; rated_at: string;

@@ -1,4 +1,4 @@
-import type { Media } from '@/types/media';
+import type { Media, MediaType } from '@/types/media';
 import type { GroupDecision, RoomSnapshot } from '@/types/room';
 import type { Complexity } from '@/types/mood';
 import type { MediaKey } from '@/types/rating';
@@ -21,7 +21,7 @@ export interface RoomRepository {
   setReady(code: string, userId: string, ready: boolean): Promise<void>;
   startMatch(code: string, userId: string): Promise<void>;
   setMoodAnswer(code: string, userId: string, questionId: string, answerId: string): Promise<void>;
-  confirmMood(code: string, userId: string, deck?: Array<{ mediaType: 'movie' | 'tv'; mediaId: number }>): Promise<void>;
+  confirmMood(code: string, userId: string, deck?: Array<{ mediaType: MediaType; mediaId: number }>): Promise<void>;
   submitDecision(code: string, userId: string, key: MediaKey, decision: 'like' | 'skip'): Promise<void>;
   subscribe(code: string, cb: (s: RoomSnapshot) => void): () => void;
   subscribeDecisions(code: string, cb: (d: GroupDecision) => void): () => void;

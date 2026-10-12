@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { Film } from 'lucide-react-native';
+import { Film, X } from 'lucide-react-native';
 import { Poster } from '@/components/features/Poster';
 import { mediaTitle } from '@/components/features/mediaHelpers';
 import { EmptyState, ErrorState, Screen, Skeleton } from '@/components/ui';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { PLATFORMS } from '@/constants/platforms';
 import { GENRES } from '@/mocks/data/genres';
+import { useDebounce } from '@/hooks/useDebounce';
 import { activeCatalogSource } from '@/services/supabase/catalog/select';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
@@ -18,10 +20,12 @@ const PAGE_SIZE = 20;
 
 const DECADES: Array<{ label: string; decade: number | null }> = [
   { label: 'Todas', decade: null },
-  { label: 'Años 90', decade: 1990 },
-  { label: 'Años 2000', decade: 2000 },
-  { label: 'Años 2010', decade: 2010 },
-  { label: 'Años 2020', decade: 2020 },
+  { label: '2020', decade: 2020 },
+  { label: '2010', decade: 2010 },
+  { label: '2000', decade: 2000 },
+  { label: '1990', decade: 1990 },
+  { label: '1980', decade: 1980 },
+  { label: '1970', decade: 1970 },
 ];
 
 const keyOf = (m: Media) => `${m.media_type}-${m.id}`;
@@ -34,9 +38,13 @@ const keyOf = (m: Media) => `${m.media_type}-${m.id}`;
  */
 export default function ExploreScreen() {
   const router = useRouter();
-  const [platform, setPlatform] = useState<string | null>(null);
-  const [genre, setGenre] = useState<number | null>(null);
+  // Filtros multi-select: plataformas y géneros son arrays; década sigue single-select
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
   const [decade, setDecade] = useState<number | null>(null);
+  // Buscador
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
 
   const [items, setItems] = useState<Media[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -47,24 +55,52 @@ export default function ExploreScreen() {
   const alive = useRef(true);
   const reqId = useRef(0);
 
+  const hasActiveFilters = selectedPlatforms.length > 0 || selectedGenres.length > 0 || decade !== null || debouncedQuery.length > 0;
+
+  const clearAllFilters = useCallback(() => {
+    setSelectedPlatforms([]);
+    setSelectedGenres([]);
+    setDecade(null);
+    setQuery('');
+  }, []);
+
+  const togglePlatform = useCallback((id: string) => {
+    setSelectedPlatforms((prev) => prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]);
+  }, []);
+
+  const toggleGenre = useCallback((id: number) => {
+    setSelectedGenres((prev) => prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]);
+  }, []);
+
   const fetchPage = useCallback(
     async (nextCursor: number | null) => {
       const id = ++reqId.current;
       busy.current = true;
       try {
-        const res = await activeCatalogSource.browse({
-          platforms: platform ? [platform] : [],
-          genre: genre ?? undefined,
-          decade: decade ?? undefined,
-          sort: 'popularity',
-          cursor: nextCursor ?? 0,
-          limit: PAGE_SIZE,
-        });
+        const source = activeCatalogSource;
+        const res = debouncedQuery.length > 0
+          ? await source.search({
+              query: debouncedQuery,
+              platforms: selectedPlatforms.length > 0 ? selectedPlatforms : undefined,
+              cursor: nextCursor ?? 0,
+              limit: PAGE_SIZE,
+            })
+          : await source.browse({
+              platforms: selectedPlatforms.length > 0 ? selectedPlatforms : undefined,
+              decade: decade ?? undefined,
+              sort: 'popularity',
+              cursor: nextCursor ?? 0,
+              limit: PAGE_SIZE,
+            });
         if (!alive.current || id !== reqId.current) return;
+        // Filtrar por géneros en cliente (el backend solo soporta género único)
+        const filtered = selectedGenres.length > 0
+          ? res.items.filter((m) => m.genres.some((g) => selectedGenres.includes(g.id)))
+          : res.items;
         cursor.current = res.nextCursor;
         setItems((cur) => {
           const seen = new Set(cur.map(keyOf));
-          return [...cur, ...res.items.filter((m) => !seen.has(keyOf(m)))];
+          return [...cur, ...filtered.filter((m) => !seen.has(keyOf(m)))];
         });
         setHasMore(res.hasMore);
         setStatus('ready');
@@ -75,7 +111,7 @@ export default function ExploreScreen() {
         if (alive.current && id === reqId.current) setLoadingMore(false);
       }
     },
-    [platform, genre, decade],
+    [selectedPlatforms, selectedGenres, decade, debouncedQuery],
   );
 
   const loadFirst = useCallback(() => {
@@ -121,13 +157,15 @@ export default function ExploreScreen() {
     header: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
-      gap: 12,
+      justifyContent: 'space-between' as const,
       paddingHorizontal: 20,
       paddingTop: 16,
-      paddingBottom: 12,
+      paddingBottom: 8,
     },
+    searchBar: { paddingHorizontal: 20, paddingBottom: 8 },
     chipRow: { flexGrow: 0 },
-    chipRowContent: { paddingHorizontal: 20, gap: 8, paddingVertical: 8 },
+    chipRowContent: { paddingHorizontal: 20, gap: 8, paddingVertical: 6 },
+    sectionLabel: { color: c.mut, paddingHorizontal: 20, paddingBottom: 4, paddingTop: 4 },
     chip: {
       paddingHorizontal: 12,
       paddingVertical: 6,
@@ -135,28 +173,29 @@ export default function ExploreScreen() {
       backgroundColor: c.card,
     },
     chipActive: { backgroundColor: c.accSoft },
-    divider: { width: 1, alignSelf: 'stretch' as const, marginHorizontal: 4, backgroundColor: c.line },
     grid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, paddingHorizontal: 12, paddingVertical: 8 },
-    cell: { width: '33.33%', alignItems: 'center' as const, gap: 6, paddingVertical: 8, paddingHorizontal: 4 },
+    // Ancho calculado: (ancho_pantalla - 2*padding - 2*gap) / 3 columnas
+    cell: { width: '31.6%', alignItems: 'center' as const, gap: 6, paddingVertical: 8, paddingHorizontal: 2 },
     caption: { fontFamily: 'Inter-SemiBold' as const, color: c.ink, fontSize: 11, width: 92, textAlign: 'center' as const },
     list: { paddingHorizontal: 12, paddingBottom: 32, paddingTop: 4 },
     center: { flex: 1, justifyContent: 'center' as const, alignItems: 'center' as const, paddingHorizontal: 24 },
     footer: { paddingVertical: 16 },
     retry: { minHeight: 44, alignItems: 'center' as const, justifyContent: 'center' as const },
+    clearBtn: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 99,
+      backgroundColor: c.accSoft,
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 4,
+    },
   }));
 
   const chipStyle = (active: boolean) => [styles.chip, active ? styles.chipActive : null, !active && SHADOWS.card];
   const chipText = (active: boolean) =>
     [textStyle('bodySmall', { fontSize: 12, fontFamily: 'Inter-SemiBold' }), { color: active ? colors.acc : colors.ink }];
 
-  const platformChips = useMemo(
-    () => [{ id: null as string | null, label: 'Todas' }, ...PLATFORMS.map((p) => ({ id: p.id, label: p.name }))],
-    [],
-  );
-  const genreChips = useMemo(
-    () => [{ id: null as number | null, label: 'Todos los géneros' }, ...GENRES.map((g) => ({ id: g.id, label: g.name }))],
-    [],
-  );
 
   return (
     <Screen>
@@ -164,48 +203,74 @@ export default function ExploreScreen() {
         <Text accessibilityRole="header" style={textStyle('screenTitle', { color: colors.ink })}>
           Explorar
         </Text>
+        {hasActiveFilters ? (
+          <Pressable
+            onPress={clearAllFilters}
+            style={styles.clearBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Limpiar filtros"
+          >
+            <X size={14} color={colors.acc} />
+            <Text style={[textStyle('bodySmall', { fontFamily: 'Inter-SemiBold' }), { color: colors.acc, fontSize: 12 }]}>Limpiar</Text>
+          </Pressable>
+        ) : null}
       </View>
 
-      {/* Chips de plataforma (D2-1.6) */}
+      {/* Buscador */}
+      <View style={styles.searchBar}>
+        <SearchBar value={query} onChangeText={setQuery} placeholder="Buscar películas y series..." />
+      </View>
+
+      {/* Plataformas - multi-select */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.chipRow}
         contentContainerStyle={styles.chipRowContent}
       >
-        {platformChips.map((p) => (
+        {PLATFORMS.map((p) => (
           <Pressable
-            key={p.id ?? 'all'}
-            testID={`explore-platform-${p.id ?? 'all'}`}
+            key={p.id}
+            testID={`explore-platform-${p.id}`}
             accessibilityRole="button"
-            accessibilityState={{ selected: platform === p.id }}
-            onPress={() => setPlatform(p.id)}
-            style={chipStyle(platform === p.id)}
+            accessibilityState={{ selected: selectedPlatforms.includes(p.id) }}
+            onPress={() => togglePlatform(p.id)}
+            style={chipStyle(selectedPlatforms.includes(p.id))}
           >
-            <Text style={chipText(platform === p.id)}>{p.label}</Text>
+            <Text style={chipText(selectedPlatforms.includes(p.id))}>{p.name}</Text>
           </Pressable>
         ))}
       </ScrollView>
 
-      {/* Filtros de género y década */}
+      {/* Géneros - multi-select */}
+      <Text style={styles.sectionLabel}>Géneros</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.chipRow}
         contentContainerStyle={styles.chipRowContent}
       >
-        {genreChips.map((g) => (
+        {GENRES.map((g) => (
           <Pressable
-            key={g.id ?? 'allg'}
+            key={g.id}
             accessibilityRole="button"
-            accessibilityState={{ selected: genre === g.id }}
-            onPress={() => setGenre(g.id)}
-            style={chipStyle(genre === g.id)}
+            accessibilityState={{ selected: selectedGenres.includes(g.id) }}
+            onPress={() => toggleGenre(g.id)}
+            style={chipStyle(selectedGenres.includes(g.id))}
           >
-            <Text style={chipText(genre === g.id)}>{g.label}</Text>
+            <Text style={chipText(selectedGenres.includes(g.id))}>{g.name}</Text>
           </Pressable>
         ))}
-        <View style={styles.divider} />
+      </ScrollView>
+
+      {/* Décadas - single-select en su propia sección */}
+      <Text style={styles.sectionLabel}>Décadas</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipRow}
+        contentContainerStyle={styles.chipRowContent}
+      >
         {DECADES.map((d) => (
           <Pressable
             key={d.label}
@@ -231,7 +296,7 @@ export default function ExploreScreen() {
         </View>
       ) : items.length === 0 ? (
         <View style={styles.center}>
-          <EmptyState icon={Film} title="Nada aquí todavía" message="Prueba con otra plataforma o quita un filtro." />
+          <EmptyState icon={Film} title={hasActiveFilters ? "Sin resultados" : "Nada aquí todavía"} message={hasActiveFilters ? "Prueba a relajar los filtros activos." : "Explora el catálogo completo."} />
         </View>
       ) : (
         <FlashList
