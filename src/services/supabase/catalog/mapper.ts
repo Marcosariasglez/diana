@@ -34,11 +34,13 @@ function altTitles(title: string, original: string): string[] {
 export function rowToMedia(row: CatalogRow): Media {
   const genres = genresFromIds(row.genre_ids ?? []);
   const platforms = availablePlatforms(row);
+  const displayTitle = row.title || row.original_title;
   if (row.media_type === 'tv') {
+    const fallbackTitle = displayTitle || `[Título no disponible]`;
     const tv: TVSeries = {
       id: row.tmdb_id,
       media_type: 'tv',
-      name: row.title || row.original_title || `Serie ${row.tmdb_id}`,
+      name: fallbackTitle,
       first_air_date: dateFromYear(row.year),
       episode_run_time: row.runtime && row.runtime > 0 ? [row.runtime] : [],
       seasons: [],
@@ -54,10 +56,11 @@ export function rowToMedia(row: CatalogRow): Media {
     };
     return tv;
   }
+  const fallbackMovieTitle = displayTitle || `[Título no disponible]`;
   const movie: Movie = {
     id: row.tmdb_id,
     media_type: 'movie',
-    title: row.title || row.original_title || `Película ${row.tmdb_id}`,
+    title: fallbackMovieTitle,
     release_date: dateFromYear(row.year),
     runtime: row.runtime ?? 0,
     poster_path: row.poster_path ?? null,
