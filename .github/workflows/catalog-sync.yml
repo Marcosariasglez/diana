@@ -80,11 +80,12 @@ jobs:
           GITHUB_EVENT_PATH: ${{ github.event_path }}
           # AUTO-RELE: el token por defecto (GITHUB_TOKEN) NO puede lanzar
           # workflow_dispatch (GitHub lo bloquea para evitar bucles infinitos).
-          # Para que el auto-rele funcione, define el secret GITHUB_PAT
+          # Para que el auto-rele funcione, define el secret RELAY_PAT (GitHub no
+          # admite secrets que empiecen por GITHUB_)
           # (Personal Access Token con scope `workflow` sobre este repo).
           # Sin él, RELAY_TOKEN queda vacío, el rele se desactiva y el run
           # termina en el timeout (comportamiento degradado, no error).
-          RELAY_TOKEN: ${{ secrets.GITHUB_PAT }}
+          RELAY_TOKEN: ${{ secrets.RELAY_PAT }}
         run: |
           set -uo pipefail
           # Modo según el evento: schedule → por el cron; dispatch → por el input.
@@ -108,7 +109,7 @@ jobs:
           echo "Modo: ${MODE} | Re-sincronizar: ${RESYNC} | Cuerpo: ${BODY}"
           START_EPOCH=$(date +%s)
           # AUTO-RELE: solo para runs MANUALES (workflow_dispatch) Y solo si hay
-          # un PAT (GITHUB_PAT) — el token por defecto no puede lanzar
+          # un PAT (RELAY_PAT) — el token por defecto no puede lanzar
           # workflow_dispatch. Un dispatch no tiene otro cron a su espalda: si
           # el full no cabe en el timeout de GitHub (350 min), el run se RELE a
           # sí mismo (lanza el siguiente con la API de Actions) antes de

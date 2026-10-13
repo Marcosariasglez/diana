@@ -67,7 +67,17 @@ genera solo las que faltan (las series nuevas).
 ### 3. Re-sincronizar
 
 GitHub → Actions → **catalog-sync** → *Run workflow* → `mode = full`,
-`resync = true`. El workflow se relanza solo hasta terminar (varias horas).
+`resync = false`.
+
+⚠️ **No uses `resync = true` para un `full`**: con `true`, cada llamada de 2 min
+vuelve a empezar desde el primer trabajo (no se salta los terminados) y la
+bomba nunca avanza. Con el estado vaciado, `false` hace todo el trabajo y
+continúa donde se quedó.
+
+Si el run se corta (por el límite de 350 min o por un error), vuelve a lanzarlo
+igual (`full`, `resync = false`): sigue donde se quedó. Si tienes configurado
+el secret `RELAY_PAT`, se relanza solo. Sabrás que ha terminado cuando el log
+diga «SINCRONIZACIÓN COMPLETA».
 
 Para comprobarlo:
 
@@ -95,8 +105,8 @@ from public.catalog_titles;
 
 ### Alternativa sin vaciar (no recomendada)
 
-Haz el paso 1 y apunta la hora (`select now();` → T0). Lanza `full` con
-`resync = true` y, cuando termine:
+Haz el paso 1, apunta la hora (`select now();` → T0), vacía solo
+`catalog_sync_state` y lanza `full` con `resync = false`. Cuando termine:
 
 ```sql
 delete from public.catalog_titles where updated_at < 'T0';
