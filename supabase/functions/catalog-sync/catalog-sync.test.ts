@@ -488,3 +488,31 @@ describe('Edge Function catalog-sync (D2-1.3)', () => {
     expect((t!.platforms_flatrate as string[]).includes('8')).toBe(false);
   });
 });
+
+describe('toCatalogRows: el tipo sale del job, no del resultado', () => {
+  // Forma REAL de /discover/tv: sin `media_type`, con `name`/`first_air_date`.
+  const tvResult = {
+    id: 456,
+    name: 'Los Simpson',
+    original_name: 'The Simpsons',
+    first_air_date: '1989-12-17',
+    genre_ids: [16, 35],
+    popularity: 330,
+    poster_path: '/s.jpg',
+  };
+
+  it('una serie de /discover/tv se guarda como tv con su nombre', () => {
+    const [row] = fn.toCatalogRows([tvResult], 'disney-plus', 'flatrate', 'tv');
+    expect(row.media_type).toBe('tv');
+    expect(row.title).toBe('Los Simpson');
+    expect(row.original_title).toBe('The Simpsons');
+    expect(row.year).toBe(1989);
+  });
+
+  it('una película de /discover/movie (sin media_type) se guarda como movie', () => {
+    const { media_type: _omit, ...movie } = titleRow(7);
+    const [row] = fn.toCatalogRows([movie], 'netflix', 'flatrate', 'movie');
+    expect(row.media_type).toBe('movie');
+    expect(row.title).toBe('Titulo 7');
+  });
+});

@@ -121,6 +121,8 @@ function mediaFromRpcRow(row: {
   if (inMock) return inMock;
   // Fallback: title puede estar vacío cuando sync solo guardó original_title.
   const resolvedTitle = row.title || row.original_title || '';
+  // Sin título no se pinta: saldría «Película 9772» y su ficha no existiría.
+  if (!resolvedTitle) return null;
   const base = {
     id: row.tmdb_id,
     poster_path: row.poster_path,
@@ -134,7 +136,7 @@ function mediaFromRpcRow(row: {
     alt_titles: [] as string[],
   };
   if (row.media_type === 'movie') {
-    return { ...base, media_type: 'movie', title: resolvedTitle || `Película ${row.tmdb_id}`, release_date: '', runtime: 0 };
+    return { ...base, media_type: 'movie', title: resolvedTitle, release_date: '', runtime: 0 };
   }
-  return { ...base, media_type: 'tv', name: resolvedTitle || `Serie ${row.tmdb_id}`, first_air_date: '', episode_run_time: [], seasons: [] };
+  return { ...base, media_type: 'tv', name: resolvedTitle, first_air_date: '', episode_run_time: [], seasons: [] };
 }

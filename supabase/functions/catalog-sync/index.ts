@@ -172,6 +172,7 @@ export function toCatalogRows(
   results: unknown[],
   providerId: string,
   monetization: 'flatrate' | 'rent|buy',
+  jobMediaType: 'movie' | 'tv',
 ): Record<string, unknown>[] {
   // deno-lint-ignore no-explicit-any
   const rows: Record<string, unknown>[] = [];
@@ -180,7 +181,6 @@ export function toCatalogRows(
   for (const raw of results) {
     const r = raw as {
       id: number;
-      media_type?: 'movie' | 'tv';
       title?: string;
       name?: string;
       original_title?: string;
@@ -208,7 +208,12 @@ export function toCatalogRows(
       };
     };
     if (!r.id) continue;
-    const mediaType = r.media_type === 'tv' ? 'tv' : 'movie';
+    // El tipo sale del JOB (/discover/movie o /discover/tv), NO de r.media_type:
+    // discover no devuelve ese campo (solo /trending y /search/multi lo traen).
+    // Leerlo del resultado clasificaba TODAS las series como 'movie' (con
+    // title vacío, porque las series traen `name`) — bug verificado en
+    // producción 2026-10-13.
+    const mediaType = jobMediaType;
     const date = mediaType === 'movie' ? (r.release_date ?? '') : (r.first_air_date ?? '');
     const title = mediaType === 'movie' ? (r.title ?? '') : (r.name ?? '');
     const originalTitle =
@@ -254,6 +259,9 @@ export function toCatalogRows(
       platforms_flatrate: [...new Set(flat)],
       platforms_rent: [...new Set(rent)],
       platforms_buy: [...new Set(buy)],
+      // Marca de «visto en esta pasada»: permite barrer después las filas que
+      // ningún job re-descubre (ver docs/vertice/reparar-catalogo-series.md).
+      updated_at: new Date().toISOString(),
     });
   }
   return rows;
@@ -457,7 +465,7 @@ async function syncJob(job: SyncJob, budget: RunBudget, startedAt: number, resyn
     }
     try {
       total = res.total_results ?? total;
-      let rows = toCatalogRows(res.results ?? [], job.provider, job.monetization);
+      let rows = toCatalogRows(res.results ?? [], job.provider, job.monetization, job.mediaType);
       // MERGE de plataformas: leer la fila previa (mismo tmdb_id + media_type)
       // y unirla con los del pase, para que el pase rent|buy no borre
       // platforms_flatrate (ni al revés). Ver mergePlatformArrays.

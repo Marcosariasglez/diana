@@ -1,5 +1,10 @@
 # Guía completa: Configurar catálogo TMDB en Supabase para producción
 
+> **Actualización 2026-10-13:** el diagnóstico de abajo era incompleto. La mayoría
+> de las filas sin título eran **series guardadas como películas** (bug de
+> `catalog-sync`, ya corregido). La Opción B de esta guía (backfill) les ponía el
+> título de otra película. Sigue [reparar-catalogo-series.md](reparar-catalogo-series.md).
+
 ## Diagnóstico
 
 Si ves títulos como "Película 658..." o "[Título no disponible]" en tu app, significa que la tabla `catalog_titles` de Supabase tiene filas con `title = NULL`. Esto ocurre cuando la sincronización inicial (catalog-sync) escribió "stubs" sin llamar al detalle de TMDB.

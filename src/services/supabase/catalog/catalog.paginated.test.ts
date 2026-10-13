@@ -136,6 +136,7 @@ describe('catálogo paginado (D2-1.5) — builder PostgREST', () => {
   it('buildBrowseQuery: género cs.{id}, década year gte/lte, orden y range', () => {
     const q = buildBrowseQuery({ genre: 18, decade: 2010, sort: 'vote', cursor: 40, limit: 20, type: 'movie' });
     expect(q.filters).toEqual([
+      { col: 'title', op: 'neq', val: '' }, // nunca filas sin título
       { col: 'media_type', op: 'eq', val: 'movie' },
       { col: 'genre_ids', op: 'cs', val: '{18}' },
       { col: 'year', op: 'gte', val: '2010' },
@@ -157,7 +158,11 @@ describe('catálogo paginado (D2-1.5) — builder PostgREST', () => {
 
   it('buildCandidatesQuery: solo plataformas (y tipo), sin offset, tope 1000', () => {
     const q = buildCandidatesQuery(['filmin'], 'movie', 5000);
-    expect(q.filters).toEqual([{ col: 'media_type', op: 'eq', val: 'movie' }, { col: null, op: 'or', val: platformFilter(['filmin']) }]);
+    expect(q.filters).toEqual([
+      { col: 'title', op: 'neq', val: '' },
+      { col: 'media_type', op: 'eq', val: 'movie' },
+      { col: null, op: 'or', val: platformFilter(['filmin']) },
+    ]);
     expect(q.range).toEqual([0, 999]); // acotado a 1000
   });
 });

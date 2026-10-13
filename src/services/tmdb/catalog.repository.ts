@@ -1,7 +1,7 @@
 import type { Media, MediaType, Movie, TVSeason } from '@/types/media';
 import type { CatalogRepository } from '../catalog.repository';
 import { GROUP_DECK_SEED } from '../catalog.repository';
-import { QUESTIONS_BY_COMPLEXITY } from '@/features/mood/questions';
+import { QUESTIONS, QUESTIONS_BY_COMPLEXITY } from '@/features/mood/questions';
 import { bucketOfTenths } from '@/mocks/mock-ai/predict';
 import { getOnboardingDeckMovies } from '@/mocks/mock-ai/onboardingDeck';
 import { buildGroupDeckMedia, rankMoodResults } from '@/mocks/mock-ai/moodFilters';
@@ -16,8 +16,21 @@ import { invokeTmdb } from './invoke';
  * en modo mock). Se filtra por las plataformas del usuario cuando se dan.
  */
 const POOL_SIZE = 600;
-export async function getPool(platforms?: ReadonlyArray<string>): Promise<Media[]> {
-  return activeCatalogSource.candidates(platforms ? [...platforms] : [], undefined, POOL_SIZE);
+export async function getPool(platforms?: ReadonlyArray<string>, type?: 'movie' | 'tv'): Promise<Media[]> {
+  return activeCatalogSource.candidates(platforms ? [...platforms] : [], type, POOL_SIZE);
+}
+
+/**
+ * Tipo que fija la respuesta de «¿Cuánto tiempo tienes?»: «Una serie» → tv,
+ * cualquier duración → movie. Así el pool de 600 candidatos ya es del tipo
+ * pedido (si no, las series eran una minoría del pool mezclado).
+ */
+export function moodPoolType(answers: Record<string, string>): 'movie' | 'tv' | undefined {
+  const opt = QUESTIONS.time.options.find((o) => o.id === answers.time);
+  if (!opt) return undefined;
+  if (opt.effect.kind === 'mediaType') return opt.effect.mediaType === 'tv' ? 'tv' : 'movie';
+  if (opt.effect.kind === 'runtime') return 'movie';
+  return undefined;
 }
 
 const mediaCache = new Map<string, Media>();
@@ -66,7 +79,8 @@ export const tmdbCatalogRepository: CatalogRepository = {
     const allowed = new Set<string>(QUESTIONS_BY_COMPLEXITY[input.complexity]);
     const answers: Record<string, string> = {};
     for (const [qid, aid] of Object.entries(input.answers)) if (allowed.has(qid)) answers[qid] = aid;
-    return rankMoodResults({ answers, fallbackPlatforms: input.platforms }, ctx, await getPool(input.platforms)).map((r) => ({
+    const pool = await getPool(input.platforms, moodPoolType(answers));
+    return rankMoodResults({ answers, fallbackPlatforms: input.platforms }, ctx, pool).map((r) => ({
       media: r.media,
       bucket: bucketOfTenths(r.tenths),
     }));

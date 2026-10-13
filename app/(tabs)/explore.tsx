@@ -174,8 +174,11 @@ export default function ExploreScreen() {
     },
     chipActive: { backgroundColor: c.accSoft },
     grid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, paddingHorizontal: 12, paddingVertical: 8 },
-    // Ancho calculado: (ancho_pantalla - 2*padding - 2*gap) / 3 columnas
-    cell: { width: '31.6%', alignItems: 'center' as const, gap: 6, paddingVertical: 8, paddingHorizontal: 2 },
+    // FlashList (numColumns=3) ya reparte el ancho en 3 columnas: la celda
+    // ocupa SU columna entera y centra el póster. Un ancho en % aquí es % de
+    // la columna, no de la pantalla (31.6% dejaba el póster desbordado a la
+    // izquierda y un hueco a la derecha).
+    cell: { width: '100%', alignItems: 'center' as const, gap: 6, paddingVertical: 8, paddingHorizontal: 2 },
     caption: { fontFamily: 'Inter-SemiBold' as const, color: c.ink, fontSize: 11, width: 92, textAlign: 'center' as const },
     list: { paddingHorizontal: 12, paddingBottom: 32, paddingTop: 4 },
     center: { flex: 1, justifyContent: 'center' as const, alignItems: 'center' as const, paddingHorizontal: 24 },

@@ -18,7 +18,7 @@
 import { MAX_PAGE_SIZE, type BrowseParams, type CatalogSort, type SearchParams } from './types';
 
 /** Operadores PostgREST que usa el catálogo. */
-export type FilterOp = 'eq' | 'cs' | 'gte' | 'lte' | 'or' | 'websearch_query' | 'ilike';
+export type FilterOp = 'eq' | 'neq' | 'cs' | 'gte' | 'lte' | 'or' | 'websearch_query' | 'ilike';
 
 export interface CatalogFilter {
   /** Columna (para `or` es null). */
@@ -44,6 +44,13 @@ const SORT_MAP: Record<CatalogSort, string> = {
   title: 'title.asc',
 };
 const TIE = 'media_type.asc,tmdb_id.asc';
+
+/**
+ * Las filas sin título (stubs de TMDB o series mal clasificadas antes del
+ * arreglo de catalog-sync del 2026-10-13) no se muestran: saldrían como
+ * «Película 9772» / «[Título no disponible]» y su ficha no carga.
+ */
+const HAS_TITLE: CatalogFilter = { col: 'title', op: 'neq', val: '' };
 
 function clampLimit(limit?: number): number {
   if (!Number.isFinite(limit) || (limit as number) <= 0) return 20;
@@ -71,7 +78,7 @@ export function platformFilter(platforms: readonly string[]): string {
 }
 
 export function buildBrowseQuery(p: BrowseParams): PostgRestQuery {
-  const filters: CatalogFilter[] = [];
+  const filters: CatalogFilter[] = [HAS_TITLE];
   if (p.type) filters.push({ col: 'media_type', op: 'eq', val: p.type });
   if (p.genre !== undefined) filters.push({ col: 'genre_ids', op: 'cs', val: `{${p.genre}}` });
   if (p.decade !== undefined) {
@@ -87,7 +94,7 @@ export function buildBrowseQuery(p: BrowseParams): PostgRestQuery {
 
 /** Búsqueda: FTS en español (websearch_query sobre title_tsv). */
 export function buildSearchQuery(p: SearchParams): PostgRestQuery {
-  const filters: CatalogFilter[] = [];
+  const filters: CatalogFilter[] = [HAS_TITLE];
   const q = (p.query || '').trim();
   if (p.type) filters.push({ col: 'media_type', op: 'eq', val: p.type });
   if (q) {
@@ -106,7 +113,7 @@ export function buildCandidatesQuery(
   type: 'movie' | 'tv' | undefined,
   limit: number,
 ): PostgRestQuery {
-  const filters: CatalogFilter[] = [];
+  const filters: CatalogFilter[] = [HAS_TITLE];
   if (type) filters.push({ col: 'media_type', op: 'eq', val: type });
   if (platforms.length > 0) filters.push({ col: null, op: 'or', val: platformFilter(platforms) });
   const n = Math.max(1, Math.min(Math.floor(limit), 1000));

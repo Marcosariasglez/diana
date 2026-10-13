@@ -39,7 +39,13 @@ function passesHard(
 ): boolean {
   for (const e of effects) {
     if (e.kind === 'runtime') {
+      // Las opciones de duración («Menos de 90 min», «Unas 2 horas», «Maratón»)
+      // son la alternativa a «Una serie»: implican película.
+      if (media.media_type !== 'movie') return false;
       const rt = runtimeOf(media);
+      // Duración desconocida (0: el catálogo aún no la tiene) → no se descarta;
+      // si no, un catálogo sin runtime dejaba el mood siempre vacío.
+      if (rt <= 0) continue;
       if (e.minMinutes !== undefined && rt < e.minMinutes) return false;
       if (e.maxMinutes !== undefined && rt > e.maxMinutes) return false;
     } else if (e.kind === 'mediaType') {

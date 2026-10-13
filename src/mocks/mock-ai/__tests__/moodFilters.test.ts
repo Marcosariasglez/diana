@@ -34,6 +34,19 @@ const pool: Media[] = [short, normal, long, serie];
 const ids = (r: Array<{ media: Media }>) => r.map((x) => x.media.id);
 
 describe('applyMoodFilters', () => {
+  it('una duración implica película: la serie de 45 min no entra en «Menos de 90 min»', () => {
+    expect(ids(applyMoodFilters([short, serie], f({ time: 'lt90' })))).toEqual([1]);
+  });
+
+  it('«Una serie» deja solo series', () => {
+    expect(ids(applyMoodFilters(pool, f({ time: 'series' }, [])))).toEqual([4]);
+  });
+
+  it('duración desconocida (runtime 0) no descarta la película', () => {
+    const sinDuracion = synthMovie(20, [18], { runtime: 0 });
+    expect(ids(applyMoodFilters([sinDuracion, long], f({ time: 'h2' }, [])))).toEqual([20, 3]);
+  });
+
   it('M1 time = lt90 deja solo la de 85 min', () => {
     const movies = [short, synthMovie(10, [18], { runtime: 100 }), synthMovie(11, [18], { runtime: 140 })];
     expect(ids(applyMoodFilters(movies, f({ time: 'lt90' })))).toEqual([1]);

@@ -74,6 +74,16 @@ async function tmdbDetail(mediaType: 'movie' | 'tv', id: number): Promise<AnyRec
   throw new Error(`tmdb reintentos agotados ${path}`);
 }
 
+/** Minutos de un detalle de TMDB (0 = desconocido o título retirado). */
+export function runtimeFromDetail(mediaType: 'movie' | 'tv', d: AnyRecord | null): number {
+  if (!d) return 0;
+  if (mediaType === 'movie') return Number(d.runtime) > 0 ? Math.round(Number(d.runtime)) : 0;
+  const eps = Array.isArray(d.episode_run_time) ? d.episode_run_time.filter((x: unknown) => Number(x) > 0) : [];
+  if (eps.length > 0) return Math.round(eps.reduce((a: number, b: number) => a + Number(b), 0) / eps.length);
+  const last = Number(d.last_episode_to_air?.runtime);
+  return last > 0 ? Math.round(last) : 0;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return new Response('method not allowed', { status: 405, headers: CORS });
@@ -82,7 +92,7 @@ Deno.serve(async (req: Request) => {
   if (!expected || secret !== expected) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
-  let body: { count?: number; timeMs?: number; cleanup?: boolean } = {};
+  let body: { count?: number; timeMs?: number; cleanup?: boolean; mode?: string } = {};
   try {
     body = (await req.json()) as typeof body;
   } catch {
@@ -149,6 +159,59 @@ Deno.serve(async (req: Request) => {
   const maxTitles = Math.max(1, Math.min(Number(body.count) || DEFAULT_TITLES, 200));
   const budgetMs = Math.max(5000, Math.min(Number(body.timeMs) || DEFAULT_BUDGET_MS, MAX_BUDGET_MS));
   const startedAt = Date.now();
+
+  // MODO RUNTIME (2026-10-13): `discover` no trae duración, así que la sync
+  // deja `runtime` a NULL en todas las filas y el filtro «¿Cuánto tiempo
+  // tienes?» del mood no puede funcionar. Este modo pide el detalle de las
+  // filas con runtime NULL y guarda los minutos (película: runtime; serie:
+  // episode_run_time o la duración del último episodio). Si TMDB no la
+  // conoce se guarda 0 («desconocida, ya consultada») para no re-pedirla.
+  if (body.mode === 'runtime') {
+    let processed = 0;
+    let fixed = 0;
+    let unknown = 0;
+    for (;;) {
+      if (processed >= maxTitles || Date.now() - startedAt > budgetMs) break;
+      const { data, error } = (await admin
+        .from('catalog_titles')
+        .select('tmdb_id,media_type')
+        .is('runtime', null)
+        .order('popularity', { ascending: false })
+        .limit(PAGE)) as unknown as { data: AnyRecord[] | null; error: unknown };
+      if (error) throw new Error(String(error));
+      if (!data || data.length === 0) break;
+      for (const row of data) {
+        if (processed >= maxTitles || Date.now() - startedAt > budgetMs) break;
+        processed += 1;
+        await sleep(REQUEST_INTERVAL_MS);
+        let d: AnyRecord | null = null;
+        try {
+          d = await tmdbDetail(row.media_type, row.tmdb_id);
+        } catch {
+          continue; // transitorio: la siguiente bomba lo reintenta
+        }
+        const runtime = runtimeFromDetail(row.media_type, d);
+        const { error: upErr } = await admin
+          .from('catalog_titles')
+          .update({ runtime, updated_at: new Date().toISOString() })
+          .eq('tmdb_id', row.tmdb_id)
+          .eq('media_type', row.media_type);
+        if (upErr) throw new Error(String(upErr));
+        if (runtime > 0) fixed += 1;
+        else unknown += 1;
+      }
+      if (data.length < PAGE) break;
+    }
+    const { count: remaining } = (await admin
+      .from('catalog_titles')
+      .select('tmdb_id', { count: 'exact', head: true })
+      .is('runtime', null)) as unknown as { count: number | null };
+    return new Response(JSON.stringify({ mode: 'runtime', processed, fixed, unknown, remaining: remaining ?? 0 }), {
+      status: 200,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
+
   let processed = 0;
   let fixed = 0;
   let missing = 0;
