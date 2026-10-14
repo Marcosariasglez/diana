@@ -25,7 +25,7 @@ export default function SwipeOnboardingScreen() {
     inkText: { color: c.ink },
     coldLabel: {
       position: 'absolute' as const,
-      top: 64,
+      top: 48,
       alignSelf: 'center',
       paddingHorizontal: 12,
       paddingVertical: 6,

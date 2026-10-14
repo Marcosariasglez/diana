@@ -2,9 +2,9 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Film, X } from 'lucide-react-native';
 import { FeaturedMatchCard } from '@/components/features/FeaturedMatchCard';
-import { mediaTitle } from '@/components/features/mediaHelpers';
 import { PosterCarousel } from '@/components/features/PosterCarousel';
 import { Button, EmptyState, ErrorState, Screen, Skeleton } from '@/components/ui';
+import { QUESTIONS } from '@/features/mood/questions';
 import { useMoodStore } from '@/store/useMoodStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
@@ -30,8 +30,7 @@ export default function MoodResultsScreen() {
     pad: { paddingHorizontal: 20 },
     content: { gap: 20 },
     heading: { color: c.ink },
-    bestTitle: { marginTop: 16 },
-    others: { marginTop: 4 },
+    others: { marginTop: 24 },
     loading: { gap: 20 },
     row: { flexDirection: 'row' as const, gap: 12 },
   }));
@@ -88,7 +87,12 @@ export default function MoodResultsScreen() {
           <EmptyState
             icon={Film}
             title="Ningún título encaja con tu mood"
-            message="Prueba con otras respuestas."
+            message={
+              useMoodStore.getState().answers.time &&
+              QUESTIONS.time.options.find((o) => o.id === useMoodStore.getState().answers.time)?.effect?.kind === 'runtime'
+                ? 'Aún estamos completando las duraciones del catálogo. Prueba otro tramo o «Una serie».'
+                : 'Prueba con otras respuestas.'
+            }
             action={{ label: 'Repetir mood', onPress: repeat }}
           />
         ) : null}
@@ -100,12 +104,6 @@ export default function MoodResultsScreen() {
             </Text>
             <View style={styles.pad}>
               <FeaturedMatchCard item={best} onPress={() => openDetail(best.media)} />
-              <Text
-                accessibilityRole="header"
-                style={[textStyle('bestMatch', { color: colors.ink }), styles.bestTitle]}
-              >
-                {mediaTitle(best.media)}
-              </Text>
             </View>
             {others.length > 0 ? (
               <View style={styles.others}>

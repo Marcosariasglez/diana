@@ -27,7 +27,7 @@ export default function MoodWizardScreen() {
     },
     progress: { flex: 1 },
     body: { flex: 1 },
-    bodyContent: { flexGrow: 1, paddingBottom: 40, paddingTop: 40 },
+    bodyContent: { flexGrow: 1, justifyContent: 'center', paddingBottom: 40, paddingTop: 40 },
   }));
 
   return (

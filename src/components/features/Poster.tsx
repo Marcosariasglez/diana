@@ -20,9 +20,11 @@ export interface PosterProps {
   media: Media;
   size: PosterSize;
   onPress?: () => void;
+  /** Oculta el título dentro del bloque cuando no hay imagen (el padre ya lo muestra). */
+  hideTitle?: boolean;
 }
 
-function PosterBase({ media, size, onPress }: PosterProps) {
+function PosterBase({ media, size, onPress, hideTitle }: PosterProps) {
   const { width, height } = POSTER_DIMENSIONS[size];
   const title = mediaTitle(media);
   const uri = posterUri(media.poster_path);
@@ -48,18 +50,22 @@ function PosterBase({ media, size, onPress }: PosterProps) {
           accessible={false}
         />
       ) : (
-        <Text
-          numberOfLines={4}
-          maxFontSizeMultiplier={1.2}
-          style={[
-            textStyle('posterTitle', { color: '#FFFFFF' }),
-            styles.title,
-            big && styles.titleBig,
-            size === 'giant' && styles.titleGiant,
-          ]}
-        >
-          {title}
-        </Text>
+        !hideTitle ? (
+          <Text
+            numberOfLines={3}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+            maxFontSizeMultiplier={1.2}
+            style={[
+              textStyle('posterTitle', { color: 'white' }),
+              styles.title,
+              big && styles.titleBig,
+              size === 'giant' && styles.titleGiant,
+            ]}
+          >
+            {title}
+          </Text>
+        ) : null
       )}
     </View>
   );
@@ -88,7 +94,8 @@ export const Poster = memo(
   (prev, next) =>
     prev.media.id === next.media.id &&
     prev.size === next.size &&
-    prev.onPress === next.onPress,
+    prev.onPress === next.onPress &&
+    prev.hideTitle === next.hideTitle,
 );
 
 const styles = StyleSheet.create({

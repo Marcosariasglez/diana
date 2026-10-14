@@ -165,7 +165,7 @@ export default function ExploreScreen() {
     searchBar: { paddingHorizontal: 20, paddingBottom: 8 },
     chipRow: { flexGrow: 0 },
     chipRowContent: { paddingHorizontal: 20, gap: 8, paddingVertical: 6 },
-    sectionLabel: { color: c.mut, paddingHorizontal: 20, paddingBottom: 4, paddingTop: 4 },
+    sectionLabel: { color: c.mut, paddingHorizontal: 20, paddingBottom: 4, paddingTop: 8 },
     chip: {
       paddingHorizontal: 12,
       paddingVertical: 6,
@@ -173,14 +173,14 @@ export default function ExploreScreen() {
       backgroundColor: c.card,
     },
     chipActive: { backgroundColor: c.accSoft },
-    grid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, paddingHorizontal: 12, paddingVertical: 8 },
+    grid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, paddingHorizontal: 20, paddingVertical: 8 },
     // FlashList (numColumns=3) ya reparte el ancho en 3 columnas: la celda
     // ocupa SU columna entera y centra el póster. Un ancho en % aquí es % de
     // la columna, no de la pantalla (31.6% dejaba el póster desbordado a la
     // izquierda y un hueco a la derecha).
     cell: { width: '100%', alignItems: 'center' as const, gap: 6, paddingVertical: 8, paddingHorizontal: 2 },
     caption: { fontFamily: 'Inter-SemiBold' as const, color: c.ink, fontSize: 11, width: 92, textAlign: 'center' as const },
-    list: { paddingHorizontal: 12, paddingBottom: 32, paddingTop: 4 },
+    list: { paddingHorizontal: 20, paddingBottom: 32, paddingTop: 4 },
     center: { flex: 1, justifyContent: 'center' as const, alignItems: 'center' as const, paddingHorizontal: 24 },
     footer: { paddingVertical: 16 },
     retry: { minHeight: 44, alignItems: 'center' as const, justifyContent: 'center' as const },
@@ -224,7 +224,8 @@ export default function ExploreScreen() {
         <SearchBar value={query} onChangeText={setQuery} placeholder="Buscar películas y series..." />
       </View>
 
-      {/* Plataformas - multi-select */}
+      {/* Plataformas - multi-select (E2: etiqueta + padding uniforme) */}
+      <Text style={styles.sectionLabel}>Plataformas</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

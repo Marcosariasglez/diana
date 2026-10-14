@@ -84,14 +84,14 @@ export function WatchlistButton({
       style={({ pressed }) => [
         styles.row,
         {
-          backgroundColor: active ? colors.acc : colors.card,
+          backgroundColor: active ? colors.accSoft : colors.card,
           borderColor: active ? colors.acc : colors.line,
           opacity: pressed ? 0.85 : 1,
         },
       ]}
     >
-      <Icon size={size === 'small' ? 16 : 18} color={active ? colors.onAcc : colors.ink} strokeWidth={2} />
-      <Text style={[textStyle('bodyStrong'), styles.label, { color: active ? colors.onAcc : colors.ink }]}>
+      <Icon size={size === 'small' ? 16 : 18} color={active ? colors.acc : colors.ink} strokeWidth={2} />
+      <Text style={[textStyle('bodyStrong'), styles.label, { color: active ? colors.acc : colors.ink }]}>
         {active ? activeLabel : 'Quiero ver'}
       </Text>
     </Pressable>

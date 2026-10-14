@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { AlertCircle, Calendar, CheckCircle2, User } from 'lucide-react-native';
+import { AlertCircle, CheckCircle2, User } from 'lucide-react-native';
 import { TmdbAttribution } from '@/components/features/Attribution';
 import { MetricCard } from '@/components/features/MetricCard';
 import { Button } from '@/components/ui/Button';
@@ -14,8 +14,10 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { detailHref, sortHistory } from '@/features/profile/profileLogic';
+import { DiarySection } from '@/features/profile/DiarySection';
 import { WatchlistSection } from '@/features/profile/WatchlistSection';
 import { useProfileImport } from '@/features/profile/useProfileImport';
+import { useEntryPosters } from '@/features/profile/useEntryPosters';
 import {
   selectAverageRating,
   selectSeenCount,
@@ -52,8 +54,8 @@ export default function ProfileScreen() {
   const [pages, setPages] = useState(1);
   const { colors } = useTheme();
   const styles = useThemedStyles((c) => StyleSheet.create({
-    content: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 84 + 24 + 24, gap: 14 },
-    title: { color: c.ink, marginBottom: 8 },
+    content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 84 + 24 + 24, gap: 14 },
+    title: { color: c.ink, marginBottom: 12 },
     metrics: { flexDirection: 'row' as const, gap: 10 },
     card: { padding: 20, gap: 8 },
     cardTitle: { color: c.ink },
@@ -100,6 +102,8 @@ export default function ProfileScreen() {
 
   const seen = useMemo(() => selectSeenCount({ entries, watched }), [entries, watched]);
   const average = useMemo(() => selectAverageRating({ entries }), [entries]);
+  // D3: resolver pósters de las entradas visibles
+  const entryPosters = useEntryPosters(entries);
 
   const empty = seen === 0;
   const seenText = empty ? '—' : String(seen);
@@ -197,11 +201,19 @@ export default function ProfileScreen() {
           ) : (
             <View>
               {/* Historial ordenado (más reciente primero) */}
-              {sortHistory(entries).slice(0, pages === 1 ? COLLAPSED_COUNT : undefined).map((entry, i) => (
-                <View key={entry.key} style={i > 0 ? styles.separator : undefined}>
-                  <HistoryRow entry={entry} onPress={() => router.push(detailHref(entry))} />
-                </View>
-              ))}
+              {sortHistory(entries).slice(0, pages === 1 ? COLLAPSED_COUNT : undefined).map((entry, i) => {
+                const mediaKey = `${entry.ref.mediaType}:${entry.ref.mediaId}`;
+                const posterPath = entryPosters.get(mediaKey) ?? null;
+                return (
+                  <View key={entry.key} style={i > 0 ? styles.separator : undefined}>
+                    <HistoryRow
+                      entry={entry}
+                      posterPath={posterPath}
+                      onPress={() => router.push(detailHref(entry))}
+                    />
+                  </View>
+                );
+              })}
               {pages === 1 && entries.length > COLLAPSED_COUNT ? (
                 <Button
                   variant="secondary"
@@ -215,20 +227,8 @@ export default function ProfileScreen() {
           )}
         </Card>
 
-        {/* Diario (6.3): entradas añadidas manualmente con fecha */}
-        <Card style={styles.card}>
-          <View style={styles.historyHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Calendar size={18} color={colors.acc} strokeWidth={2} />
-              <Text style={[textStyle('body', { fontFamily: 'Manrope-ExtraBold', fontSize: 20 }), styles.cardTitle]}>
-                Diario
-              </Text>
-            </View>
-          </View>
-          <Text style={[textStyle('body'), styles.emptyText]}>
-            Registra las películas que ves día a día desde el botón «+».
-          </Text>
-        </Card>
+        {/* Diario (6.3): entradas añadidas manualmente con fecha (C4) */}
+        <DiarySection />
 
         {/* Grupo Aplicación */}
         <Text style={[textStyle('label'), styles.groupLabel]}>APLICACIÓN</Text>

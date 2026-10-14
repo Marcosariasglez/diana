@@ -6,7 +6,7 @@ export interface HistoryRow {
   user_id: string; key: string; media_type: MediaType; media_id: number;
   season: number | null; episode: number | null; title: string; genre_ids: number[];
   user_rating: number; ai_prediction_tenths: number; prediction_seen: boolean;
-  source: 'app' | 'letterboxd'; rated_at: string;
+  source: 'app' | 'letterboxd'; rated_at: string; logged_at: string | null;
 }
 
 export function rowToEntry(r: HistoryRow): HistoryEntry {
@@ -26,6 +26,7 @@ export function rowToEntry(r: HistoryRow): HistoryEntry {
     ratedAt: r.rated_at,
     source: r.source,
     genreIds: r.genre_ids,
+    loggedAt: r.logged_at ?? null,
   };
 }
 
@@ -36,5 +37,6 @@ export function entryToRow(userId: string, e: HistoryEntry): HistoryRow {
     genre_ids: e.genreIds ?? [], user_rating: e.userRating,
     ai_prediction_tenths: Math.round(e.aiPrediction * 10), prediction_seen: e.predictionSeen,
     source: e.source, rated_at: e.ratedAt,
+    logged_at: e.loggedAt ?? null,
   };
 }

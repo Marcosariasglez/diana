@@ -21,6 +21,9 @@ import {
 } from './query';
 import type { BrowseParams, PageResult, SearchParams } from './types';
 
+import type { RuntimeRange } from './query';
+export type { RuntimeRange } from './query';
+
 /** Fuente de candidatos del catálogo (mock o PostgREST): misma firma. */
 export interface CatalogSource {
   /** Explorar paginado (chips de plataforma, filtros de género/década). */
@@ -30,7 +33,7 @@ export interface CatalogSource {
   /** Títulos por (tipo, ids TMDB). */
   byIds(type: 'movie' | 'tv', ids: number[]): Promise<Media[]>;
   /** Candidatos para el motor mood/feed/grupo (los N más populares filtrados). */
-  candidates(platforms: string[], type?: 'movie' | 'tv', limit?: number): Promise<Media[]>;
+  candidates(platforms: string[], type?: 'movie' | 'tv', limit?: number, runtime?: RuntimeRange): Promise<Media[]>;
   /** «Disponible ahora en mis plataformas» (para «Quiero ver»). */
   availableNow(platforms: string[]): Promise<Media[]>;
   /** Disponibilidad por modalidad de un título (para «Dónde verla» en la ficha). */
@@ -114,8 +117,8 @@ export const postgrestCatalogSource: CatalogSource = {
     if (error) throw error;
     return toMedia((data ?? []) as unknown as CatalogRow[]);
   },
-  async candidates(platforms: string[], type?: 'movie' | 'tv', limit?: number): Promise<Media[]> {
-    const q = buildCandidatesQuery(platforms, type, limit ?? 600);
+  async candidates(platforms: string[], type?: 'movie' | 'tv', limit?: number, runtime?: RuntimeRange): Promise<Media[]> {
+    const q = buildCandidatesQuery(platforms, type, limit ?? 600, runtime);
     return toMedia(await runQuery(getSupabase(), q));
   },
   async availableNow(platforms: string[]): Promise<Media[]> {

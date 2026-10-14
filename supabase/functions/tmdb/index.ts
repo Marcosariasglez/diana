@@ -2,6 +2,7 @@
 // Entrada: POST JSON { action, ... }. Acciones: 'pool' | 'media' | 'season' | 'search' | 'match' | 'providers'.
 // Salida: JSON ya normalizado al formato de Diana (src/types/media.ts). Secretos: TMDB_READ_TOKEN.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { filterDocumentaries, filterShorts, tagDocumentaryInResults } from './searchKinds.ts';
 
 const TMDB = 'https://api.themoviedb.org/3';
 const REGION = 'ES';
@@ -224,6 +225,46 @@ async function buildPool() {
 const EPISODE_PATTERN = /\b[ts]\s*(\d+)\s*[·\-.]?\s*e\s*(\d+)\b/i;
 
 async function search(query: string, kind: string, page: number) {
+  // A2: soporta short y documentary
+  if (kind === 'documentary') {
+    const res = await tmdb('/search/multi', { query, page, include_adult: 'false' });
+    const hits = ((res.results ?? []) as Any[]).filter((r: Any) => r.media_type === 'movie' || r.media_type === 'tv');
+    const docs = filterDocumentaries(hits);
+    const results: Any[] = [];
+    for (const r of docs) {
+      if (r.media_type === 'movie') {
+        results.push({ kind: 'movie', label: 'Película', mediaId: r.id, mediaType: 'movie', title: r.title, poster_path: r.poster_path ?? null, tag: 'Documental', genre_ids: r.genre_ids ?? [] });
+      }
+      if (r.media_type === 'tv') {
+        results.push({ kind: 'tv', label: 'Serie', mediaId: r.id, mediaType: 'tv', title: r.name, poster_path: r.poster_path ?? null, tag: 'Documental', genre_ids: r.genre_ids ?? [] });
+      }
+    }
+    return { results, hasMore: (res.page ?? 1) < (res.total_pages ?? 1) };
+  }
+
+  if (kind === 'short') {
+    const res = await tmdb('/search/movie', { query, page, include_adult: 'false' });
+    const movieHits = ((res.results ?? []) as Any[]).slice(0, 10);
+    // Pedir duración a los top 10 (máx. 5 en paralelo)
+    const runtimes = await mapLimit(movieHits, 5, async (m: Any) => {
+      try {
+        const detail = await cached(`media:movie:${m.id}:v1`, 24 * HOUR, () => tmdb(`/movie/${m.id}`));
+        return { id: m.id, runtime: detail.runtime ?? 0 };
+      } catch {
+        return { id: m.id, runtime: 0 };
+      }
+    });
+    const runtimeMap = new Map(runtimes.map((r: Any) => [r.id, r.runtime]));
+    const shorts = filterShorts(movieHits, runtimeMap);
+    const results: Any[] = shorts.map((r: Any) => ({
+      kind: 'movie', label: 'Película', mediaId: r.id, mediaType: 'movie',
+      title: r.title, poster_path: r.poster_path ?? null, tag: 'Corto',
+      genre_ids: r.genre_ids ?? [],
+    }));
+    return { results, hasMore: false };
+  }
+
+  // all / movie / tv / episode
   const match = query.match(EPISODE_PATTERN);
   const text = query.replace(EPISODE_PATTERN, '').trim() || query;
   const res = await tmdb('/search/multi', { query: text, page, include_adult: 'false' });
@@ -231,10 +272,14 @@ async function search(query: string, kind: string, page: number) {
   const results: Any[] = [];
   for (const r of hits) {
     if (r.media_type === 'movie' && (kind === 'all' || kind === 'movie')) {
-      results.push({ kind: 'movie', label: 'Película', mediaId: r.id, mediaType: 'movie', title: r.title, poster_path: r.poster_path ?? null });
+      const entry: Any = { kind: 'movie', label: 'Película', mediaId: r.id, mediaType: 'movie', title: r.title, poster_path: r.poster_path ?? null, genre_ids: r.genre_ids ?? [] };
+      if ((r.genre_ids ?? []).includes(99)) entry.tag = 'Documental';
+      results.push(entry);
     }
     if (r.media_type === 'tv' && (kind === 'all' || kind === 'tv')) {
-      results.push({ kind: 'tv', label: 'Serie', mediaId: r.id, mediaType: 'tv', title: r.name, poster_path: r.poster_path ?? null });
+      const entry: Any = { kind: 'tv', label: 'Serie', mediaId: r.id, mediaType: 'tv', title: r.name, poster_path: r.poster_path ?? null, genre_ids: r.genre_ids ?? [] };
+      if ((r.genre_ids ?? []).includes(99)) entry.tag = 'Documental';
+      results.push(entry);
     }
   }
   if (kind === 'all' || kind === 'episode') {
@@ -296,10 +341,12 @@ Deno.serve(async (req) => {
       }
       case 'search': {
         const query = String(body.query ?? '').trim().slice(0, 100);
-        const kind = ['all', 'movie', 'tv', 'episode'].includes(body.kind) ? body.kind : 'all';
+        const validKinds = ['all', 'movie', 'tv', 'episode', 'short', 'documentary'];
+        const kind = validKinds.includes(body.kind) ? body.kind : 'all';
         const page = Math.min(Math.max(Number(body.page ?? 1) || 1, 1), 5);
         if (query.length < 2) return json({ results: [], hasMore: false });
-        return json(await cached(`search:${kind}:${page}:${query.toLowerCase()}:v1`, 6 * HOUR, () => search(query, kind, page)));
+        // A2: caché v2 (incluye tag y poster_path en resultados)
+        return json(await cached(`search:${kind}:${page}:${query.toLowerCase()}:v2`, 6 * HOUR, () => search(query, kind, page)));
       }
       case 'match': {
         // Cruce de Letterboxd: [{ name, year }] (max 40) -> [{ i, id, title, genre_ids }] (id null si no hay coincidencia).

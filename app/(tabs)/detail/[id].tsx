@@ -24,7 +24,11 @@ import { formatRating, formatRuntime } from '@/utils/format';
 import { posterColor } from '@/utils/posterColor';
 
 const HEADER_HEIGHT = 250;
+// Espacio seguro bajo el contenido scrolleable para que las tarjetas no queden
+// cortadas por la barra de acciones inferior + barra de tabs + safe area.
+const FOOTER_CONTENT_HEIGHT = 92;  // ~alto de la barra de acciones (botón + watchlist + padding)
 const FOOTER_BOTTOM_GAP = 36;
+const SCROLL_PAD_BOTTOM = FOOTER_CONTENT_HEIGHT + 88 + 24; // acciones + tabs + margen
 
 function goBack() {
   if (router.canGoBack()) router.back();
@@ -160,7 +164,7 @@ function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
       <WhereToWatchRow label="Suscripción" ids={data.flatrate} c={colors} />
       <WhereToWatchRow label="Alquiler" ids={data.rent} c={colors} />
       <WhereToWatchRow label="Compra" ids={data.buy} c={colors} />
-      <Text style={[textStyle('bodySmall', { fontSize: 10 })]}>{'Datos de disponibilidad por JustWatch'}</Text>
+      <Text style={[textStyle('bodySmall', { fontSize: 10, color: colors.mut })]}>{'Datos de disponibilidad por JustWatch'}</Text>
     </View>
   );
 }
@@ -187,7 +191,7 @@ function DetailContent({ media, params }: { media: Media; params: DetailParams }
   const { colors } = useTheme();
   const styles = useThemedStyles((c) => StyleSheet.create({
     flex: { flex: 1 },
-    scrollContent: { paddingBottom: 16 },
+    scrollContent: { paddingBottom: SCROLL_PAD_BOTTOM },
     header: { height: HEADER_HEIGHT, width: '100%' },
     back: {
       position: 'absolute' as const,
@@ -292,7 +296,6 @@ function DetailContent({ media, params }: { media: Media; params: DetailParams }
             title="Tu nota"
             value={formatRating(state.draft)}
             unit="/ 5"
-            topBorderColor={colors.ink}
           >
             <StarRating value={state.draft} onChange={rolling ? undefined : data.setRating} compact size={26} />
           </MetricCard>
@@ -313,6 +316,7 @@ function DetailContent({ media, params }: { media: Media; params: DetailParams }
             label={view.buttonLabel}
             disabled={view.buttonDisabled}
             onPress={data.onPrimaryPress}
+            variant={view.buttonLabel === 'Nota guardada' ? 'done' : 'primary'}
             style={{ flex: 1 }}
           />
           <View style={{ justifyContent: 'center' }}>

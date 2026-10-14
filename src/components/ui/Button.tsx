@@ -8,7 +8,7 @@ import {
 import { useThemedStyles, useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'google' | 'destructive';
+export type ButtonVariant = 'primary' | 'secondary' | 'google' | 'destructive' | 'done';
 
 export interface ButtonProps {
   label: string;
@@ -42,6 +42,12 @@ export function Button({
       fg: c.ink,
       disabledBg: c.chip,
       disabledFg: c.mut,
+    },
+    done: {
+      bg: c.accSoft,
+      fg: c.acc,
+      disabledBg: c.accSoft,
+      disabledFg: c.acc,
     },
     google: {
       bg: c.card,

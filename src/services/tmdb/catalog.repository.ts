@@ -16,8 +16,8 @@ import { invokeTmdb } from './invoke';
  * en modo mock). Se filtra por las plataformas del usuario cuando se dan.
  */
 const POOL_SIZE = 600;
-export async function getPool(platforms?: ReadonlyArray<string>, type?: 'movie' | 'tv'): Promise<Media[]> {
-  return activeCatalogSource.candidates(platforms ? [...platforms] : [], type, POOL_SIZE);
+export async function getPool(platforms?: ReadonlyArray<string>, type?: 'movie' | 'tv', runtime?: RuntimeRange): Promise<Media[]> {
+  return activeCatalogSource.candidates(platforms ? [...platforms] : [], type, POOL_SIZE, runtime);
 }
 
 /**
@@ -31,6 +31,16 @@ export function moodPoolType(answers: Record<string, string>): 'movie' | 'tv' | 
   if (opt.effect.kind === 'mediaType') return opt.effect.mediaType === 'tv' ? 'tv' : 'movie';
   if (opt.effect.kind === 'runtime') return 'movie';
   return undefined;
+}
+
+/** B4: extrae el rango de duración de la respuesta a "¿Cuánto tiempo tienes?". */
+import type { RuntimeRange } from '@/services/supabase/catalog/query';
+
+export function moodPoolRuntime(answers: Record<string, string>): RuntimeRange | undefined {
+  const opt = QUESTIONS.time.options.find((o) => o.id === answers.time);
+  if (!opt || opt.effect.kind !== 'runtime') return undefined;
+  const { minMinutes, maxMinutes } = opt.effect;
+  return { min: minMinutes, max: maxMinutes };
 }
 
 const mediaCache = new Map<string, Media>();
@@ -79,14 +89,16 @@ export const tmdbCatalogRepository: CatalogRepository = {
     const allowed = new Set<string>(QUESTIONS_BY_COMPLEXITY[input.complexity]);
     const answers: Record<string, string> = {};
     for (const [qid, aid] of Object.entries(input.answers)) if (allowed.has(qid)) answers[qid] = aid;
-    const pool = await getPool(input.platforms, moodPoolType(answers));
+    // B4: pasa tipo y duración al pool
+    const pool = await getPool(input.platforms, moodPoolType(answers), moodPoolRuntime(answers));
     return rankMoodResults({ answers, fallbackPlatforms: input.platforms }, ctx, pool).map((r) => ({
       media: r.media,
       bucket: bucketOfTenths(r.tenths),
     }));
   },
   async getGroupDeck({ excludeKeys, filters, count }) {
-    const pool = await getPool(filters.fallbackPlatforms);
+    // B4: el mazo de grupo es solo películas y lleva la duración del mood
+    const pool = await getPool(filters.fallbackPlatforms, 'movie', moodPoolRuntime(filters.answers));
     return buildGroupDeckMedia({ code: GROUP_DECK_SEED, filters, excludeKeys, count, catalog: pool }) as Movie[];
   },
 };

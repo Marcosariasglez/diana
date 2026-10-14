@@ -168,7 +168,6 @@ export default function HomeScreen() {
             selected={platforms}
             onChange={feed.setPlatforms}
             multiple
-            activeColor={colors.ink}
           />
         </ScrollView>
 

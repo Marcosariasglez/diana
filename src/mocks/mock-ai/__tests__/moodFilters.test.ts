@@ -42,9 +42,10 @@ describe('applyMoodFilters', () => {
     expect(ids(applyMoodFilters(pool, f({ time: 'series' }, [])))).toEqual([4]);
   });
 
-  it('duración desconocida (runtime 0) no descarta la película', () => {
+  // B2: duración desconocida (runtime 0) AHORA SÍ descarta la película.
+  it('duración desconocida (runtime 0) descarta la película (B2)', () => {
     const sinDuracion = synthMovie(20, [18], { runtime: 0 });
-    expect(ids(applyMoodFilters([sinDuracion, long], f({ time: 'h2' }, [])))).toEqual([20, 3]);
+    expect(ids(applyMoodFilters([sinDuracion, long], f({ time: 'h2' }, [])))).toEqual([3]);
   });
 
   it('M1 time = lt90 deja solo la de 85 min', () => {

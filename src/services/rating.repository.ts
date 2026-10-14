@@ -30,13 +30,16 @@ export const ratingRepository: RatingRepository = {
     const { entries } = useHistoryStore.getState();
     const existing = entries.find((e) => e.key === key);
     const ratedAt = new Date().toISOString();
+    // Diario rápido: marca la fecha de registro para que aparezca en el Perfil.
+    const loggedAt = origin === 'daily-log' ? ratedAt : existing?.loggedAt ?? null;
 
     if (existing) {
-      // Upsert: conserva aiPrediction y nunca baja predictionSeen de true a false.
+      // Upsert: conserva aiPrediction, nunca baja predictionSeen, conserva loggedAt salvo daily-log.
       return {
         ...existing,
         userRating,
         ratedAt,
+        loggedAt,
         predictionSeen: existing.predictionSeen || origin === 'detail',
       };
     }
@@ -54,6 +57,7 @@ export const ratingRepository: RatingRepository = {
       predictionSeen: origin === 'detail',
       ratedAt,
       source: 'app',
+      loggedAt,
     };
   },
   async getRating(key) {

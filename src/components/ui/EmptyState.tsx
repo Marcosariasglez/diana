@@ -28,7 +28,14 @@ export function EmptyState({ icon: Icon, title, message, action }: EmptyStatePro
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: 12, paddingHorizontal: 32, paddingVertical: 32 },
+  wrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 32,
+    paddingVertical: 32,
+  },
   iconBox: {
     width: 64,
     height: 64,

@@ -18,7 +18,7 @@
 import { MAX_PAGE_SIZE, type BrowseParams, type CatalogSort, type SearchParams } from './types';
 
 /** Operadores PostgREST que usa el catálogo. */
-export type FilterOp = 'eq' | 'neq' | 'cs' | 'gte' | 'lte' | 'or' | 'websearch_query' | 'ilike';
+export type FilterOp = 'eq' | 'neq' | 'cs' | 'gt' | 'gte' | 'lte' | 'or' | 'websearch_query' | 'ilike';
 
 export interface CatalogFilter {
   /** Columna (para `or` es null). */
@@ -107,14 +107,25 @@ export function buildSearchQuery(p: SearchParams): PostgRestQuery {
   return { filters, order: `popularity.desc,${TIE}`, range: [offset, offset + limit - 1], select: COLUMNS };
 }
 
-/** Candidatos: solo plataformas (y tipo), orden por popularidad, sin offset. */
+/** Rango de duración (B4). */
+export interface RuntimeRange {
+  min?: number;
+  max?: number;
+}
+
+/** Candidatos: plataformas + tipo + duración (B4), orden por popularidad, sin offset. */
 export function buildCandidatesQuery(
   platforms: readonly string[],
   type: 'movie' | 'tv' | undefined,
   limit: number,
+  runtime?: RuntimeRange,
 ): PostgRestQuery {
   const filters: CatalogFilter[] = [HAS_TITLE];
   if (type) filters.push({ col: 'media_type', op: 'eq', val: type });
+  // B4: siempre exige runtime > 0 (filtra stubs sin duración)
+  filters.push({ col: 'runtime', op: 'gt', val: '0' });
+  if (runtime?.min !== undefined) filters.push({ col: 'runtime', op: 'gte', val: String(runtime.min) });
+  if (runtime?.max !== undefined) filters.push({ col: 'runtime', op: 'lte', val: String(runtime.max) });
   if (platforms.length > 0) filters.push({ col: null, op: 'or', val: platformFilter(platforms) });
   const n = Math.max(1, Math.min(Math.floor(limit), 1000));
   return { filters, order: `popularity.desc,${TIE}`, range: [0, n - 1], select: COLUMNS };

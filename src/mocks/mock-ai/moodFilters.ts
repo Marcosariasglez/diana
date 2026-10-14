@@ -43,15 +43,16 @@ function passesHard(
       // son la alternativa a «Una serie»: implican película.
       if (media.media_type !== 'movie') return false;
       const rt = runtimeOf(media);
-      // Duración desconocida (0: el catálogo aún no la tiene) → no se descarta;
-      // si no, un catálogo sin runtime dejaba el mood siempre vacío.
-      if (rt <= 0) continue;
+      // Duración desconocida (0) → se descarta (B2).
+      if (rt <= 0) return false;
       if (e.minMinutes !== undefined && rt < e.minMinutes) return false;
       if (e.maxMinutes !== undefined && rt > e.maxMinutes) return false;
     } else if (e.kind === 'mediaType') {
       if (media.media_type !== e.mediaType) return false;
     } else if (e.kind === 'era') {
       const y = releaseYearOf(media);
+      // Año desconocido (0) → se descarta (B3).
+      if (y <= 0) return false;
       if (e.fromYear !== undefined && y < e.fromYear) return false;
       if (e.toYear !== undefined && y > e.toYear) return false;
     }

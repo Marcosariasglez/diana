@@ -1,20 +1,24 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Lock } from 'lucide-react-native';
 import type { HistoryEntry } from '@/types/rating';
+import { EntryPoster } from '@/components/features/EntryPoster';
 import { formatRating } from '@/utils/format';
 import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
 export interface HistoryRowProps {
   entry: HistoryEntry;
+  /** Ruta de póster resuelta (D3). Si no se pasa, usa entry.posterPath. */
+  posterPath?: string | null;
   onPress?: () => void;
 }
 
-export function HistoryRow({ entry, onPress }: HistoryRowProps) {
+export function HistoryRow({ entry, posterPath, onPress }: HistoryRowProps) {
   const { colors } = useTheme();
   const rating = formatRating(entry.userRating);
   const ai = formatRating(entry.aiPrediction);
   const aiLabel = entry.predictionSeen ? `Predicción de IA ${ai}` : 'Predicción bloqueada';
+  const resolvedPosterPath = posterPath ?? entry.posterPath ?? null;
   return (
     <Pressable
       accessibilityRole={onPress ? 'button' : undefined}
@@ -23,8 +27,18 @@ export function HistoryRow({ entry, onPress }: HistoryRowProps) {
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View style={[styles.poster, { backgroundColor: entry.posterColor }]} />
-      <Text numberOfLines={1} style={[textStyle('body', { fontFamily: 'Inter-SemiBold' }), { color: colors.ink }]}>
+      <EntryPoster
+        posterPath={resolvedPosterPath}
+        color={entry.posterColor}
+        title={entry.title}
+        width={40}
+        height={58}
+        radius={10}
+      />
+      <Text
+        numberOfLines={1}
+        style={[textStyle('body', { fontFamily: 'Inter-SemiBold' }), { color: colors.ink }, styles.title]}
+      >
         {entry.title}
       </Text>
       <View
@@ -54,7 +68,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   pressed: { opacity: 0.85 },
-  poster: { width: 40, height: 58, borderRadius: 10 },
+  title: { flex: 1, minWidth: 0 },
   chip: {
     minWidth: 44,
     height: 36,

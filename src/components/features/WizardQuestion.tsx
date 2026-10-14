@@ -77,7 +77,7 @@ export function WizardQuestion({
       <Text
         accessibilityRole="header"
         maxFontSizeMultiplier={1.2}
-        style={[textStyle('wizardQuestion'), { color: colors.ink, textAlign: 'center', marginTop: 12, marginBottom: 32 }]}
+        style={[textStyle('wizardQuestion'), { color: colors.ink, textAlign: 'center', marginTop: 8, marginBottom: 24, lineHeight: 24 }]}
       >
         {question.title}
       </Text>

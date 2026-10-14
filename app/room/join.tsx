@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { Button, CodeInput, Screen } from '@/components/ui';
@@ -32,9 +32,10 @@ export default function JoinRoomScreen() {
       justifyContent: 'center' as const,
     },
     title: { color: c.ink },
-    body: { flex: 1, paddingHorizontal: 20, paddingTop: 48, gap: 24 },
+    body: { flex: 1, paddingHorizontal: 20, paddingTop: 48, gap: 24, justifyContent: 'center' as const },
     hint: { textAlign: 'center' as const },
     errorBox: { minHeight: 24, justifyContent: 'center' as const },
+    keyboardAvoid: { flex: 1 },
     footer: { paddingHorizontal: 20, paddingBottom: 24 },
   }));
 
@@ -63,7 +64,12 @@ export default function JoinRoomScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
+        style={styles.keyboardAvoid}
+      >
+        <View style={styles.header}>
         <Pressable
           onPress={back}
           accessibilityRole="button"
@@ -95,6 +101,7 @@ export default function JoinRoomScreen() {
       <View style={styles.footer}>
         <Button label="Unirme" onPress={join} disabled={!ready} loading={loading} />
       </View>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }

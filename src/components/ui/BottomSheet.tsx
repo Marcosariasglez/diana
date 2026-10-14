@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import 'react-native-safe-area-context'; // usado en A5 para paddingBottom
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
@@ -107,5 +108,5 @@ const styles = StyleSheet.create({
   },
   handleArea: { height: 44, alignItems: 'center', justifyContent: 'center' },
   handle: { width: 40, height: 5, borderRadius: 9 },
-  content: { paddingHorizontal: 20, paddingBottom: 24 },
+  content: { flex: 1, paddingTop: 12, paddingHorizontal: 20 },
 });

@@ -11,3 +11,6 @@ export const SPACING = {
   '6xl': 56,
   '7xl': 64,
 } as const;
+
+/** Padding lateral estándar en todas las pantallas (20 px). */
+export const SCREEN_PADDING = SPACING.xl;

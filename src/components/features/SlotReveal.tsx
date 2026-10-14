@@ -203,7 +203,7 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
   const cardStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(progress.value, [0, 1], [colors.card, colors.acc]),
   }));
-  const haloStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
+  // E6: halo eliminado (sin haloStyle)
   const valueColorStyle = useAnimatedStyle(() => ({
     color: interpolateColor(progress.value, [0, 1], [colors.ink, WHITE]),
   }));
@@ -228,12 +228,6 @@ function SlotRevealBase({ value, state, animated, onRevealed, lockedHint }: Slot
 
   return (
     <View style={styles.wrapper}>
-      <Animated.View
-        pointerEvents="none"
-        style={[styles.halo, haloStyle]}
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-      />
       <Animated.View
         accessible
         accessibilityLabel={a11yLabel}
@@ -315,14 +309,8 @@ export const SlotReveal = memo(SlotRevealBase);
 
 const styles = StyleSheet.create({
   wrapper: { flex: 1, minHeight: 148 },
-  halo: {
-    ...StyleSheet.absoluteFill,
-    top: -4, left: -4, right: -4, bottom: -4,
-    borderRadius: 20,
-    borderWidth: 4,
-    borderColor: 'rgba(11,122,102,0.2)',
-  },
-  card: { flex: 1, borderRadius: 24, padding: 16, borderTopWidth: 2, overflow: 'hidden' },
+  // E6: sin halo desplazado, geometría igual a MetricCard (radius 20, padding 14)
+  card: { flex: 1, borderRadius: 20, padding: 14, gap: 3, overflow: 'hidden' },
   title: { marginBottom: 8 },
   body: { flex: 1, gap: 8 },
   lockedRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

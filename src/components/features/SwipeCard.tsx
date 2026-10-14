@@ -159,7 +159,7 @@ export function SwipeCard({ media, isTop, onDecide, allowUnseen = true, topBadge
         {topBadge ? (
           <View
             pointerEvents="box-none"
-            style={{ position: 'absolute', top: 28, alignSelf: 'center', left: 0, right: 0, alignItems: 'center' }}
+            style={{ position: 'absolute', top: 56, alignSelf: 'center', left: 0, right: 0, alignItems: 'center' }}
           >
             {topBadge}
           </View>

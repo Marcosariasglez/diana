@@ -46,6 +46,10 @@
   --overlay: rgba(0, 0, 0, 0.6);
 }
 
+/* Quitar outline nativo en web para inputs y textareas (SearchBar maneja
+   el borde de foco en el contenedor para evitar saltos de layout). */
+input:focus, textarea:focus { outline: none; }
+
 /* Simulador movil en desktop (A3.5: columna centrada de 390 px en pantallas
    anchas). El root de Expo Router web es #root (no #__next): antes de
    plan2 (D2-0) esta regla nunca se aplicaba en desktop. */

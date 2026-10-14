@@ -80,4 +80,37 @@ describe('searchRepository', () => {
     expect(p1.results[0].mediaId).not.toBe(p0.results[0].mediaId);
     expect(p0.results.length + p1.results.length).toBeLessThanOrEqual(total);
   });
+
+  it('filtra cortos (runtime ≤ 40)', async () => {
+    const { results } = await searchRepository.search({ query: 'lunch', kind: 'short' });
+    for (const r of results) {
+      expect(r.kind).toBe('movie');
+      // Un corto puede tener tag 'Corto' o 'Documental' si además es género 99
+      expect(['Corto', 'Documental']).toContain(r.tag);
+    }
+    // The Lunchbox (id 123, 38 min)
+    expect(results.map((r) => r.title)).toContain('The Lunchbox');
+  });
+
+  it('filtra documentales (género 99)', async () => {
+    const { results } = await searchRepository.search({ query: '', kind: 'documentary' });
+    // Con query vacía no devuelve nada
+    expect(results).toEqual([]);
+  });
+
+  it('documentales con query devuelven solo género 99', async () => {
+    const { results } = await searchRepository.search({ query: 'e', kind: 'documentary' });
+    for (const r of results) {
+      expect(r.tag).toBe('Documental');
+    }
+    // Planet Earth II (id 59), Dig! (id 88), Searching for Sugar Man (id 89), etc.
+    const titles = results.map((r) => r.title);
+    expect(titles).toContain('Planet Earth II');
+  });
+
+  it('resultados en "all" llevan tag cuando son corto o documental', async () => {
+    const { results } = await searchRepository.search({ query: 'lunchbox' });
+    const lunchbox = results.find((r) => r.title === 'The Lunchbox');
+    expect(lunchbox?.tag).toBe('Corto');
+  });
 });

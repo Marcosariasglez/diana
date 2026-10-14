@@ -31,7 +31,7 @@ export const QUESTIONS: Record<MoodQuestionId, MoodQuestion> = {
         title: 'Menos de 90 min',
         subtitle: 'Algo ligero',
         icon: Clock,
-        effect: { kind: 'runtime', maxMinutes: 90 },
+        effect: { kind: 'runtime', maxMinutes: 89 },
       },
       {
         id: 'h2',
@@ -45,7 +45,7 @@ export const QUESTIONS: Record<MoodQuestionId, MoodQuestion> = {
         title: 'Maratón',
         subtitle: 'Sin prisa',
         icon: Sofa,
-        effect: { kind: 'runtime', minMinutes: 150 },
+        effect: { kind: 'runtime', minMinutes: 151 },
       },
       {
         id: 'series',

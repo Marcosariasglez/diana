@@ -1,12 +1,69 @@
 # ESTADO DEL PROYECTO VERTICE · Diana
 
-> Actualizado 2026-10-08T21:36+02:00. Ejecución continua D0→D6 completada (todo aprobado por el dueño).
+> Actualizado 2026-10-14T12:21+02:00. **Plan ajustes-oct13 completado (S→Z).**
 > **Plan VERTICE terminado.** Quedan solo los pasos de producción del dueño (abajo) y las
 > correcciones de cierre de este 2026-10-08.
 >
 > Este fichero es la **única fuente de verdad del estado**. Los antiguos `PROGRESS.md`,
 > `BACKEND_PROGRESS.md` e `IMPLEMENTATION_STATUS.md` se eliminaron el 2026-10-08: lo útil
 > quedó absorbido en «Registro histórico (B0–B7)» al final de este documento.
+
+## Ajustes 2026-10-14 (continuación plan-ajustes-oct13.md)
+
+**Plan:** <`docs/vertice/plan-ajustes-oct13.md`> · **Auditoría de mood:** <`docs/vertice/mood-auditoria.md`>
+
+### Verify completo
+
+```
+Test Suites: 103 passed, 103 total
+Tests:       704 passed, 704 total
+```
+
+**Auditoría de estilos:** `✓ Auditoría de estilos: todo limpio.` (0 problemas)
+**Build web (producción):** `Exported: dist` · `PWA lista (base "/")`
+**Escáner de secretos:** `✓ service_role no filtrada: 302 ficheros revisados en [app, src, public, dist]`
+**Contraste WCAG AA:** 5 fallos conocidos (acc/accSoft 4.44:1 claro; neg/negBg y warn/warnBg decorativos 1:1)
+
+### Ajustes visuales E5–E12 (sesión 2026-10-14)
+
+| Tarea | Archivo | Qué se hizo |
+|-------|---------|-------------|
+| E5 | `FeaturedMatchCard.tsx` | `hideTitle={true}` en `<Poster>` para título único; `gap: 0` en tarjeta; `marginTop: 24` entre "Otras opciones" y "Repetir mood" |
+| E6 | `[id].tsx` | `topBorderColor={colors.textSecondary}` (borde "Tu nota" menos agresivo); `color: colors.mut` en JustWatch; `paddingBottom` ScrollView = footer + tabs + safe area |
+| E6 | `WatchlistButton.tsx` | Fondo activo `accSoft` (no `acc`); texto/icono `acc` (no `onAcc`) |
+| E8 | `profile.tsx` | `paddingTop: 20` (no 24); `marginBottom: 12` en títulos sección |
+| E8 | `ProfileCard.tsx` | `marginBottom: 24` en la tarjeta |
+| E9 | `room/join.tsx` | `KeyboardAvoidingView` envolviendo contenido; `justifyContent: 'center'` en body; casillas CodeInput ya centradas |
+| E10 | `EmptyState.tsx` | Ya tenía `flex: 1` + `justifyContent: 'center'` — verificado sin cambios |
+| E11 | `swipe-onboarding.tsx` | `top: 48` (no 64) en píldora "Populares" para evitar solapamiento |
+| E11 | `welcome.tsx` | FAN: `translateX ±44` (no ±30) para centrar abanico |
+| E12 | `see-all/[category].tsx` | `paddingHorizontal: 20` (no 12) en FlashList; `width: '100%'` + `paddingHorizontal: 2` en celdas |
+| FIX | `Poster.tsx` | Reescrito completo para eliminar caracteres Unicode corruptos que rompían TS |
+
+### Tareas anteriores (A–D)
+
+| Tarea | Bloque | Qué se hizo |
+|-------|--------|-------------|
+| A2 | A | `tmdb/search.repository.ts` con `posterPath`, `searchKinds.ts` (documentary/short), Edge function v2, tests |
+| A4 | A | Espaciado del Diario (`bodySmall`, `SPACING['2xl']` para "Resultados de TMDB") |
+| A5 | A | BottomSheet con `snapPoints={[0.6]}`, padding correcto |
+| B1 | B | `moodFilters.audit.test.ts` (26 tests de auditoría automática) |
+| B2 | B | Tramos sin solape (lt90≤89, h2 90-150, marathon≥151), runtime≤0 descartado |
+| B3 | B | year≤0 descartado en filtro de época |
+| B4 | B | `buildCandidatesQuery` + `moodPoolRuntime` cableados en getMoodResults/getGroupDeck |
+| B5 | B | `docs/vertice/mood-auditoria.md` creado |
+| B6 | B | Mensaje honesto en `mood-results.tsx` cuando no hay resultados por duración |
+| C1 | C | `rating.repository.test.ts` con reintento PGRST204 |
+| C2 | C | Migración 0023 verificada correcta |
+| C4 | C | `DiarySection.test.tsx` (5 tests RNTL) |
+| D1/D2/D3 | D | `useEntryPosters`, `HistoryRow` con `posterPath`, cableados en Perfil |
+
+### Pasos del dueño pendientes
+
+1. Desplegar Edge Function `tmdb` (busca `searchKinds.ts` y caché v2) — requiere `npx supabase functions deploy tmdb`
+2. Revisar capturas antes/después en `docs/vertice/capturas/ajustes-oct13/` (manual)
+
+---
 
 ## Último verify (tras las correcciones de cierre, 2026-10-08)
 

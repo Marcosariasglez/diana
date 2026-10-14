@@ -51,7 +51,7 @@ export function FeaturedMatchCard({
         </Text>
       </View>
       <View style={styles.row}>
-        <Poster media={media} size="large" />
+        <Poster media={media} size="large" hideTitle />
         <View style={styles.info}>
           <View>
             <Text
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 24,
     padding: 12,
-    gap: 12,
+    gap: 0,
   },
   badge: {
     alignSelf: 'flex-start',

@@ -34,14 +34,31 @@ export const supabaseRatingRepository: RatingRepository = {
       tenths = predictTenths(buildTasteProfile(profile.id, profile.initialRatings, entries), media, key);
       seen = origin === 'detail';
     }
+
+    // Diario rápido: fija logged_at; conserva el previo si venía del Diario.
+    const now = new Date().toISOString();
+    const logged_at = origin === 'daily-log' ? now : (existing as { logged_at?: string | null })?.logged_at ?? null;
+
     const row: HistoryRow = {
       user_id: u.user.id, key, media_type: mediaRef.mediaType, media_id: mediaRef.mediaId,
       season: mediaRef.season ?? null, episode: mediaRef.episode ?? null,
       title: entryTitle(mediaRef, titleOf(media)), genre_ids: media.genres.map((g) => g.id),
       user_rating: userRating, ai_prediction_tenths: tenths, prediction_seen: seen,
-      source: existing?.source ?? 'app', rated_at: new Date().toISOString(),
+      source: existing?.source ?? 'app', rated_at: now,
+      logged_at,
     };
-    const { error } = await sb.from('history_entries').upsert(row, { onConflict: 'user_id,key' });
+
+    // Intenta upsert con logged_at.
+    let { error } = await sb.from('history_entries').upsert(row, { onConflict: 'user_id,key' });
+
+    // Defensa PGRST204: si la columna logged_at aún no existe (migración 0023 pendiente),
+    // reintenta una vez sin logged_at para no romper la app en vuelo.
+    if (error && (error.code === 'PGRST204' || (error.message ?? '').includes('logged_at'))) {
+      const rowFallback = { ...row } as Omit<HistoryRow, 'logged_at'>;
+      delete (rowFallback as any).logged_at;
+      ({ error } = await sb.from('history_entries').upsert(rowFallback, { onConflict: 'user_id,key' }));
+    }
+
     if (error) throw error;
     return rowToEntry(row);
   },

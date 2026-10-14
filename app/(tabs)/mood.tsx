@@ -11,6 +11,12 @@ import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 
+const COMPLEXITY_DESCRIPTIONS: Record<Complexity, string> = {
+  express: 'Exprés · 2 preguntas · unos 10 s',
+  intermedio: 'Intermedio · 4 preguntas · unos 30 s',
+  cinefilo: 'Cinéfilo · 6 preguntas · unos 60 s',
+};
+
 const COMPLEXITIES: ReadonlyArray<{ id: Complexity; title: string; subtitle: string }> = [
   { id: 'express', title: 'Exprés', subtitle: 'Rápido' },
   { id: 'intermedio', title: 'Intermedio', subtitle: 'Equilibrado' },
@@ -43,7 +49,7 @@ function ActionCard({ icon: Icon, title, subtitle, onPress, busy = false, styles
       <View style={s.iconCircle}>
         <Icon size={24} color={c.acc} strokeWidth={2} />
       </View>
-      <View style={s.actionTexts}>
+      <View style={[s.actionTexts, { gap: 16 }]}>
         <Text style={textStyle('body', { fontFamily: 'Manrope-ExtraBold', fontSize: 18, color: c.ink })}>
           {title}
         </Text>
@@ -86,7 +92,7 @@ export default function MoodScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles((c) => StyleSheet.create({
     root: { flex: 1 },
-    scroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16, gap: 24 },
+    scroll: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8, gap: 24 },
     title: { color: c.ink, marginBottom: 20 },
     eyebrow: { marginTop: 28, marginBottom: 14, letterSpacing: 0.5 },
     cards: { flexDirection: 'row' as const, gap: 10 },
@@ -95,11 +101,12 @@ export default function MoodScreen() {
       minHeight: 112,
       backgroundColor: c.card,
       borderRadius: 20,
-      paddingHorizontal: 14,
+      paddingHorizontal: 12,
       paddingBottom: 18,
       justifyContent: 'flex-end' as const,
       gap: 4,
     },
+    levelInfo: { color: c.textSecondary, marginTop: 12, marginBottom: 4 },
     cardSelected: { backgroundColor: c.ink },
     actions: { gap: 14 },
     actionCard: { flexDirection: 'row' as const, alignItems: 'center' as const, minHeight: 88, borderRadius: 20 },
@@ -112,6 +119,8 @@ export default function MoodScreen() {
       justifyContent: 'center' as const,
     },
     actionTexts: { flex: 1, gap: 2 },
+    // E3: gap entre icono y textos en ActionCard (modo "Con amigos")
+    iconTextGap: { gap: 16 },
     footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36 },
   }));
 
@@ -144,9 +153,12 @@ export default function MoodScreen() {
                     style={[styles.card, SHADOWS.card, selected && styles.cardSelected]}
                   >
                     <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.65}
                       style={textStyle('body', {
                         fontFamily: 'Manrope-ExtraBold',
-                        fontSize: 18,
+                        fontSize: 14,
                         color: selected ? colors.onInk : colors.ink,
                       })}
                     >
@@ -163,6 +175,12 @@ export default function MoodScreen() {
                 );
               })}
             </View>
+            {/* E3: línea del nivel elegido bajo las tarjetas */}
+            {!group ? (
+              <Text style={[textStyle('bodySmall'), styles.levelInfo]}>
+                {COMPLEXITY_DESCRIPTIONS[complexity]}
+              </Text>
+            ) : null}
           </View>
           {group ? (
             <View style={styles.actions}>

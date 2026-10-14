@@ -1,6 +1,8 @@
 import type { MediaType } from '@/types/media';
 
-export type SearchKind = 'all' | 'movie' | 'tv' | 'episode';
+export type SearchKind = 'all' | 'movie' | 'tv' | 'episode' | 'short' | 'documentary';
+
+export type SearchTag = 'Corto' | 'Documental';
 
 export interface SearchResult {
   kind: 'movie' | 'tv' | 'episode';
@@ -12,4 +14,6 @@ export interface SearchResult {
   seasonNumber?: number;
   episodeNumber?: number;
   posterColor: string;
+  posterPath?: string | null;
+  tag?: SearchTag;
 }

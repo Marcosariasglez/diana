@@ -92,21 +92,38 @@ export function searchRows(rows: readonly CatalogRow[], p: SearchParams): PageRe
   return sortAndPage(filtered, compareRows('popularity'), p.cursor ?? 0, clampLimit(p.limit));
 }
 
+/** Rango de duración (B4). */
+export interface RuntimeRange {
+  min?: number;
+  max?: number;
+}
+
 /**
  * Candidatos para el motor de mood/feed/grupo: los `limit` más populares
  * (300–1000) que cumplen el filtro de plataformas (y tipo, si se da). No se
  * pagina: se devuelve la lista completa para que el ranking la ordene por
  * afinidad. `limit` se acota a [300, 1000] por defecto.
+ *
+ * @param runtime — rango de duración (B4). Filtra runtime > 0 siempre,
+ *                   y aplica min/max cuando existen.
  */
 export function candidatesRows(
   rows: readonly CatalogRow[],
   platforms: readonly string[],
   type: MediaType | undefined,
   limit?: number,
+  runtime?: RuntimeRange,
 ): CatalogRow[] {
   const n = Math.max(1, Math.min(Math.floor(limit ?? 600), 1000));
   const filtered = filterBrowse(rows, { platforms, type });
-  return [...filtered].sort(compareRows('popularity')).slice(0, n);
+  const candidates = filtered.filter((r) => {
+    // B4: exige runtime > 0
+    if (r.runtime === null || r.runtime <= 0) return false;
+    if (runtime?.min !== undefined && r.runtime < runtime.min) return false;
+    if (runtime?.max !== undefined && r.runtime > runtime.max) return false;
+    return true;
+  });
+  return [...candidates].sort(compareRows('popularity')).slice(0, n);
 }
 
 /** Filtro «disponible ahora en mis plataformas» (para «Quiero ver»). */

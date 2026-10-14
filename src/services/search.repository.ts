@@ -1,5 +1,5 @@
 import type { SearchKind, SearchResult } from '@/types/search';
-import type { Media, TVSeries } from '@/types/media';
+import type { Media, Movie, TVSeries } from '@/types/media';
 import { PAGE_SIZE } from '@/constants/feed';
 import { CATALOG, titleOf } from '@/mocks/data/catalog';
 import { fakeDelay } from '@/mocks/latency';
@@ -38,6 +38,16 @@ interface Scored {
   popularity: number;
 }
 
+/** Determina si un media es documental (género 99). */
+function isDocumentary(media: Media): boolean {
+  return media.genres.some((g) => g.id === 99);
+}
+
+/** Determina si una película es corto (0 < runtime ≤ 40). */
+function isShort(media: Media): media is Movie {
+  return media.media_type === 'movie' && media.runtime > 0 && media.runtime <= 40;
+}
+
 function matchRank(normalizedTitle: string, q: string): number | null {
   if (normalizedTitle === q) return 0;
   if (normalizedTitle.startsWith(q)) return 1;
@@ -65,6 +75,9 @@ function episodeResult(series: TVSeries, seasonNumber: number, episodeNumber: nu
 }
 
 function baseResult(media: Media): SearchResult {
+  const doc = isDocumentary(media);
+  const short = isShort(media);
+  const tag = doc ? 'Documental' : short ? 'Corto' : undefined;
   return {
     kind: media.media_type,
     label: LABELS[media.media_type],
@@ -72,6 +85,8 @@ function baseResult(media: Media): SearchResult {
     mediaType: media.media_type,
     title: titleOf(media),
     posterColor: posterColor(media.id),
+    posterPath: media.poster_path ?? null,
+    tag,
   };
 }
 
@@ -86,7 +101,8 @@ export function searchCatalog(query: string, kind: SearchKind = 'all'): SearchRe
   for (const media of CATALOG) {
     const rank = matchRank(normalizeTitle(titleOf(media)), textQuery);
     if (rank === null) continue;
-    const scored = { result: baseResult(media), rank, popularity: media.popularity };
+    const result = baseResult(media);
+    const scored = { result, rank, popularity: media.popularity };
     if (media.media_type === 'movie') {
       movies.push(scored);
       continue;
@@ -96,17 +112,39 @@ export function searchCatalog(query: string, kind: SearchKind = 'all'): SearchRe
       ? [[Number(episodeMatch[1]), Number(episodeMatch[2])]]
       : [...(MOCK_EPISODE_HIGHLIGHTS[media.id] ?? [])].slice(0, 2);
     for (const [s, e] of wanted) {
-      const result = episodeResult(media, s, e);
-      if (result) episodes.push({ result, rank, popularity: media.popularity });
+      const ep = episodeResult(media, s, e);
+      if (ep) episodes.push({ result: ep, rank, popularity: media.popularity });
     }
   }
 
   const sorted = (list: Scored[]) => list.sort(byRankThenPopularity).map((x) => x.result);
+
+  // Handle documentary: filter media with genre 99
+  if (kind === 'documentary') {
+    const docMovies = movies.filter((x) => { const m = getMediaById(x.result.mediaId); return m && isDocumentary(m); });
+    const docSeries = series.filter((x) => { const m = getMediaById(x.result.mediaId); return m && isDocumentary(m); });
+    return [...sorted(docMovies), ...sorted(docSeries)];
+  }
+
+  // Handle short: filter movies with 0 < runtime ≤ 40
+  if (kind === 'short') {
+    const shortMovies = movies.filter((x) => {
+      const media = getMediaById(x.result.mediaId);
+      return media && isShort(media);
+    });
+    return sorted(shortMovies);
+  }
+
   const out: SearchResult[] = [];
   if (kind === 'all' || kind === 'movie') out.push(...sorted(movies));
   if (kind === 'all' || kind === 'tv') out.push(...sorted(series));
   if (kind === 'all' || kind === 'episode') out.push(...sorted(episodes));
   return out;
+}
+
+/** Helper para buscar un media por id en el catálogo. */
+function getMediaById(id: number): Media | undefined {
+  return CATALOG.find((m) => m.id === id);
 }
 
 export const searchRepository: SearchRepository = {

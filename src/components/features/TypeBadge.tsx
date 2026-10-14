@@ -2,7 +2,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
-export type TypeBadgeLabel = 'Pelicula' | 'Película' | 'Serie' | 'Capitulo' | 'Capítulo';
+export type TypeBadgeLabel =
+  | 'Pelicula'
+  | 'Película'
+  | 'Serie'
+  | 'Capitulo'
+  | 'Capítulo'
+  | 'Corto'
+  | 'Documental';
 
 export interface TypeBadgeProps {
   label: TypeBadgeLabel;
@@ -14,16 +21,18 @@ const PALETTE: Record<string, { bg: string; fg: string }> = {
   Serie: { bg: 'acc', fg: 'onAcc' },
   Capitulo: { bg: 'card', fg: 'ink' },
   'Capítulo': { bg: 'card', fg: 'ink' },
+  Corto: { bg: 'chip', fg: 'ink' },
+  Documental: { bg: 'accSoft', fg: 'acc' },
 };
 
 export function TypeBadge({ label }: TypeBadgeProps) {
   const { colors } = useTheme();
   const { bg, fg } = PALETTE[label] ?? PALETTE['Pelicula'];
   return (
-    <View style={styles.badge}>
+    <View style={[styles.badge, { backgroundColor: colors[bg as keyof typeof colors] }]}>
       <Text style={[
         textStyle('bodySmall', { fontFamily: 'Inter-SemiBold' }),
-        { backgroundColor: colors[bg as keyof typeof colors], color: colors[fg as keyof typeof colors] },
+        { color: colors[fg as keyof typeof colors] },
       ]}>
         {label}
       </Text>
@@ -38,5 +47,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 99,
+    overflow: 'hidden',
   },
 });

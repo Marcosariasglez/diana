@@ -92,6 +92,11 @@ const MOVIE_ROWS: MovieRow[] = [
   [38, 'Toy Story', '1995-11-22', 81, [16, 10751, 35], [DP], 18000, 8.0, 77, 'Los juguetes de un niño cobran vida cuando nadie los ve.'],
   [39, 'WALL-E', '2008-06-27', 98, [16, 878, 10751], [DP], 18500, 8.1, 74, 'Un pequeño robot limpiador descubre su propósito en un planeta abandonado.'],
   // Ciencia ficcion (878)
+  // Cortos (runtime ≤ 40) para probar filtro "Cortos" (A2)
+  [123, 'The Lunchbox', '2013-05-18', 38, [18, 10749], [NF], 900, 7.4, 18, 'Dos desconocidos se conectan a través de un servicio de reparto de comidas en Mumbai.'],
+  [124, 'Waltz with Bashir', '2008-03-27', 35, [99, 18], [PV], 1200, 7.8, 20, 'Un soldado israelí busca sus recuerdos perdidos de la guerra del Líbano.'],
+  // Documentales (género 99) ya existen (ids 88-91); este es extra sin Disney+
+  [125, 'My Octopus Teacher', '2020-09-07', 36, [99], [NF], 1800, 7.6, 22, 'Un hombre solitario forma una amistad con un pulpo en una pradera de kelp.'],
   [40, 'Blade Runner 2049', '2017-10-06', 164, [878, 18], [PV, NF], 13500, 7.6, 70, 'Un nuevo blade runner descubre un secreto que podría cambiar el orden social.'],
   [41, 'Arrival', '2016-11-11', 116, [878, 18], [PV, MX], 16000, 7.6, 69, 'Una lingüista intenta comunicarse con visitantes extraterrestres.', ['La llegada']],
   [42, '2001: A Space Odyssey', '1968-04-06', 149, [878, 12], [MX], 10500, 8.1, 50, 'Una misión a Júpiter se complica cuando la computadora de la nave toma sus propias decisiones.', ['2001: Una odisea del espacio']],

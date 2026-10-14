@@ -9,7 +9,11 @@ export const tmdbSearchRepository: SearchRepository = {
   async search({ query, kind = 'all', page = 0 }) {
     const res = await invokeTmdb<{ results: Raw[]; hasMore: boolean }>({ action: 'search', query, kind, page: page + 1 });
     return {
-      results: res.results.map(({ poster_path: _p, ...r }) => ({ ...r, posterColor: posterColor(r.mediaId) })),
+      results: res.results.map(({ poster_path: posterPath, ...r }) => ({
+        ...r,
+        posterPath,
+        posterColor: posterColor(r.mediaId),
+      })),
       hasMore: res.hasMore,
     };
   },

@@ -12,9 +12,9 @@ import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 
 const FAN = [
-  { title: 'Aftersun', color: '#2B3A55', transform: [{ translateX: -30 }, { rotate: '-9deg' }], z: 1 },
+  { title: 'Aftersun', color: '#2B3A55', transform: [{ translateX: -44 }, { rotate: '-9deg' }], z: 1 },
   { title: 'Past Lives', color: '#5B4B6B', transform: [], z: 3 },
-  { title: 'Burning', color: '#7A5C1E', transform: [{ translateX: 30 }, { rotate: '9deg' }], z: 2 },
+  { title: 'Burning', color: '#7A5C1E', transform: [{ translateX: 44 }, { rotate: '9deg' }], z: 2 },
 ] as const;
 
 function DianaLogo({ accent }: { accent: string }) {

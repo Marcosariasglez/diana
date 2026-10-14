@@ -161,9 +161,27 @@ describe('catálogo paginado (D2-1.5) — builder PostgREST', () => {
     expect(q.filters).toEqual([
       { col: 'title', op: 'neq', val: '' },
       { col: 'media_type', op: 'eq', val: 'movie' },
+      { col: 'runtime', op: 'gt', val: '0' }, // B4: siempre runtime > 0
       { col: null, op: 'or', val: platformFilter(['filmin']) },
     ]);
     expect(q.range).toEqual([0, 999]); // acotado a 1000
+  });
+
+  it('buildCandidatesQuery (B4): runtime max 89 incluye runtime=gt.0 y runtime=lte.89', () => {
+    const q = buildCandidatesQuery(['netflix'], 'movie', 600, { max: 89 });
+    expect(q.filters).toContainEqual({ col: 'runtime', op: 'gt', val: '0' });
+    expect(q.filters).toContainEqual({ col: 'runtime', op: 'lte', val: '89' });
+  });
+
+  it('buildCandidatesQuery (B4): runtime min 90 y max 150 incluye gte/lte', () => {
+    const q = buildCandidatesQuery(['netflix'], 'movie', 600, { min: 90, max: 150 });
+    expect(q.filters).toContainEqual({ col: 'runtime', op: 'gte', val: '90' });
+    expect(q.filters).toContainEqual({ col: 'runtime', op: 'lte', val: '150' });
+  });
+
+  it('buildCandidatesQuery (B4): sin runtime solo pone runtime=gt.0', () => {
+    const q = buildCandidatesQuery([], undefined, 300);
+    expect(q.filters).toEqual([{ col: 'title', op: 'neq', val: '' }, { col: 'runtime', op: 'gt', val: '0' }]);
   });
 });
 

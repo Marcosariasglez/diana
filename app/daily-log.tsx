@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Search, X } from 'lucide-react-native';
 import { StarRating } from '@/components/features/StarRating';
@@ -22,6 +23,7 @@ import { SAVE_ERROR_MESSAGE } from '@/features/detail/useDetailData';
 import { selectEntryByKey, useHistoryStore } from '@/store/useHistoryStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
+import { SPACING } from '@/theme/spacing';
 import { textStyle } from '@/theme/typography';
 import type { Rating } from '@/types/rating';
 import type { SearchKind, SearchResult } from '@/types/search';
@@ -32,6 +34,8 @@ const FILTERS: { label: string; value: SearchKind }[] = [
   { label: 'Películas', value: 'movie' },
   { label: 'Series', value: 'tv' },
   { label: 'Capítulos', value: 'episode' },
+  { label: 'Cortos', value: 'short' },
+  { label: 'Documentales', value: 'documentary' },
 ];
 
 const SAVED_MESSAGE = 'Nota guardada. Revela tu predicción en la ficha.';
@@ -59,8 +63,17 @@ interface TileProps {
   };
 }
 
+const POSTER_BASE_URL = 'https://image.tmdb.org/t/p/w200';
+
+function posterUri(path?: string | null): string | null {
+  if (!path) return null;
+  return `${POSTER_BASE_URL}${path}`;
+}
+
 function ResultTile({ result, width, selected, onPress, s }: TileProps) {
   const height = Math.round((width * 3) / 2);
+  const uri = posterUri(result.posterPath);
+  const hasPoster = uri !== null;
   return (
     <Pressable
       onPress={onPress}
@@ -76,12 +89,22 @@ function ResultTile({ result, width, selected, onPress, s }: TileProps) {
           selected && s.tileSelected,
         ]}
       >
+        {hasPoster ? (
+          <Image
+            source={{ uri }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            accessible={false}
+          />
+        ) : (
+          <Text numberOfLines={3} style={[textStyle('posterTitle', { color: 'white' }), s.tileTitle]}>
+            {result.title}
+          </Text>
+        )}
         <View style={s.badge}>
-          <TypeBadge label={result.label} />
+          {result.tag ? <TypeBadge label={result.tag} /> : <TypeBadge label={result.label} />}
         </View>
-        <Text numberOfLines={3} style={[textStyle('posterTitle', { color: 'white' }), s.tileTitle]}>
-          {result.title}
-        </Text>
       </View>
       <Text numberOfLines={2} style={[textStyle('bodySmall', { fontFamily: 'Inter-SemiBold' }), s.caption]}>
         {result.title}
@@ -110,7 +133,7 @@ export default function DailyLogScreen() {
       alignItems: 'center' as const,
       justifyContent: 'space-between' as const,
       paddingHorizontal: H_PADDING,
-      paddingTop: 16,
+      paddingTop: SPACING.sm,
     },
     title: { color: c.ink },
     closeBtn: {
@@ -121,9 +144,9 @@ export default function DailyLogScreen() {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
     },
-    search: { paddingHorizontal: H_PADDING, marginTop: 20 },
-    pills: { paddingHorizontal: H_PADDING, marginTop: 16 },
-    results: { paddingHorizontal: H_PADDING, paddingTop: 20, paddingBottom: 40 },
+    search: { paddingHorizontal: H_PADDING, marginTop: SPACING.lg },
+    pills: { marginTop: SPACING.md },
+    results: { paddingHorizontal: H_PADDING, paddingTop: SPACING.lg, paddingBottom: SPACING.xl },
     grid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: GAP, rowGap: 16 },
     tile: {
       borderRadius: 12,
@@ -136,12 +159,12 @@ export default function DailyLogScreen() {
     badge: { position: 'absolute' as const, top: 8, left: 8 },
     tileTitle: { paddingHorizontal: 8, paddingBottom: 8 },
     caption: { color: c.ink, marginTop: 8 },
-    source: { color: c.textSecondary, marginTop: 24 },
-    sheet: { gap: 16 },
+    source: { color: c.mut, marginTop: SPACING['2xl'], textAlign: 'center' as const },
+    sheet: { gap: SPACING.lg },
     sheetHeader: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: 12 },
     sheetTitle: { color: c.ink },
     sheetSubtitle: { color: c.textSecondary, marginTop: 2 },
-    stars: { paddingHorizontal: 12 },
+    stars: { paddingHorizontal: SPACING.md },
   }));
 
   const contentWidth = Math.min(windowWidth, MAX_CONTENT_WIDTH) - H_PADDING * 2;
@@ -196,6 +219,8 @@ export default function DailyLogScreen() {
               activeColor={colors.ink}
               items={FILTERS}
               selected={[kind]}
+              scrollable
+              edgePadding={H_PADDING}
               onChange={(sel) => setKind((sel[0] as SearchKind | undefined) ?? 'all')}
             />
           </View>
@@ -204,6 +229,7 @@ export default function DailyLogScreen() {
             style={styles.flex}
             contentContainerStyle={styles.results}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             {status === 'idle' ? (
@@ -248,16 +274,16 @@ export default function DailyLogScreen() {
                     />
                   ))}
                 </View>
-                <Text style={[textStyle('body'), styles.source]}>Resultados de TMDB</Text>
+                <Text style={[textStyle('bodySmall'), styles.source]}>Resultados de TMDB</Text>
               </>
             ) : null}
           </ScrollView>
         </View>
       </Screen>
 
-      <BottomSheet visible={selected !== null} onClose={() => setSelected(null)} snapPoints={[0.5]}>
+      <BottomSheet visible={selected !== null} onClose={() => setSelected(null)} snapPoints={[0.6]}>
         {selected ? (
-          <View style={styles.sheet}>
+          <View style={[styles.sheet, { paddingHorizontal: H_PADDING, paddingTop: SPACING.md, paddingBottom: SPACING.xl }]}>
             <View style={styles.sheetHeader}>
               <View style={styles.flex}>
                 <Text accessibilityRole="header" style={[textStyle('detailTitle'), styles.sheetTitle]}>

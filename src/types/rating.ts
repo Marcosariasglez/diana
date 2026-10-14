@@ -22,6 +22,10 @@ export interface HistoryEntry {
   ratedAt: string;
   source: 'app' | 'letterboxd';
   genreIds?: number[];
+  /** Fecha de registro en el Diario rápido (null si no vino del Diario). */
+  loggedAt?: string | null;
+  /** Ruta de póster solo local (no va a la base). Para evitar parpadeo. */
+  posterPath?: string | null;
 }
 
 export type EntryOrigin = 'detail' | 'daily-log';
