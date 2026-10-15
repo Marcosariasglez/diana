@@ -1,5 +1,3 @@
-import type { WatchlistItem } from '@/store/useWatchlistStore';
-
 /**
  * VERTICE-PLAN-2, D2-3: espejo de «Quiero ver» en la tabla `watchlist`
  * (migración 0008, RLS «solo lo tuyo»).

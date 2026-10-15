@@ -1,8 +1,8 @@
 import JSZip from 'jszip';
 import { openFile, type OpenedFile } from './openFile';
 import Papa from 'papaparse';
-import type { ImportErrorCode, ImportPhase, ImportProgress, ImportResult } from '@/types/import';
-import type { HistoryEntry, MediaKey, Rating } from '@/types/rating';
+import type { ImportPhase } from '@/types/import';
+import type { HistoryEntry, MediaKey } from '@/types/rating';
 import type { Movie } from '@/types/media';
 import { MAX_IMPORT_BYTES, MAX_IMPORT_ROWS } from '@/constants/import';
 import { FIXTURE_MOVIES } from '@/test/fixtures/catalog';
@@ -18,7 +18,7 @@ import { posterColor } from '@/utils/posterColor';
 // P9: los tipos/helpers se exportaron a import.types.ts; se mantiene el export aquí
 // para compatibilidad (se borra este fichero en P9).
 import type { ImportRepository, CsvRow, ParsedCsv } from './import.types';
-import { ImportError, IMPORT_ERROR_MESSAGES, parseRating, ratedAtOf, IMPORT_YEAR_TOLERANCE } from './import.types';
+import { ImportError, parseRating, ratedAtOf, IMPORT_YEAR_TOLERANCE } from './import.types';
 export { ImportError, IMPORT_ERROR_MESSAGES, parseRating, ratedAtOf } from './import.types';
 export type { ImportRepository, CsvRow, ParsedCsv } from './import.types';
 

@@ -1,6 +1,3 @@
-import type { FeedCategory, Media, MediaType, MediaWithAffinity, Movie, TVSeason } from '@/types/media';
-import type { Complexity, MoodFilters } from '@/types/mood';
-import type { MediaKey, RankingContext } from '@/types/rating';
 import { QUESTIONS_BY_COMPLEXITY } from '@/features/mood/questions';
 import { FIXTURE_CATALOG, fixtureMedia, fixtureTvSeason } from '@/test/fixtures/catalog';
 import { bucketOfTenths } from '@/recommender/predict';

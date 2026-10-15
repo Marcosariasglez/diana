@@ -76,7 +76,7 @@ jest.mock('expo-clipboard', () => ({
 // ============================================================================
 jest.mock('@/services', () => {
   const {
-    mockRooms, mockSeq, mockNextCode, mockMe, mockBuildMember,
+    mockRooms, mockNextCode, mockMe, mockBuildMember,
     mockSubscribers, mockDecisionSubscribers, mockFakeSnap,
     mockNotify, mockEnsureSeededRoom, mockTimers,
   } = require('@/__tests__/__mockRoomState');
@@ -88,8 +88,9 @@ jest.mock('@/services', () => {
     const eligible = rankEligible(platforms, ctx, FIXTURE_CATALOG);
     if (eligible.length === 0) return null;
     const first = eligible[0];
-    // Strip ranking internals (tenths, score, explanation) - only pass media+bucket up
-    const { tenths, score, explanation, ...rest } = first;
+    // Strip ranking internals - only pass media+bucket up
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Destructure to exclude keys
+    const { tenths: _t, score: _s, explanation: _e, ...rest } = first;
     return rest;
   };
 

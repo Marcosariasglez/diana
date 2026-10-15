@@ -1,4 +1,3 @@
-import type { AddEntryInput, HistoryEntry, MediaKey, MediaRef } from '@/types/rating';
 import { fixtureMedia } from '@/test/fixtures/catalog';
 import { titleOf } from '@/utils/media';
 import { predict } from '@/recommender/predict';

@@ -2,10 +2,12 @@
 // Los repositorios mock se han eliminado.
 // Ya no lee BACKEND/CATALOG de env.ts (eso muere en P10).
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Re-export on line 31
 import type { CatalogRepository, GROUP_DECK_SEED } from './catalog.types';
 import { tmdbCatalogRepository } from './tmdb/catalog.repository';
 import type { RatingRepository } from './rating.types';
 import { supabaseRatingRepository } from './supabase/rating.repository';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Re-export on line 34
 import type { ProfileRepository, RemoteUserData } from './profile.types';
 import { supabaseProfileRepository } from './supabase/profile.repository';
 import type { RoomRepository } from './room.types';
@@ -13,10 +15,12 @@ import { supabaseRoomRepository } from './supabase/room.repository';
 import type { SearchRepository } from './search.types';
 import { tmdbSearchRepository } from './tmdb/search.repository';
 import type { ImportRepository } from './import.types';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Re-export on line 33
 import { ImportError, IMPORT_ERROR_MESSAGES } from './import.types';
 import { tmdbImportRepository } from './tmdb/import.repository';
 import type { WatchlistRepository } from './watchlist.types';
 import { supabaseWatchlistRepository } from './supabase/watchlist.repository';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Re-export on line 39
 import { RoomError } from './room.errors';
 
 export const catalogRepository: CatalogRepository = tmdbCatalogRepository;

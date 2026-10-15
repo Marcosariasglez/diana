@@ -29,7 +29,7 @@ export const mockDecisionSubscribers = new Map<string, Array<(d: unknown) => voi
 // Base32 characters for room codes (same alphabet as the real system)
 const BASE32 = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-export let mockSeq = { n: 8300 };
+export const mockSeq = { n: 8300 };
 export const mockTimers: NodeJS.Timeout[] = [];
 
 function clearMockTimers(): void {

@@ -48,8 +48,6 @@ export default function ExploreScreen() {
   // P17: Filtro por créditos (director/actor) — degradación si migración 0024 no desplegada
   const [creditQuery, setCreditQuery] = useState('');
   const debouncedCreditQuery = useDebounce(creditQuery, 350);
-  const [creditsAvailable, setCreditsAvailable] = useState(true); // false si columna no existe
-
   const [items, setItems] = useState<Media[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [loadingMore, setLoadingMore] = useState(false);

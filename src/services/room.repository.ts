@@ -1,7 +1,3 @@
-import type { Media, MediaType } from '@/types/media';
-import type { GroupDecision, RoomSnapshot } from '@/types/room';
-import type { Complexity } from '@/types/mood';
-import type { MediaKey } from '@/types/rating';
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, SEEDED_ROOM_CODE } from '@/constants/room';
 import { createFakeRoom, type FakeRoom } from '@/__tests__/__mockFakeSocket';
 import { useProfileStore } from '@/store/useProfileStore';

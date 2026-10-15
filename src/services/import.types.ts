@@ -2,8 +2,7 @@
 // antes de borrarlo. El TMDB import (tmdb/import.repository.ts) usa los mismos
 // helpers puros (parseRating, ratedAtOf, readFile, ImportError) que se reutilizan.
 import type { ImportErrorCode, ImportPhase, ImportProgress, ImportResult } from '@/types/import';
-import type { MediaKey, Rating } from '@/types/rating';
-
+import type { Rating } from '@/types/rating';
 export interface ImportRepository {
   parseLetterboxd(
     file: { uri: string; name: string },
