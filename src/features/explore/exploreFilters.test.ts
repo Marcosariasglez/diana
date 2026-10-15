@@ -9,6 +9,9 @@ import {
   setSort,
   setType,
   toChips,
+  toCountParams,
+  toScope,
+  searchText,
   toggleGenre,
   togglePlatform,
 } from './exploreFilters';
@@ -77,5 +80,36 @@ describe('exploreFilters', () => {
   it('clearFilters conserva el texto y el resto vuelve al inicio', () => {
     const f = setSort(setDecade(toggleGenre(setQuery(INITIAL_FILTERS, 'villeneuve'), 18), 2020), 'year');
     expect(clearFilters(f)).toEqual({ ...INITIAL_FILTERS, query: 'villeneuve' });
+  });
+});
+
+describe('traducción al catálogo', () => {
+  it('searchText exige 2 letras y recorta espacios', () => {
+    expect(searchText(setQuery(INITIAL_FILTERS, ''))).toBe('');
+    expect(searchText(setQuery(INITIAL_FILTERS, 'a'))).toBe('');
+    expect(searchText(setQuery(INITIAL_FILTERS, '  a '))).toBe('');
+    expect(searchText(setQuery(INITIAL_FILTERS, '  du '))).toBe('du');
+  });
+
+  it('toScope omite lo que no filtra', () => {
+    expect(toScope(INITIAL_FILTERS)).toEqual({ sort: 'popularity' });
+  });
+
+  it('toScope incluye tipo, plataformas, géneros, década y orden', () => {
+    let f = setSort(setDecade(toggleGenre(togglePlatform(setType(INITIAL_FILTERS, 'tv'), 'max'), 18), 1990), 'vote');
+    f = toggleGenre(f, 53);
+    expect(toScope(f)).toEqual({ type: 'tv', platforms: ['max'], genres: [18, 53], decade: 1990, sort: 'vote' });
+  });
+
+  it('toScope copia los arrays (no comparte referencias con el estado)', () => {
+    const f = toggleGenre(INITIAL_FILTERS, 18);
+    expect(toScope(f).genres).not.toBe(f.genres);
+  });
+
+  it('toCountParams no lleva orden y añade el texto solo si es buscable', () => {
+    const f = setSort(toggleGenre(INITIAL_FILTERS, 18), 'year');
+    expect(toCountParams(f)).toEqual({ genres: [18] });
+    expect(toCountParams(setQuery(f, 'dune'))).toEqual({ genres: [18], query: 'dune' });
+    expect(toCountParams(setQuery(f, 'd'))).toEqual({ genres: [18] });
   });
 });

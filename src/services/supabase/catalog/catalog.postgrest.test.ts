@@ -10,7 +10,7 @@
  *  - `candidates`/`availableNow` aplican el filtro de plataformas;
  *  - un error de la base se propaga (throw).
  */
-import { postgrestCatalogSource } from './postgrest.repository';
+import { postgrestCatalogSource, resetSearchRpcCache } from './postgrest.repository';
 import { COLUMNS } from './query';
 
 jest.mock('@/lib/supabase', () => ({ getSupabase: jest.fn() }));
@@ -102,7 +102,25 @@ function makeClient(rows: Row[]) {
       return b;
     },
   };
-  return { client, calls, setFail: (f: boolean) => ((client as unknown as { fail?: boolean }).fail = f) };
+  // RPC search_titles: 'ok' devuelve filas + total_count; 'missing' imita PostgREST sin la
+  // migración 0025 (PGRST202); 'fail' es un error real de la base.
+  const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+  let rpcMode: 'ok' | 'missing' | 'fail' = 'missing';
+  (client as unknown as { rpc: unknown }).rpc = async (fn: string, args: Record<string, unknown>) => {
+    rpcCalls.push({ fn, args });
+    if (rpcMode === 'missing') return { data: null, error: { code: 'PGRST202', message: 'Could not find the function public.search_titles' } };
+    if (rpcMode === 'fail') return { data: null, error: { code: 'XX000', message: 'boom rpc' } };
+    const offset = (args.p_offset as number) ?? 0;
+    const page = rows.slice(offset, offset + (args.p_limit as number));
+    return { data: page.map((r) => ({ ...r, total_count: String(rows.length) })), error: null };
+  };
+  return {
+    client,
+    calls,
+    rpcCalls,
+    setRpcMode: (m: 'ok' | 'missing' | 'fail') => (rpcMode = m),
+    setFail: (f: boolean) => ((client as unknown as { fail?: boolean }).fail = f),
+  };
 }
 
 function row(over: Partial<Row> & { tmdb_id: number; media_type: string }): Row {
@@ -131,12 +149,17 @@ const ROWS: Row[] = Array.from({ length: 25 }, (_, i) => row({ tmdb_id: i + 1, m
 describe('repo PostgREST catalog_titles (D2-1.5) — cliente mock', () => {
   let calls: Recorded[];
   let setFail: (f: boolean) => void;
+  let rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
+  let setRpcMode: (m: 'ok' | 'missing' | 'fail') => void;
 
   beforeEach(() => {
+    resetSearchRpcCache();
     const m = makeClient(ROWS);
     (getSupabase as jest.Mock).mockReturnValue(m.client);
     calls = m.calls;
     setFail = m.setFail;
+    rpcCalls = m.rpcCalls;
+    setRpcMode = m.setRpcMode;
   });
 
   it('browse aplica from/select/filters(or)/order(rangos)/range y devuelve la página', async () => {
@@ -173,7 +196,7 @@ describe('repo PostgREST catalog_titles (D2-1.5) — cliente mock', () => {
     expect(page.items[0].platforms).toContain('netflix');
   });
 
-  it('search aplica el FTS (title_tsv websearch_query) y pagina', async () => {
+  it('search sin el RPC desplegado degrada al FTS PostgREST (title_tsv websearch_query) y pagina', async () => {
     const page = await postgrestCatalogSource.search({ query: 'gato', limit: 5 });
     const rec = calls[0];
     expect(rec.filters.some(([col, op, val]) => col === 'title_tsv' && op === 'websearch_query' && val === "'gato'")).toBe(true);
@@ -228,9 +251,103 @@ describe('repo PostgREST catalog_titles (D2-1.5) — cliente mock', () => {
     expect(n).toBe(25);
   });
 
-  it('count con texto aplica el filtro de búsqueda', async () => {
+  it('count con texto y sin el RPC desplegado degrada al filtro FTS', async () => {
     await postgrestCatalogSource.count({ query: 'gato' });
     expect(calls[0].filters.some(([col, op]) => col === 'title_tsv' && op === 'websearch_query')).toBe(true);
+  });
+
+  describe('search_titles (migración 0025)', () => {
+    it('search llama al RPC con texto, filtros, orden y paginación, y no toca la tabla', async () => {
+      setRpcMode('ok');
+      const page = await postgrestCatalogSource.search({
+        query: 'villeneuve',
+        platforms: ['netflix'],
+        genres: [878],
+        decade: 2010,
+        type: 'movie',
+        sort: 'year',
+        cursor: 5,
+        limit: 10,
+      });
+      expect(rpcCalls).toEqual([
+        {
+          fn: 'search_titles',
+          args: {
+            p_query: 'villeneuve',
+            p_platforms: ['netflix'],
+            p_genres: [878],
+            p_decade: 2010,
+            p_type: 'movie',
+            p_sort: 'year',
+            p_offset: 5,
+            p_limit: 10,
+          },
+        },
+      ]);
+      expect(calls).toHaveLength(0); // ni from() ni PostgREST
+      expect(page.items).toHaveLength(10);
+      expect(page.items[0].id).toBe(6); // offset 5 sobre ids 1..25
+      expect(page.hasMore).toBe(true);
+      expect(page.nextCursor).toBe(15);
+    });
+
+    it('search pasa null por lo que no se filtra y usa los valores por defecto', async () => {
+      setRpcMode('ok');
+      await postgrestCatalogSource.search({ query: 'gato' });
+      expect(rpcCalls[0].args).toEqual({
+        p_query: 'gato',
+        p_platforms: null,
+        p_genres: null,
+        p_decade: null,
+        p_type: null,
+        p_sort: 'popularity',
+        p_offset: 0,
+        p_limit: 20,
+      });
+    });
+
+    it('la última página (menos filas que el límite) no tiene siguiente', async () => {
+      setRpcMode('ok');
+      const page = await postgrestCatalogSource.search({ query: 'gato', cursor: 20, limit: 10 });
+      expect(page.items).toHaveLength(5);
+      expect(page.hasMore).toBe(false);
+      expect(page.nextCursor).toBeNull();
+    });
+
+    it('si el RPC no existe degrada a PostgREST y lo recuerda (no reintenta en cada tecla)', async () => {
+      await postgrestCatalogSource.search({ query: 'a', limit: 5 });
+      await postgrestCatalogSource.search({ query: 'ab', limit: 5 });
+      expect(rpcCalls).toHaveLength(1); // solo el primer intento
+      expect(calls).toHaveLength(2); // las dos búsquedas fueron por PostgREST
+    });
+
+    it('un error real del RPC se propaga y NO marca el RPC como ausente', async () => {
+      setRpcMode('fail');
+      await expect(postgrestCatalogSource.search({ query: 'gato' })).rejects.toMatchObject({ message: 'boom rpc' });
+      setRpcMode('ok');
+      await postgrestCatalogSource.search({ query: 'gato' });
+      expect(rpcCalls).toHaveLength(2);
+    });
+
+    it('count con texto usa total_count del RPC (cuenta también director/actor) con límite 1', async () => {
+      setRpcMode('ok');
+      const n = await postgrestCatalogSource.count({ query: 'villeneuve', genres: [878], type: 'movie' });
+      expect(n).toBe(25);
+      expect(rpcCalls[0].args).toMatchObject({ p_query: 'villeneuve', p_genres: [878], p_type: 'movie', p_limit: 1, p_offset: 0 });
+      expect(calls).toHaveLength(0);
+    });
+
+    it('count con texto devuelve 0 si el RPC no encuentra nada, y null si falla', async () => {
+      setRpcMode('ok');
+      const emptyClient = makeClient([]);
+      emptyClient.setRpcMode('ok');
+      (getSupabase as jest.Mock).mockReturnValue(emptyClient.client);
+      await expect(postgrestCatalogSource.count({ query: 'nada' })).resolves.toBe(0);
+      const failing = makeClient(ROWS);
+      failing.setRpcMode('fail');
+      (getSupabase as jest.Mock).mockReturnValue(failing.client);
+      await expect(postgrestCatalogSource.count({ query: 'gato' })).resolves.toBeNull();
+    });
   });
 
   it('count devuelve null si la base falla (no rompe la UI)', async () => {

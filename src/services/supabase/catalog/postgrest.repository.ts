@@ -114,6 +114,56 @@ async function runCount(sb: SupabaseClient, filters: CatalogFilter[]): Promise<n
   }
 }
 
+/** Fila del RPC `search_titles`: las columnas de catalog_titles + el total antes de paginar. */
+type SearchRpcRow = CatalogRow & { total_count?: number | string | null };
+
+// Estado del RPC `search_titles` (migración 0025): undefined = sin probar,
+// true = responde, false = no desplegado (la búsqueda degrada a PostgREST por
+// título y no se reintenta en cada tecla).
+let searchRpcAvailable: boolean | undefined;
+
+/** Solo para tests: olvida si el RPC existía. */
+export function resetSearchRpcCache(): void {
+  searchRpcAvailable = undefined;
+}
+
+/** «No existe esa función»: PostgREST (PGRST202) o Postgres (42883). Cualquier otro error es real. */
+function isMissingRpc(error: { code?: string; message?: string }): boolean {
+  return (
+    error.code === 'PGRST202' ||
+    error.code === '42883' ||
+    /could not find the function|function .* does not exist/i.test(error.message ?? '')
+  );
+}
+
+/**
+ * Llama a `search_titles` con la misma paginación que la consulta PostgREST
+ * (`q` ya trae el offset/limit acotados). null = el RPC no está desplegado;
+ * un error real de la base se propaga.
+ */
+async function callSearchRpc(p: SearchParams, q: PostgRestQuery): Promise<SearchRpcRow[] | null> {
+  if (searchRpcAvailable === false) return null;
+  const { data, error } = await getSupabase().rpc('search_titles', {
+    p_query: p.query,
+    p_platforms: p.platforms && p.platforms.length > 0 ? [...p.platforms] : null,
+    p_genres: p.genres && p.genres.length > 0 ? [...p.genres] : null,
+    p_decade: p.decade ?? null,
+    p_type: p.type ?? null,
+    p_sort: p.sort ?? 'popularity',
+    p_offset: q.range[0],
+    p_limit: q.range[1] - q.range[0] + 1,
+  });
+  if (error) {
+    if (isMissingRpc(error)) {
+      searchRpcAvailable = false;
+      return null;
+    }
+    throw error;
+  }
+  searchRpcAvailable = true;
+  return (data ?? []) as unknown as SearchRpcRow[];
+}
+
 function toMedia(rows: CatalogRow[]): Media[] {
   return rows.map(rowToMedia);
 }
@@ -132,9 +182,25 @@ export const postgrestCatalogSource: CatalogSource = {
   },
   async search(p: SearchParams): Promise<PageResult<Media>> {
     const q = buildSearchQuery(p);
-    return pageFrom(await runQuery(getSupabase(), q), q);
+    // Con la migración 0025: título + original + full-text + director + reparto.
+    // Sin ella: solo título (FTS) por PostgREST.
+    const viaRpc = await callSearchRpc(p, q);
+    return pageFrom(viaRpc ?? (await runQuery(getSupabase(), q)), q);
   },
   async count(p: CountParams): Promise<number | null> {
+    if (p.query?.trim()) {
+      // Con texto el total sale del propio RPC (cuenta también director/actor).
+      try {
+        const sp: SearchParams = { ...p, query: p.query, cursor: 0, limit: 1 };
+        const rows = await callSearchRpc(sp, buildSearchQuery(sp));
+        if (rows) {
+          const total = rows.length === 0 ? 0 : Number(rows[0].total_count);
+          return Number.isFinite(total) ? total : null;
+        }
+      } catch {
+        return null;
+      }
+    }
     return runCount(getSupabase(), buildCountFilters(p));
   },
   async byIds(type: 'movie' | 'tv', ids: number[]): Promise<Media[]> {

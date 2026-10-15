@@ -2,7 +2,8 @@
 // Todo PURO: sin React ni red. El hook (`useUnifiedSearch`) y la UI lo consumen.
 import { GENRES } from '@/constants/genres';
 import { platformName } from '@/constants/platforms';
-import type { CatalogSort } from '@/services/supabase/catalog/types';
+import type { CatalogSort, CountParams } from '@/services/supabase/catalog/types';
+import type { MediaType } from '@/types/media';
 
 export type ExploreType = 'all' | 'movie' | 'tv';
 
@@ -104,4 +105,44 @@ export function removeChip(f: ExploreFilters, chip: Pick<FilterChip, 'kind' | 'v
     case 'decade':
       return { ...f, decade: null };
   }
+}
+
+/** Menos de 2 letras no es una búsqueda: se explora el catálogo sin texto. */
+export const MIN_QUERY_LENGTH = 2;
+
+/** Texto que se envía al buscador ('' si aún es demasiado corto). */
+export function searchText(f: ExploreFilters): string {
+  const q = f.query.trim();
+  return q.length >= MIN_QUERY_LENGTH ? q : '';
+}
+
+/** Filtros en la forma que aceptan `browse` y `search` (sin claves vacías). */
+export interface CatalogScope {
+  type?: MediaType;
+  platforms?: string[];
+  genres?: number[];
+  decade?: number;
+  sort: CatalogSort;
+}
+
+export function toScope(f: ExploreFilters): CatalogScope {
+  const scope: CatalogScope = { sort: f.sort };
+  if (f.type !== 'all') scope.type = f.type;
+  if (f.platforms.length > 0) scope.platforms = [...f.platforms];
+  if (f.genres.length > 0) scope.genres = [...f.genres];
+  if (f.decade !== null) scope.decade = f.decade;
+  return scope;
+}
+
+/** Parámetros de `count` («Ver N títulos»): los mismos filtros, sin orden. */
+export function toCountParams(f: ExploreFilters): CountParams {
+  const { type, platforms, genres, decade } = toScope(f);
+  const text = searchText(f);
+  return {
+    ...(type && { type }),
+    ...(platforms && { platforms }),
+    ...(genres && { genres }),
+    ...(decade !== undefined && { decade }),
+    ...(text && { query: text }),
+  };
 }
