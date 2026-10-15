@@ -7,9 +7,9 @@
 import type { Media } from '@/types/media';
 import { FIXTURE_CATALOG } from '@/test/fixtures/catalog';
 import { mediaToRow, rowToMedia } from './mapper';
-import { browseRows, candidatesRows, searchRows } from './engine';
+import { browseRows, candidatesRows, countRows, searchRows } from './engine';
 import type { CatalogSource, RuntimeRange } from './postgrest.repository';
-import type { BrowseParams, CatalogRow, PageResult, SearchParams } from './types';
+import type { BrowseParams, CatalogRow, CountParams, PageResult, SearchParams } from './types';
 
 let rows: CatalogRow[] | null = null;
 function allRows(): CatalogRow[] {
@@ -27,6 +27,9 @@ export const mockCatalogSource: CatalogSource = {
   },
   async search(p: SearchParams): Promise<PageResult<Media>> {
     return media(searchRows(allRows(), p));
+  },
+  async count(p: CountParams): Promise<number | null> {
+    return countRows(allRows(), p);
   },
   async byIds(type: 'movie' | 'tv', ids: number[]): Promise<Media[]> {
     const wanted = new Set(ids);

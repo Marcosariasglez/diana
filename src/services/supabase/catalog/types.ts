@@ -38,6 +38,8 @@ export interface BrowseParams {
   platforms?: ReadonlyArray<string>;
   /** Un único género (id TMDB). */
   genre?: number;
+  /** Varios géneros (ids TMDB): el título debe tener AL MENOS UNO (solapamiento). Vacío = sin filtro. */
+  genres?: ReadonlyArray<number>;
   /** Década: 2000 → [2000, 2009], 1990 → [1990, 1999], … */
   decade?: number;
   /** Tipo de medio. */
@@ -55,9 +57,16 @@ export interface SearchParams {
   type?: MediaType;
   /** «Disponible en tus plataformas». */
   platforms?: ReadonlyArray<string>;
+  /** Mismos filtros que `browse`: géneros (al menos uno), década y orden (defecto: popularidad). */
+  genres?: ReadonlyArray<number>;
+  decade?: number;
+  sort?: CatalogSort;
   cursor?: number;
   limit?: number;
 }
+
+/** Parámetros de `count`: los filtros de `browse` más texto opcional (con texto cuenta como `search`). */
+export type CountParams = Omit<BrowseParams, 'cursor' | 'limit' | 'sort'> & { query?: string };
 
 export interface PageResult<T> {
   items: T[];

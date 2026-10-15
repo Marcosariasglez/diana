@@ -1,0 +1,528 @@
+<title>Diana: propuestas Inicio y Explorar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;700;800&display=swap">
+<style>
+/* Layout: tablero oscuro; cada propuesta = ficha a la izquierda + teléfonos 375x812 a la derecha (scroll horizontal propio). */
+/* Tokens del teléfono = src/theme/tokens.ts (dark). El tablero se compromete con un único look oscuro porque los mockups son modo oscuro. */
+:root{
+  color-scheme:dark;
+  --board:#07080A;--panel:#101317;
+  --bg:#0A0C0F;--card:#14171B;--ink:#F2F3F5;--mut:#8C939C;--sec:#B3B9C1;
+  --line:#22262C;--line2:#2E333A;--chip:#1E2227;
+  --acc:#37D6A4;--accS:#0F3129;--onAcc:#03140E;
+  --warn:#F2B85B;--c2:#7C93FF;--c4:#E679B0;--c6:#B48CFF;--neg:#FF7168;
+  --display:'Manrope','Inter',system-ui,sans-serif;
+  --body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--board);color:var(--ink);font-family:var(--body);font-size:15px;-webkit-font-smoothing:antialiased;padding-inline:16px}
+.wrap{max-width:1480px;margin:0 auto;padding-block:40px 80px}
+a{color:inherit}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i.s{width:14px;height:14px}.i.xs{width:12px;height:12px;stroke-width:2.5}
+
+/* ---------- tablero ---------- */
+.top{display:flex;flex-direction:column;gap:14px;max-width:760px}
+.kick{font:700 12px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.top h1{font:800 clamp(30px,5vw,46px)/1.05 var(--display);letter-spacing:-.035em;text-wrap:balance}
+.top p{color:var(--sec);line-height:1.55;max-width:64ch}
+.find{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px 26px}
+.find h2{grid-column:1/-1;font:800 17px var(--display);letter-spacing:-.01em}
+.find div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.find b{font:700 14px var(--display)}
+.find p{color:var(--sec);font-size:13.5px;line-height:1.5}
+.find code{font:500 12.5px ui-monospace,Consolas,monospace;color:var(--warn);word-break:break-word}
+.jump{display:flex;gap:8px;margin-top:26px;flex-wrap:wrap}
+.jump a{text-decoration:none;font:600 14px var(--body);padding:9px 16px;border-radius:99px;background:var(--chip)}
+.jump a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.scr-h{display:flex;align-items:baseline;gap:14px;margin:64px 0 6px;flex-wrap:wrap}
+.scr-h h2{font:800 34px var(--display);letter-spacing:-.03em}
+.scr-h span{color:var(--mut);font-size:14px}
+.prop{display:grid;grid-template-columns:300px minmax(0,1fr);gap:32px;padding:34px 0;border-top:1px solid var(--line)}
+@media (max-width:1000px){.prop{grid-template-columns:minmax(0,1fr)}}
+.desc{display:flex;flex-direction:column;gap:14px;min-width:0}
+.letter{display:flex;align-items:center;gap:12px}
+.letter b{width:44px;height:44px;border-radius:12px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:800 22px var(--display)}
+.letter div{display:flex;flex-direction:column}
+.letter strong{font:800 20px var(--display);letter-spacing:-.02em}
+.letter em{font-style:normal;color:var(--mut);font-size:13px}
+.desc p{color:var(--sec);font-size:14px;line-height:1.55}
+.desc h4{font:700 11.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-top:4px}
+.desc ul{display:flex;flex-direction:column;gap:6px;padding-left:16px;color:var(--sec);font-size:13.5px;line-height:1.45}
+.desc li::marker{color:var(--line2)}
+.desc .pro li::marker{color:var(--acc)}.desc .con li::marker{color:var(--neg)}
+.phones{display:flex;gap:40px;overflow-x:auto;padding:14px 12px 22px;min-width:0}
+.ph{display:flex;flex-direction:column;gap:14px;align-items:center;flex:none}
+.ph figcaption{color:var(--mut);font-size:13px;text-align:center;max-width:340px}
+.ph figcaption b{color:var(--ink);font-weight:600}
+.close{margin-top:56px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:8px}
+.close b{font:800 20px var(--display)}
+.close p{color:var(--sec);line-height:1.5}
+
+/* ---------- teléfono ---------- */
+.phone{width:375px;height:812px;border-radius:46px;background:var(--bg);position:relative;overflow:hidden;color:var(--ink);
+  box-shadow:0 0 0 1px var(--line2),0 0 0 9px #030405,0 0 0 10px var(--line2),0 30px 70px rgba(0,0,0,.6)}
+.status{height:44px;display:flex;justify-content:space-between;align-items:center;padding:8px 30px 0;font:600 14px var(--body);position:relative;z-index:4}
+.sig{display:flex;gap:5px;align-items:center}.sig i{display:block;background:var(--ink);border-radius:2px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:84px;background:rgba(20,23,27,.92);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;padding-top:10px;z-index:5}
+.nav div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--mut);font:600 10.5px var(--body)}
+.nav .on{color:var(--ink)}.nav .on .i{color:var(--acc)}
+.nav::after{content:'';position:absolute;bottom:8px;left:50%;margin-left:-67px;width:134px;height:5px;border-radius:9px;background:var(--ink)}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 20px 12px;gap:12px}
+.h1{font:800 28px/1.1 var(--display);letter-spacing:-.03em}
+.rb{width:40px;height:40px;border-radius:50%;background:var(--card);display:grid;place-items:center;flex:none;position:relative}
+.rb.glass{background:rgba(10,12,15,.45);backdrop-filter:blur(8px)}
+.dot{position:absolute;top:8px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--acc);border:2px solid var(--card)}
+.sh{display:flex;justify-content:space-between;align-items:baseline;padding:0 20px;margin:20px 0 10px;gap:10px}
+.sh h4{font:800 19px var(--display);letter-spacing:-.02em;white-space:nowrap}
+.sh a{font:600 13.5px var(--body);color:var(--acc);text-decoration:none;white-space:nowrap}
+.sub{font:500 12.5px var(--body);color:var(--mut);padding:0 20px;margin:-6px 0 10px;display:flex;gap:6px;align-items:center}
+.sub.acc{color:var(--acc)}
+.hs{display:flex;gap:10px;padding:0 20px;overflow:hidden}
+.why{display:inline-flex;gap:6px;align-items:center;color:var(--acc);font:600 13px var(--body)}
+.chip{font:600 12.5px var(--body);padding:7px 12px;border-radius:99px;background:var(--chip);color:var(--ink);white-space:nowrap;display:inline-flex;gap:6px;align-items:center;font-style:normal}
+.chip.on{background:var(--accS);color:var(--acc)}
+.chip.ink{background:var(--ink);color:var(--bg)}
+.chip.sm{padding:5px 10px;font-size:12px}
+.chip.ghost{background:transparent;color:var(--acc);padding-inline:4px}
+
+/* póster generado (placeholder como posterColor() del Poster real) */
+.pst{position:relative;flex:none;border-radius:10px;overflow:hidden;
+  background:radial-gradient(circle at 72% 22%,hsl(var(--h) 75% 62% / .55),transparent 42%),linear-gradient(165deg,hsl(var(--h) 42% 34%),hsl(calc(var(--h) + 35) 48% 9%))}
+.pst::before{content:'';position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(0,0,0,.6))}
+.pt{position:absolute;left:8px;right:8px;bottom:8px;font-family:var(--display);font-weight:800;line-height:1.05;letter-spacing:-.02em;color:#fff;text-wrap:balance}
+.tvb{position:absolute;top:6px;right:6px;font:700 8.5px var(--body);letter-spacing:.08em;background:rgba(10,12,15,.72);color:var(--ink);padding:2px 5px;border-radius:4px;font-style:normal}
+.bdg{position:absolute;top:6px;left:6px;font:800 10.5px var(--display);background:rgba(10,12,15,.8);color:var(--acc);padding:3px 6px;border-radius:6px;font-style:normal}
+.bdg.gem{color:var(--warn)}
+.av{width:24px;height:24px;border-radius:50%;border:2px solid var(--bg);display:grid;place-items:center;font:800 10px var(--display);color:#0A0C0F;background:hsl(var(--a) 70% 74%);font-style:normal;flex:none}
+.avb{position:absolute;bottom:6px;right:6px}
+.avs{display:flex}.avs .av{margin-left:-7px}.avs .av:first-child{margin-left:0}
+
+/* ---- Inicio A ---- */
+.heroA{position:relative;height:560px}
+.heroA>.pst{position:absolute;inset:0;border-radius:0}
+.heroA .fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,12,15,.6) 0,transparent 20%,transparent 42%,var(--bg) 97%)}
+.heroA .status{position:absolute;left:0;right:0;top:0}
+.heroA .tp{position:absolute;top:50px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;z-index:2}
+.wm{font:800 23px var(--display);letter-spacing:-.045em}
+.wm i{font-style:normal;color:var(--acc)}
+.heroA .bd{position:absolute;left:20px;right:20px;bottom:4px;display:flex;flex-direction:column;gap:9px;z-index:2}
+.eyebrow{font:700 11px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--sec)}
+.hT{font:800 46px/1 var(--display);letter-spacing:-.045em}
+.hMeta{color:var(--sec);font:500 13px var(--body)}
+.hBtns{display:flex;gap:10px;margin-top:4px}
+.btnL{background:var(--ink);color:var(--bg);font:700 15px var(--display);padding:12px 22px;border-radius:99px;display:inline-flex;gap:6px;align-items:center}
+.btnG{background:rgba(242,243,245,.12);color:var(--ink);font:700 15px var(--display);padding:12px 18px;border-radius:99px;display:inline-flex;gap:6px;align-items:center}
+.dots{display:flex;gap:6px;margin-top:8px}.dots i{width:6px;height:6px;border-radius:9px;background:var(--line2)}.dots i.on{width:18px;background:var(--ink)}
+.t10a{display:flex;align-items:flex-end;flex:none}
+.t10a b{font:800 112px/.78 var(--display);color:transparent;-webkit-text-stroke:1.5px #59616C;margin-right:-16px;letter-spacing:-.07em}
+.t10a .pst{z-index:1}
+.land{flex:none;display:flex;flex-direction:column;gap:7px}
+.land .pst{border-radius:12px}
+.land b{font:700 14px var(--display)}
+.land span{font:500 12px var(--body);color:var(--mut);margin-top:-4px}
+
+/* ---- Inicio B ---- */
+.pills{display:flex;gap:6px;padding:0 20px;overflow:hidden}
+.cardB{flex:none;width:298px;background:var(--card);border-radius:18px;padding:12px;display:flex;gap:12px}
+.cardB .inf{display:flex;flex-direction:column;gap:7px;min-width:0;flex:1}
+.cardB h5{font:800 17px/1.15 var(--display);letter-spacing:-.02em}
+.meta{font:500 12px var(--body);color:var(--mut)}
+.tags{display:flex;gap:4px;flex-wrap:wrap}
+.tag{font:600 10.5px var(--body);padding:3px 7px;border-radius:6px;background:var(--chip);color:var(--sec)}
+.pred{display:flex;align-items:baseline;gap:6px}
+.pred b{font:800 20px var(--display);color:var(--acc);font-variant-numeric:tabular-nums}
+.pred span{font:500 11px var(--body);color:var(--mut)}
+.aff{height:4px;border-radius:9px;background:var(--chip)}.aff i{display:block;height:100%;background:var(--acc);border-radius:9px}
+.cardB .why{font-size:11.5px;line-height:1.3;align-items:flex-start}
+.lr{display:flex;gap:12px;align-items:center;padding:9px 20px;border-top:1px solid var(--line)}
+.lr:first-of-type{border-top:0}
+.rk{font:800 19px var(--display);color:var(--mut);width:20px;text-align:center;font-variant-numeric:tabular-nums;flex:none}
+.lr .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.lr h6{font:700 15px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lr .why{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.lr .why .i{vertical-align:-2px;margin-right:4px}
+.score{text-align:right;flex:none}
+.score b{font:800 17px var(--display);color:var(--acc);display:block;font-variant-numeric:tabular-nums}
+.score span{font:500 10px var(--body);color:var(--mut)}
+.score s{text-decoration:none;font:500 11px var(--body);color:var(--sec);display:block}
+.capt{display:flex;flex-direction:column;gap:3px;flex:none}
+.capt b{font:700 12.5px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.capt span{font:600 11px var(--body);color:var(--mut);display:flex;gap:6px}
+.capt span em{color:var(--acc);font-style:normal}
+.more{margin:8px 20px 0;padding:11px;border-radius:12px;background:var(--card);text-align:center;font:600 13.5px var(--body);color:var(--acc)}
+
+/* ---- Inicio C ---- */
+.cflow{position:relative;height:322px;margin-top:2px}
+.cflow .pst{position:absolute}
+.cflow .side{opacity:.45;top:40px}
+.cflow .mid{left:calc(50% - 107px);top:0;z-index:2;box-shadow:0 20px 40px rgba(0,0,0,.6);border-radius:14px}
+.cinfo{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 24px 0}
+.cinfo h3{font:800 26px var(--display);letter-spacing:-.03em}
+.whyPill{background:var(--accS);color:var(--acc);border-radius:99px;padding:7px 12px;font:600 12.5px var(--body);display:inline-flex;gap:6px;align-items:center}
+.soc{display:flex;gap:8px;align-items:center;font:500 12.5px var(--body);color:var(--sec)}
+.t10c{display:flex;align-items:flex-end;flex:none}
+.t10c b{font:800 150px/.76 var(--display);color:var(--bg);-webkit-text-stroke:2.5px var(--ink);margin-right:-30px;letter-spacing:-.08em}
+.t10c .pst{z-index:1}
+.moods{display:flex;gap:8px;padding:0 20px;overflow:hidden}
+.mood{flex:none;border-radius:14px;padding:12px 14px;background:var(--card);display:flex;flex-direction:column;gap:2px;min-width:118px}
+.mood b{font:700 14px var(--display)}.mood span{font:500 11.5px var(--body);color:var(--mut)}
+.capt .who{display:flex;gap:6px;align-items:center;color:var(--sec)}
+
+/* ---- Explorar comunes ---- */
+.srch{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;height:48px;padding:0 5px 0 14px;margin:0 20px;color:var(--mut);font:500 14.5px var(--body);border:1px solid var(--line);flex:1;min-width:0}
+.srch .ph{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srch.typing{border-color:var(--acc);color:var(--ink)}
+.caret{display:inline-block;width:2px;height:18px;background:var(--acc);vertical-align:-3px;margin-left:1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}}
+.fbtn{width:38px;height:38px;border-radius:10px;background:var(--chip);display:grid;place-items:center;position:relative;color:var(--ink);flex:none}
+.fbtn em{position:absolute;top:-5px;right:-5px;background:var(--acc);color:var(--onAcc);font:800 10px var(--display);min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;font-style:normal;border:2px solid var(--card)}
+.achips{display:flex;gap:6px;padding:10px 20px 0;overflow:hidden;align-items:center}
+.rmeta{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 10px;font:500 12.5px var(--body);color:var(--mut)}
+.rmeta b{color:var(--ink);font-weight:600}
+.rmeta .r{display:flex;gap:6px;align-items:center;color:var(--sec)}
+.grid{display:grid;grid-template-columns:repeat(3,106px);gap:8px;padding:0 20px}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.62);z-index:6}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:26px 26px 0 0;z-index:7;padding:8px 20px 30px;display:flex;flex-direction:column;gap:16px}
+.handle{width:40px;height:5px;border-radius:9px;background:var(--line2);margin:0 auto}
+.shd{display:flex;justify-content:space-between;align-items:center}
+.shd h5{font:800 20px var(--display);letter-spacing:-.02em}
+.shd a{color:var(--acc);font:600 13.5px var(--body)}
+.grp{display:flex;flex-direction:column;gap:8px}
+.lbl{font:700 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.wr{display:flex;flex-wrap:wrap;gap:6px}
+.seg{display:flex;background:var(--chip);border-radius:99px;padding:3px}
+.seg i{flex:1;text-align:center;font:600 13px var(--body);padding:7px 4px;border-radius:99px;color:var(--mut);font-style:normal;white-space:nowrap}
+.seg i.on{background:var(--ink);color:var(--bg)}
+.cta{background:var(--acc);color:var(--onAcc);font:800 16px var(--display);text-align:center;padding:15px;border-radius:14px}
+
+/* ---- Explorar B ---- */
+.srow{display:flex;align-items:center;gap:10px;padding:6px 20px 0 0}
+.srow .srch{margin-right:0}
+.cancel{color:var(--acc);font:600 14px var(--body)}
+.sgh{font:700 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);padding:16px 20px 6px}
+.sgr{display:flex;align-items:center;gap:12px;padding:8px 20px}
+.pav{width:44px;height:44px;border-radius:50%;background:hsl(28 32% 30%);display:grid;place-items:center;font:800 15px var(--display);flex:none}
+.sgr .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sgr .tx b{font:700 15px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sgr .tx span{font:500 12.5px var(--body);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kd{font:600 10.5px var(--body);color:var(--sec);background:var(--chip);padding:3px 8px;border-radius:6px;flex:none}
+mark{background:none;color:var(--acc)}
+.sgi{width:44px;height:44px;border-radius:12px;background:var(--chip);display:grid;place-items:center;color:var(--sec);flex:none}
+.inchip{display:inline-flex;align-items:center;gap:5px;background:var(--accS);color:var(--acc);font:600 12.5px var(--body);padding:5px 8px 5px 10px;border-radius:8px;white-space:nowrap}
+.tbar{display:flex;gap:8px;padding:12px 20px 4px;align-items:center}
+.obtn{display:inline-flex;gap:6px;align-items:center;font:600 13px var(--body);padding:8px 12px;border-radius:10px;border:1px solid var(--line2);white-space:nowrap}
+.obtn.on{border-color:var(--acc);color:var(--acc)}
+.vt{margin-left:auto;display:flex;background:var(--chip);border-radius:10px;padding:3px}
+.vt i{width:32px;height:28px;display:grid;place-items:center;border-radius:8px;color:var(--mut)}
+.vt i.on{background:var(--ink);color:var(--bg)}
+.dr{display:flex;gap:12px;padding:10px 20px;border-top:1px solid var(--line);align-items:flex-start}
+.dr .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.dr h6{font:800 15.5px var(--display);letter-spacing:-.01em}
+.dr .tx>span{font:500 12px var(--body);color:var(--mut)}
+.plats{display:flex;gap:4px;margin-top:2px}
+.plat{font:700 10px var(--body);padding:2px 6px;border-radius:5px;background:var(--chip);color:var(--sec)}
+.fbar{display:flex;align-items:center;gap:14px;padding:4px 20px 8px}
+.fbar h5{font:800 18px var(--display);flex:1;text-align:center}
+.fbar a{color:var(--acc);font:600 13.5px var(--body)}
+.fscroll{padding:0 20px;display:flex;flex-direction:column;gap:18px}
+.ck{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--line);font:600 14.5px var(--body)}
+.ck:first-of-type{border-top:0}
+.box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line2);display:grid;place-items:center;flex:none}
+.box.on{background:var(--acc);border-color:var(--acc);color:var(--onAcc)}
+.ck .n{margin-left:auto;color:var(--mut);font:500 12.5px var(--body);font-variant-numeric:tabular-nums}
+.hist{display:flex;align-items:flex-end;gap:3px;height:48px}
+.hist i{flex:1;background:var(--line2);border-radius:2px 2px 0 0}
+.hist i.in{background:var(--acc);opacity:.75}
+.rng{position:relative;height:18px;margin-top:-4px}
+.rng::before{content:'';position:absolute;left:0;right:0;top:8px;height:3px;border-radius:3px;background:var(--line2)}
+.rng s{position:absolute;top:8px;height:3px;background:var(--acc);left:38%;right:0}
+.rng u{position:absolute;top:0;width:20px;height:20px;border-radius:50%;background:var(--ink);border:3px solid var(--acc)}
+.rv{display:flex;justify-content:space-between;font:700 13px var(--display);font-variant-numeric:tabular-nums}
+.fsticky{position:absolute;left:0;right:0;bottom:0;padding:14px 20px 30px;background:linear-gradient(transparent,var(--bg) 30%);z-index:6}
+
+/* ---- Explorar C ---- */
+.hint{padding:8px 20px 0;font:500 12.5px var(--body);color:var(--mut)}
+.hint b{color:var(--sec);font-weight:600}
+.cols{display:flex;gap:10px;padding:0 20px;overflow:hidden}
+.col{flex:none;width:150px;height:86px;border-radius:14px;padding:11px;display:flex;align-items:flex-end;font:800 14px/1.1 var(--display);background:linear-gradient(135deg,hsl(var(--h) 45% 32%),hsl(calc(var(--h) + 40) 50% 12%))}
+.parsed{display:flex;flex-wrap:wrap;gap:6px;padding:10px 20px 0;align-items:center}
+.parsed>span{font:500 12px var(--body);color:var(--mut);width:100%}
+.pc{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:99px;font:600 12px var(--body);white-space:nowrap}
+.pc small{font:600 10.5px var(--body);opacity:.75}
+.pc.g{background:rgba(180,140,255,.14);color:var(--c6)}
+.pc.e{background:rgba(242,184,91,.14);color:var(--warn)}
+.pc.p{background:rgba(124,147,255,.15);color:var(--c2)}
+.pc.add{border:1px dashed var(--line2);color:var(--sec)}
+.tabsC{padding:12px 20px 10px}
+.fnote{margin:0 20px 10px;padding:9px 12px;border-radius:12px;background:var(--card);display:flex;gap:10px;align-items:center;font:500 12.5px var(--body);color:var(--sec)}
+.fnote b{color:var(--ink);font-weight:600}
+.qrow{display:flex;gap:6px;overflow:hidden;margin:0 -20px;padding:0 20px}
+.tg{display:flex;justify-content:space-between;align-items:center;font:600 14px var(--body)}
+.sw{width:44px;height:26px;border-radius:99px;background:var(--line2);position:relative;flex:none}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--ink)}
+.sw.on{background:var(--acc)}.sw.on::after{left:21px}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16v4M17 18h4"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+  <symbol id="list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h1M4 12h1M4 18h1"/></symbol>
+  <symbol id="home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></symbol>
+  <symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></symbol>
+  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="film" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/></symbol>
+  <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3 2.3 3.5 5"/></symbol>
+  <symbol id="star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.8z"/></symbol>
+</svg>
+
+<main class="wrap">
+  <header class="top">
+    <span class="kick">Diana · Rediseño de Inicio y Explorar</span>
+    <h1>Seis propuestas para elegir dos pantallas</h1>
+    <p>Tres direcciones para Inicio y tres para Explorar, dibujadas a 375×812 en modo oscuro con los tokens reales de <code style="color:var(--warn)">src/theme/tokens.ts</code> (Manrope + Inter, acento #37D6A4). Los pósters son placeholders de color, igual que el <code style="color:var(--warn)">Poster</code> sin imagen. Elige una letra por pantalla; se pueden mezclar piezas.</p>
+  </header>
+
+  <section class="find" aria-labelledby="fh">
+    <h2 id="fh">Lo que dice el código hoy (condiciona las propuestas)</h2>
+    <div><b>El RPC solo explica «Porque te gustó X»</b><p><code>recommend</code> (0021) devuelve <code>score</code> y <code>explanation</code> con hasta 2 títulos. No devuelve <code>tenths</code> ni <code>bucket</code>: el bucket se calcula en cliente con <code>bucketFromScore</code> y la nota sale de <code>predict_tenths</code>, una llamada por título. Las razones «género X» o «época Y» de los mockups requieren ampliar el RPC o derivarlas en cliente.</p></div>
+    <div><b>El buscador de director/actor no filtra</b><p>En <code>explore.tsx</code>, <code>debouncedCreditQuery</code> se calcula pero <code>fetchPage</code> nunca lo usa. Las columnas <code>directors</code> y <code>cast_top</code> (0024) ya existen con índice GIN.</p></div>
+    <div><b>Géneros multi se filtran en cliente</b><p><code>browse</code> acepta un solo género; el resto se filtra sobre páginas de 20, así que salen páginas cortas o vacías. El buscador unificado debe empujar los filtros al servidor.</p></div>
+    <div><b>Las filas del recomendador llegan «desnudas»</b><p><code>mediaFromRpcRow</code> deja géneros, año, backdrop y plataformas vacíos. Cualquier hero con backdrop o ficha rica necesita un <code>byIds</code> de enriquecimiento (una consulta por lote).</p></div>
+  </section>
+
+  <nav class="jump" aria-label="Saltar a pantalla"><a href="#inicio">Inicio · A B C</a><a href="#explorar">Explorar · A B C</a></nav>
+
+  <div id="mount"></div>
+
+  <section class="close">
+    <b>Siguiente paso</b>
+    <p>Dime una letra para Inicio y otra para Explorar (por ejemplo, Inicio = C, Explorar = A). Si quieres una pieza de otra propuesta, indícala y la incluyo en el plan.</p>
+  </section>
+</main>
+
+<script>
+const F={
+ aftersun:{t:'Aftersun',h:205},pastlives:{t:'Past Lives',h:22},dune2:{t:'Dune: Parte dos',h:34},parasitos:{t:'Parásitos',h:140},
+ anatomia:{t:'Anatomía de una caída',h:215},perfect:{t:'Perfect Days',h:165},robot:{t:'Robot Dreams',h:48},bestas:{t:'As bestas',h:95},
+ nieve:{t:'La sociedad de la nieve',h:200},oppen:{t:'Oppenheimer',h:14},garza:{t:'El chico y la garza',h:178},sicario:{t:'Sicario',h:30},
+ llegada:{t:'La llegada',h:192},incendies:{t:'Incendies',h:24},prisioneros:{t:'Prisioneros',h:212},br:{t:'Blade Runner 2049',h:26},
+ enemy:{t:'Enemy',h:52},seven:{t:'Seven',h:58},fargo:{t:'Fargo',h:198},heat:{t:'Heat',h:222},chungking:{t:'Chungking Express',h:338},
+ tesis:{t:'Tesis',h:2},bear:{t:'The Bear',h:12,tv:1},separacion:{t:'Separación',h:188,tv:1},succession:{t:'Succession',h:40,tv:1},
+ arcane:{t:'Arcane',h:282,tv:1},todo:{t:'Todo a la vez en todas partes',h:300},matrix:{t:'Matrix',h:128},abejas:{t:'20.000 especies de abejas',h:50},
+ memorias:{t:'Memorias de un asesino',h:80},lost:{t:'Lost in Translation',h:320},magnolia:{t:'Magnolia',h:260}
+};
+const I=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#${n}"/></svg>`;
+function P(id,w,o={}){const f=F[id];const h=o.h||Math.round(w*1.5);const fs=Math.max(9,Math.round(w*.105));
+ return `<div class="pst ${o.cls||''}" style="width:${w}px;height:${h}px;--h:${f.h};${o.st||''}">${o.nt?'':`<span class="pt" style="font-size:${o.fs||fs}px">${f.t}</span>`}${f.tv&&!o.nt?'<em class="tvb">SERIE</em>':''}${o.b?`<em class="bdg ${o.bc||''}">${o.b}</em>`:''}${o.av?`<em class="av avb" style="--a:${o.ah||200}">${o.av}</em>`:''}</div>`}
+const row=(ids,w,o)=>ids.map(id=>P(id,w,o)).join('');
+const status=()=>`<div class="status"><b>21:47</b><span class="sig"><i style="width:3px;height:6px"></i><i style="width:3px;height:8px"></i><i style="width:3px;height:10px"></i><i style="width:3px;height:12px"></i><i style="width:22px;height:11px;border-radius:3px;margin-left:4px"></i></span></div>`;
+const nav=on=>`<div class="nav">${[['index','Inicio','home'],['mood','Mood','sliders'],['explore','Explorar','compass'],['profile','Perfil','user']].map(([k,l,ic])=>`<div class="${k===on?'on':''}">${I(ic)}${l}</div>`).join('')}</div>`;
+const sh=(t,a='')=>`<div class="sh"><h4>${t}</h4>${a?`<a>${a}</a>`:''}</div>`;
+const av=(l,a)=>`<em class="av" style="--a:${a}">${l}</em>`;
+
+/* ================= INICIO ================= */
+const iA1=`<div class="heroA">${P('aftersun',375,{h:560,nt:1})}<div class="fade"></div>${status()}
+ <div class="tp"><span class="wm">diana<i>.</i></span><span class="rb glass">${I('bell')}<span class="dot"></span></span></div>
+ <div class="bd"><span class="eyebrow">Para ti · 96 % afín</span><h3 class="hT">Aftersun</h3>
+  <p class="hMeta">2022 · Drama · 1 h 42 min · Filmin</p>
+  <p class="why">${I('spark','s')} Porque te gustó <b style="color:var(--ink);margin-left:3px">Past Lives</b></p>
+  <div class="hBtns"><span class="btnL">Ver ficha</span><span class="btnG">${I('plus','s')} Mi lista</span></div>
+  <div class="dots"><i class="on"></i><i></i><i></i><i></i><i></i></div></div></div>
+ ${sh('Top 10 para ti')}
+ <div class="hs" style="gap:4px">${['parasitos','anatomia','perfect','pastlives'].map((id,i)=>`<div class="t10a"><b>${i+1}</b>${P(id,100)}</div>`).join('')}</div>${nav('index')}`;
+
+const iA2=`${status()}
+ ${sh('Porque te gusta el thriller')}<p class="sub">Sicario, Prisioneros y 30 títulos más</p>
+ <div class="hs">${row(['sicario','memorias','bestas','seven'],112)}</div>
+ ${sh('Los 90, tu década')}<p class="sub">Buscas cine de 1990–1999</p>
+ <div class="hs">${row(['chungking','fargo','heat','tesis'],112)}</div>
+ ${sh('Series para el fin de semana')}
+ <div class="hs">${[['bear','The Bear','Disney+ · 3 temporadas'],['separacion','Separación','Apple TV+ · 2 temporadas']].map(([id,t,m])=>`<div class="land">${P(id,236,{h:133,nt:1})}<b>${t}</b><span>${m}</span></div>`).join('')}</div>${nav('index')}`;
+
+const cardB=(id,t,m,tags,n,aff,why)=>`<div class="cardB">${P(id,92)}<div class="inf"><h5>${t}</h5><span class="meta">${m}</span><div class="tags">${tags.map(x=>`<span class="tag">${x}</span>`).join('')}</div><div class="pred"><b>${n}</b><span>tu nota estimada</span></div><div class="aff"><i style="width:${aff}%"></i></div><span class="why">${I('spark','xs')} ${why}</span></div></div>`;
+const lr=(r,id,t,m,why,n)=>`<div class="lr"><span class="rk">${r}</span>${P(id,44,{nt:1})}<div class="tx"><h6>${t}</h6><span class="meta">${m}</span><span class="why">${I('spark','xs')}${why}</span></div><div class="score"><b>${n}</b><span>estimada</span></div></div>`;
+const iB1=`${status()}<div class="hdr"><span class="h1">Para ti</span><span class="rb">${I('bell')}<span class="dot"></span></span></div>
+ <div class="pills"><span class="chip on sm">Netflix</span><span class="chip on sm">Filmin</span><span class="chip on sm">Max</span><span class="chip sm">Prime Video</span><span class="chip sm">Disney+</span></div>
+ ${sh('Elegidas para ti','6 de 50')}
+ <div class="hs">${cardB('aftersun','Aftersun','2022 · Charlotte Wells · 1 h 42',['Drama','Filmin'],'4,6',96,'Porque te gustó Past Lives y Perfect Days')}${cardB('dune2','Dune: Parte dos','2024 · Denis Villeneuve',['Ciencia ficción'],'4,4',90,'Porque te gustó La llegada')}</div>
+ ${sh('Top 10 para ti','Ver los 10')}
+ ${lr(1,'parasitos','Parásitos','2019 · Bong Joon-ho · Thriller','Porque te gustó Memorias de un asesino','4,7')}
+ ${lr(2,'anatomia','Anatomía de una caída','2023 · Justine Triet · Drama','Porque te gusta el drama judicial','4,6')}
+ ${lr(3,'perfect','Perfect Days','2023 · Wim Wenders · Drama','Porque te gustó Aftersun','4,5')}
+ ${lr(4,'bestas','As bestas','2022 · Rodrigo Sorogoyen · Thriller','Porque te gusta el thriller','4,5')}${nav('index')}`;
+const capB=(id,t,y,n)=>`<div class="capt" style="width:96px">${P(id,96)}<b>${t}</b><span><em>★ ${n}</em>${y}</span></div>`;
+const iB2=`${status()}
+ ${lr(5,'pastlives','Past Lives','2023 · Celine Song · Romance','Porque te gustó Lost in Translation','4,4')}
+ ${lr(6,'garza','El chico y la garza','2023 · Hayao Miyazaki · Animación','Porque te gustó Robot Dreams','4,4')}
+ ${lr(7,'nieve','La sociedad de la nieve','2023 · J. A. Bayona · Drama','Porque buscas cine español','4,3')}
+ <div class="more">Ver los 10 completos</div>
+ ${sh('Porque te gusta el thriller','Ver todo')}<p class="sub">Basado en 14 valoraciones tuyas</p>
+ <div class="hs">${capB('sicario','Sicario','2015','4,3')}${capB('memorias','Memorias de un asesino','2003','4,5')}${capB('seven','Seven','1995','4,2')}${capB('heat','Heat','1995','4,1')}</div>
+ ${sh('Los 90, tu década','Ver todo')}
+ <div class="hs">${capB('chungking','Chungking Express','1994','4,4')}${capB('fargo','Fargo','1996','4,2')}${capB('tesis','Tesis','1996','4,0')}${capB('matrix','Matrix','1999','3,9')}</div>${nav('index')}`;
+
+const iC1=`${status()}<div class="hdr"><div><span class="meta" style="font-size:13px">Viernes por la noche</span><div class="h1">Para ti</div></div><div style="display:flex;gap:8px"><span class="rb">${I('bell')}<span class="dot"></span></span><span class="rb">${I('users')}</span></div></div>
+ <div class="cflow">${P('dune2',150,{cls:'side',st:'left:-34px'})}${P('anatomia',150,{cls:'side',st:'right:-34px'})}${P('pastlives',214,{cls:'mid'})}</div>
+ <div class="cinfo"><h3>Past Lives</h3><span class="meta">2023 · Romance · 1 h 46 · Filmin</span>
+  <span class="whyPill">${I('spark','s')} Porque te gustó Lost in Translation</span>
+  <span class="soc"><span class="avs">${av('L',340)}${av('D',160)}${av('A',40)}</span>Lucía y 2 amigos la tienen en su lista</span></div>
+ ${sh('Top 10 para ti','Esta semana')}
+ <div class="hs" style="gap:0">${['parasitos','aftersun'].map((id,i)=>`<div class="t10c" style="margin-right:6px"><b>${i+1}</b>${P(id,104)}</div>`).join('')}</div>${nav('index')}`;
+const capC=(id,t,who,a,n)=>`<div class="capt" style="width:104px">${P(id,104,{av:who[0],ah:a})}<b>${t}</b><span class="who">${who} <em>★ ${n}</em></span></div>`;
+const iC2=`${status()}
+ <div class="hs" style="gap:0;margin-top:14px">${['perfect','bestas','garza'].map((id,i)=>`<div class="t10c" style="margin-right:6px"><b>${i+3}</b>${P(id,104)}</div>`).join('')}</div>
+ ${sh('Tus amigos están viendo','Ver todo')}
+ <div class="hs">${capC('bear','The Bear','Lucía',340,'4,5')}${capC('seven','Seven','Diego',160,'4,0')}${capC('robot','Robot Dreams','Ana',40,'5,0')}</div>
+ ${sh('¿Qué te apetece hoy?')}
+ <div class="moods"><div class="mood"><b>Algo corto</b><span>Menos de 100 min</span></div><div class="mood"><b>Para llorar</b><span>Drama intenso</span></div><div class="mood"><b>Con risas</b><span>Comedia</span></div></div>
+ ${sh('Joyas ocultas para ti','Ver todo')}
+ <div class="hs">${row(['incendies','abejas','enemy'],104,{b:'Joya',bc:'gem'})}</div>${nav('index')}`;
+
+/* ================= EXPLORAR ================= */
+const searchA=(n)=>`<div class="srch">${I('search')}<span class="ph">Película, director, actor, género…</span><span class="fbtn">${I('sliders')}${n?`<em>${n}</em>`:''}</span></div>`;
+const gridIds=['dune2','oppen','parasitos','anatomia','aftersun','pastlives','nieve','bestas','perfect','incendies','sicario','robot'];
+const eABase=`${status()}<div class="hdr"><span class="h1">Explorar</span></div>${searchA(3)}
+ <div class="achips"><span class="chip on sm">Drama ${I('x','xs')}</span><span class="chip on sm">Netflix ${I('x','xs')}</span><span class="chip on sm">2010–2019 ${I('x','xs')}</span><span class="chip ghost sm">Limpiar</span></div>
+ <div class="rmeta"><span><b>128</b> títulos</span><span class="r">Popularidad ${I('chevd','s')}</span></div>
+ <div class="grid">${row(gridIds,106)}</div>${nav('explore')}`;
+const eA2=`${eABase}<div class="dim"></div><div class="sheet" style="height:640px"><div class="handle"></div>
+ <div class="shd"><h5>Filtros</h5><a>Restablecer</a></div>
+ <div class="grp"><span class="lbl">Tipo</span><div class="seg"><i class="on">Todo</i><i>Películas</i><i>Series</i></div></div>
+ <div class="grp"><span class="lbl">Plataformas</span><div class="wr"><span class="chip on">${I('check','xs')} Netflix</span><span class="chip">Prime Video</span><span class="chip">Max</span><span class="chip">Disney+</span><span class="chip">Filmin</span><span class="chip">Movistar Plus+</span><span class="chip">Apple TV+</span></div></div>
+ <div class="grp"><span class="lbl">Género</span><div class="wr"><span class="chip on">${I('check','xs')} Drama</span><span class="chip">Thriller</span><span class="chip">Comedia</span><span class="chip">Romance</span><span class="chip">Ciencia ficción</span><span class="chip">Animación</span><span class="chip ghost">+12</span></div></div>
+ <div class="grp"><span class="lbl">Época</span><div class="wr"><span class="chip">2020s</span><span class="chip on">${I('check','xs')} 2010s</span><span class="chip">2000s</span><span class="chip">90s</span><span class="chip">80s</span><span class="chip">Clásicos</span></div></div>
+ <div class="grp"><span class="lbl">Ordenar</span><div class="seg"><i class="on">Popularidad</i><i>Afinidad</i><i>Año</i><i>Nota</i></div></div>
+ <div class="cta">Ver 128 títulos</div></div>`;
+
+const eB1=`${status()}<div class="srow"><div class="srch typing">${I('search')}<span class="ph">villeneuve<span class="caret"></span></span><span class="fbtn" style="background:transparent">${I('x','s')}</span></div><span class="cancel">Cancelar</span></div>
+ <div class="sgh">Personas</div>
+ <div class="sgr"><span class="pav">DV</span><div class="tx"><b>Denis <mark>Villeneuve</mark></b><span>Dirección · 11 títulos · 4 en tus plataformas</span></div><span class="kd">Director</span></div>
+ <div class="sgh">Títulos</div>
+ <div class="sgr">${P('dune2',36,{h:54,nt:1})}<div class="tx"><b>Dune: Parte dos</b><span>2024 · dir. Denis <mark>Villeneuve</mark></span></div><span class="kd">Película</span></div>
+ <div class="sgr">${P('llegada',36,{h:54,nt:1})}<div class="tx"><b>La llegada</b><span>2016 · dir. Denis <mark>Villeneuve</mark></span></div><span class="kd">Película</span></div>
+ <div class="sgr">${P('incendies',36,{h:54,nt:1})}<div class="tx"><b>Incendies</b><span>2010 · dir. Denis <mark>Villeneuve</mark></span></div><span class="kd">Película</span></div>
+ <div class="sgh">Buscar «villeneuve» en</div>
+ <div class="sgr"><span class="sgi">${I('film')}</span><div class="tx"><b>Títulos</b><span>Título y título original</span></div>${I('chev','s')}</div>
+ <div class="sgr"><span class="sgi">${I('users')}</span><div class="tx"><b>Reparto</b><span>Sin coincidencias en el top 5 del reparto</span></div>${I('chev','s')}</div>
+ <div class="sgh">Recientes</div>
+ <div class="sgr"><span class="sgi">${I('clock')}</span><div class="tx"><b style="font-weight:600;font-family:var(--body);font-size:14px">wong kar-wai</b></div>${I('x','s')}</div>${nav('explore')}`;
+const dr=(id,t,m,g,pl,me,avg)=>`<div class="dr">${P(id,56,{nt:1})}<div class="tx"><h6>${t}</h6><span>${m}</span><span>${g}</span><div class="plats">${pl.map(x=>`<span class="plat">${x}</span>`).join('')}</div></div><div class="score"><b>${me}</b><span>para ti</span><s>Media ${avg}</s></div></div>`;
+const eB2=`${status()}<div class="srow" style="padding-left:6px">${I('back')}<div class="srch" style="margin-left:4px">${I('search')}<span class="ph"><span class="inchip">Dirección: Denis Villeneuve ${I('x','xs')}</span></span></div></div>
+ <div class="tbar"><span class="obtn on">${I('sliders','s')} Filtros · 1</span><span class="obtn">Año ${I('chevd','s')}</span><span class="vt"><i>${I('grid','s')}</i><i class="on">${I('list','s')}</i></span></div>
+ <div class="rmeta"><span><b>11</b> títulos · más recientes primero</span><span class="r">Solo mis plataformas</span></div>
+ ${dr('dune2','Dune: Parte dos','2024 · 2 h 46 min','Ciencia ficción · Aventura',['Max','Prime Video'],'4,6','4,2')}
+ ${dr('br','Blade Runner 2049','2017 · 2 h 44 min','Ciencia ficción · Drama',['Netflix'],'4,5','4,1')}
+ ${dr('llegada','La llegada','2016 · 1 h 56 min','Ciencia ficción · Drama',['Prime Video'],'4,7','4,0')}
+ ${dr('sicario','Sicario','2015 · 2 h 01 min','Thriller · Crimen',['Netflix','Movistar Plus+'],'4,3','3,9')}
+ ${dr('enemy','Enemy','2013 · 1 h 31 min','Thriller · Misterio',['Filmin'],'3,8','3,6')}${nav('explore')}`;
+const hist=[2,3,3,4,5,6,7,9,12,16,18,22,26,30,34,38,44,50,62,70,78,88,96,100,92,80].map((v,i)=>`<i class="${i>=10?'in':''}" style="height:${v}%"></i>`).join('');
+const eB3=`${status()}<div class="fbar">${I('x')}<h5>Filtros</h5><a>Restablecer</a></div>
+ <div class="fscroll">
+  <div class="grp"><span class="lbl">Tipo</span><div class="seg"><i class="on">Todo · 11</i><i>Películas · 10</i><i>Series · 1</i></div></div>
+  <div class="grp"><span class="lbl">Plataformas</span><div>
+   <div class="ck"><span class="box on">${I('check','xs')}</span>Netflix<span class="n">3</span></div>
+   <div class="ck"><span class="box on">${I('check','xs')}</span>Prime Video<span class="n">4</span></div>
+   <div class="ck"><span class="box">&nbsp;</span>Max<span class="n">2</span></div>
+   <div class="ck"><span class="box">&nbsp;</span>Filmin<span class="n">1</span></div></div></div>
+  <div class="grp"><span class="lbl">Año de estreno</span><div class="hist">${hist}</div><div class="rng"><s></s><u style="left:calc(38% - 10px)"></u><u style="right:-2px"></u></div><div class="rv"><span>2010</span><span>2024</span></div></div>
+  <div class="grp"><span class="lbl">Tu nota estimada</span><div class="seg"><i>Todas</i><i>3+</i><i class="on">3,5+</i><i>4+</i></div></div>
+  <div class="grp"><span class="lbl">Duración</span><div class="seg"><i>&lt; 90 min</i><i class="on">90–150</i><i>&gt; 150</i></div></div>
+ </div>
+ <div class="fsticky"><div class="cta">Ver 7 títulos</div></div>`;
+
+const eC1=`${status()}<div class="hdr"><span class="h1">Explorar</span><span class="rb">${I('users')}</span></div>${searchA(0)}
+ <p class="hint">Prueba <b>«thriller de los 90 en Netflix»</b></p>
+ ${sh('Lo que buscan tus amigos')}
+ <div class="hs" style="gap:6px"><span class="chip">${av('L',340)} Wong Kar-wai</span><span class="chip">${av('D',160)} cine coreano</span><span class="chip">${av('A',40)} Sorogoyen</span></div>
+ ${sh('Colecciones','Ver todas')}
+ <div class="cols"><div class="col" style="--h:42">Ganadoras del Goya</div><div class="col" style="--h:200">Cine de los 90</div><div class="col" style="--h:330">Para ver en pareja</div></div>
+ ${sh('Todo el catálogo')}
+ <div class="grid">${['dune2','parasitos','aftersun','pastlives','bestas','anatomia'].map((id,i)=>P(id,106,{b:[92,95,96,89,90,93][i]+' %'})).join('')}</div>${nav('explore')}`;
+const eC2=`${status()}<div class="hdr" style="padding-bottom:10px"><span class="h1">Explorar</span><span class="rb">${I('users')}</span></div>
+ <div class="srch typing">${I('search')}<span class="ph">thriller años 90 netflix</span><span class="fbtn">${I('sliders')}<em>3</em></span></div>
+ <div class="parsed"><span>Entendido como</span><span class="pc g"><small>Género</small> Thriller ${I('x','xs')}</span><span class="pc e"><small>Época</small> 1990s ${I('x','xs')}</span><span class="pc p"><small>En</small> Netflix ${I('x','xs')}</span><span class="pc add">${I('plus','xs')} Filtro</span></div>
+ <div class="tabsC"><div class="seg"><i class="on">Todo · 42</i><i>Películas · 38</i><i>Series · 4</i></div></div>
+ <div class="fnote">${av('L',340)}<span><b>Lucía</b> puntuó Seven con ★ 4,5</span></div>
+ <div class="grid">${[['seven','L',340],['heat'],['fargo','D',160],['tesis'],['matrix'],['chungking','A',40],['memorias'],['magnolia'],['lost']].map(([id,a,h],i)=>P(id,106,{b:[94,91,90,88,87,85,93,84,83][i]+' %',av:a,ah:h})).join('')}</div>${nav('explore')}`;
+const eC3=`${status()}<div class="hdr" style="padding-bottom:10px"><span class="h1">Explorar</span><span class="rb">${I('users')}</span></div>
+ <div class="srch">${I('search')}<span class="ph">thriller años 90 netflix</span><span class="fbtn">${I('sliders')}<em>3</em></span></div>
+ <div class="tabsC"><div class="seg"><i class="on">Todo · 42</i><i>Películas · 38</i><i>Series · 4</i></div></div>
+ <div class="grid">${row(['seven','heat','fargo','tesis','matrix','chungking'],106)}</div>${nav('explore')}
+ <div class="dim"></div><div class="sheet" style="height:452px"><div class="handle"></div>
+  <div class="shd"><h5>Filtros rápidos</h5><a>Restablecer</a></div>
+  <div class="grp"><span class="lbl">Plataformas</span><div class="qrow"><span class="chip on">Netflix</span><span class="chip">Prime Video</span><span class="chip">Max</span><span class="chip">Filmin</span><span class="chip">Disney+</span></div></div>
+  <div class="grp"><span class="lbl">Género</span><div class="qrow"><span class="chip on">Thriller</span><span class="chip">Crimen</span><span class="chip">Drama</span><span class="chip">Misterio</span><span class="chip">Terror</span></div></div>
+  <div class="grp"><span class="lbl">Época</span><div class="qrow"><span class="chip">2020s</span><span class="chip">2010s</span><span class="chip">2000s</span><span class="chip on">90s</span><span class="chip">80s</span></div></div>
+  <div class="tg">Ocultar lo que ya he visto<span class="sw on"></span></div>
+  <div class="tg">Solo lo que gustó a mis amigos<span class="sw"></span></div>
+  <div class="cta">Ver 42 títulos</div></div>`;
+
+const SCREENS=[
+ {id:'inicio',name:'Inicio',sub:'app/(tabs)/index.tsx',props:[
+  {k:'A',name:'Pantalla limpia',tag:'Apple TV · streaming limpio',
+   p:'Un hero a sangre que ocupa dos tercios de la pantalla y rota entre las 5–6 mejores recomendaciones. Una sola razón por título, sin chips ni puntuaciones visibles. Debajo, Top 10 con números en contorno y filas de solo carátula.',
+   comp:['HeroCarousel (paginado, 5–6 ítems, dots)','Top10Row con número en contorno','PosterRow sin captions + fila 16:9 para series','Cabeceras de fila con la razón como subtítulo'],
+   data:['contentRecommend(limit 60) → hero = top 6, Top 10 = siguientes 10','Enriquecer con byIds para backdrop, año y géneros','Filas agrupadas por razón (género/época) en cliente'],
+   pro:['La más premium y la más rápida de leer','Poca densidad: buen rendimiento en web'],
+   con:['Pocas pistas para decidir sin entrar en la ficha','El hero depende de backdrops buenos; sin imagen se ve plano'],
+   phones:[['Arriba del todo','Hero «Para ti» + inicio del Top 10',iA1],['Tras hacer scroll','Filas por razón y fila de series 16:9',iA2]]},
+  {k:'B',name:'Catálogo rico',tag:'Letterboxd · denso en información',
+   p:'Pensada para quien decide leyendo: tarjetas con director, géneros, nota estimada y barra de afinidad. El Top 10 es una lista numerada vertical con la razón en cada fila. Las filas muestran título, año y nota debajo de cada póster.',
+   comp:['RecommendationCard horizontal (póster + ficha)','RankedList vertical (Top 10) con «Ver los 10»','PosterRow con caption: título, año, ★ estimada','Pills de plataforma globales (se mantienen)'],
+   data:['contentRecommend + predict_tenths por título (o tenths en el RPC: recomendado)','byIds para director y géneros (requiere directors de 0024)','Agrupar filas por razón en cliente'],
+   pro:['Es la que mejor explota la explicación y la nota IA','Mantiene el filtro de plataformas que ya existe'],
+   con:['Menos «streaming»: se parece más a una base de datos','Exige tenths en lote o se dispara el nº de RPCs'],
+   phones:[['Arriba del todo','Tarjetas «Elegidas para ti» + Top 10 en lista',iB1],['Tras hacer scroll','Resto del Top 10 y filas con nota estimada',iB2]]},
+  {k:'C',name:'Noche de cine social',tag:'Netflix × Letterboxd',
+   p:'Un carrusel de carátulas grandes con las vecinas asomando. Bajo la central, la razón en una pastilla y qué amigos la quieren ver. Top 10 al estilo Netflix con el número enorme detrás del póster. Después, lo que ven tus amigos, accesos rápidos a Mood y joyas ocultas.',
+   comp:['CoverFlow (póster central + vecinos)','ReasonPill + FriendsLine (pila de avatares)','Top10Row con número sólido grande','FriendsRow, MoodShortcuts, fila de joyas ocultas'],
+   data:['contentRecommend para el carrusel y el Top 10','hiddenGems ya existe en src/recommender','Señal social: friends.ts hoy es simulado (test users), así que la fila de amigos queda detrás de un flag'],
+   pro:['La que más invita a descubrir y la más diferenciada','Conecta Inicio con Mood y con las salas de grupo'],
+   con:['La capa social aún no tiene datos reales','Más componentes nuevos que las otras dos'],
+   phones:[['Arriba del todo','CoverFlow «Para ti» con razón y amigos',iC1],['Tras hacer scroll','Top 10 estilo Netflix, amigos, Mood y joyas',iC2]]}]},
+ {id:'explorar',name:'Explorar',sub:'app/(tabs)/explore.tsx',props:[
+  {k:'A',name:'Buscador y rejilla',tag:'Netflix / Apple · mínimo',
+   p:'Un único campo con el botón de filtros dentro y un contador. Los filtros viven en un BottomSheet (el componente ya existe) y, al cerrarlo, quedan como chips borrables. La rejilla de 3 columnas ocupa casi toda la pantalla.',
+   comp:['UnifiedSearchBar con botón de filtros y badge','ActiveFilterChips (borrables + «Limpiar»)','FilterSheet sobre BottomSheet existente','Rejilla 3 columnas sin captions (FlashList)'],
+   data:['useUnifiedSearch: un estado de filtros → browse/search','Texto libre busca en título + directors + cast_top','Géneros multi al servidor (hoy se filtran en cliente)'],
+   pro:['El cambio más pequeño y con menos riesgo','La rejilla empieza a 200 px del borde superior'],
+   con:['No distingue si escribiste un director o un título','Descubrir sin texto se reduce a «popularidad»'],
+   phones:[['Resultados','Chips activos bajo el buscador y rejilla 3 col.',eABase],['Panel de filtros','BottomSheet al 80 %: tipo, plataforma, género, época, orden',eA2]]},
+  {k:'B',name:'Búsqueda de catálogo',tag:'Letterboxd / IMDb · rico en info',
+   p:'El buscador sugiere mientras escribes y separa personas, títulos y campos. Al elegir una persona se convierte en un filtro dentro del campo. Los resultados alternan entre rejilla y lista densa con nota estimada y media. Los filtros se abren a pantalla completa con recuento por opción e histograma de años.',
+   comp:['SearchSuggestions agrupadas (Personas/Títulos/Buscar en/Recientes)','Token dentro del input («Dirección: …»)','Conmutador rejilla/lista + ResultRow densa','FilterScreen con recuentos, histograma y rango'],
+   data:['RPC search_suggest (personas desde directors/cast_top)','Recuentos por faceta: RPC catalog_facets','predict_tenths en lote para la columna «para ti»'],
+   pro:['Lo más potente para usuarios que saben lo que buscan','Resuelve de verdad la búsqueda por director/actor'],
+   con:['Requiere 2 RPCs nuevos (sugerencias y facetas)','Más trabajo de accesibilidad (listbox, foco)'],
+   phones:[['Escribiendo','Sugerencias agrupadas por tipo',eB1],['Resultados en lista','Persona como filtro, lista con nota estimada',eB2],['Filtros','Pantalla completa con recuentos e histograma',eB3]]},
+  {k:'C',name:'Descubrir hablando',tag:'Netflix × Letterboxd · social',
+   p:'El campo entiende frases: «thriller años 90 netflix» se convierte en chips de género, época y plataforma que puedes quitar. Sin texto, muestra búsquedas de amigos y colecciones, que se pliegan al hacer scroll. Cada póster lleva % de afinidad y, si toca, el avatar del amigo que la vio.',
+   comp:['QueryParser local (géneros, décadas, plataformas, tipo)','ParsedChips por color de tipo','DiscoveryHeader plegable (amigos + colecciones)','QuickFilterSheet al 55 % con filas horizontales y toggles'],
+   data:['Parser en cliente con GENRES, PLATFORMS y décadas: sin backend','Afinidad: score de recommend para los ids visibles','Colecciones estáticas al principio (constantes)'],
+   pro:['Un solo campo de verdad: escribes y filtra','El parser es puro y fácil de testear'],
+   con:['La cabecera de descubrimiento resta rejilla hasta que se pliega','% de afinidad en la rejilla cuesta una llamada extra'],
+   phones:[['Sin texto','Descubrimiento social + rejilla con % afín',eC1],['Frase interpretada','Chips de género, época y plataforma',eC2],['Filtros rápidos','Hoja al 55 % con filas horizontales y toggles',eC3]]}]}
+];
+const li=a=>a.map(x=>`<li>${x}</li>`).join('');
+document.getElementById('mount').innerHTML=SCREENS.map(s=>`<section id="${s.id}" aria-label="${s.name}">
+ <div class="scr-h"><h2>${s.name}</h2><span>${s.sub}</span></div>
+ ${s.props.map(p=>`<article class="prop"><div class="desc">
+  <div class="letter"><b>${p.k}</b><div><strong>${s.name} ${p.k} · ${p.name}</strong><em>${p.tag}</em></div></div>
+  <p>${p.p}</p><h4>Componentes</h4><ul>${li(p.comp)}</ul><h4>Datos</h4><ul>${li(p.data)}</ul>
+  <h4>A favor</h4><ul class="pro">${li(p.pro)}</ul><h4>En contra</h4><ul class="con">${li(p.con)}</ul></div>
+  <div class="phones">${p.phones.map(([l,c,h])=>`<figure class="ph"><div class="phone" role="img" aria-label="${s.name} ${p.k}: ${l}">${h}</div><figcaption><b>${l}</b> · ${c}</figcaption></figure>`).join('')}</div></article>`).join('')}
+</section>`).join('');
+</script>

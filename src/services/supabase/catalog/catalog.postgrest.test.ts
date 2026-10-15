@@ -27,6 +27,7 @@ interface OrderCall {
 interface Recorded {
   from: string;
   select: string;
+  selectOpts: { count?: string; head?: boolean } | null;
   filters: Array<[string, string, string]>;
   ors: string[];
   eqs: Array<[string, unknown]>;
@@ -39,11 +40,12 @@ function makeClient(rows: Row[]) {
   const calls: Recorded[] = [];
   const client = {
     from(table: string) {
-      const rec: Recorded = { from: table, select: '', filters: [], ors: [], eqs: [], ins: [], orders: [], range: null };
+      const rec: Recorded = { from: table, select: '', selectOpts: null, filters: [], ors: [], eqs: [], ins: [], orders: [], range: null };
       calls.push(rec);
       const b = {
-        select(cols: string) {
+        select(cols: string, opts?: { count?: string; head?: boolean }) {
           rec.select = cols;
+          rec.selectOpts = opts ?? null;
           return b;
         },
         filter(col: string, op: string, val: string | number) {
@@ -70,7 +72,10 @@ function makeClient(rows: Row[]) {
           rec.range = [from, to];
           return b;
         },
-        then(resolve: (v: { data: Row[] | null; error: { message: string } | null }) => void, reject: (e: unknown) => void) {
+        then(
+          resolve: (v: { data: Row[] | null; count?: number; error: { message: string } | null }) => void,
+          reject: (e: unknown) => void,
+        ) {
           let out = [...rows];
           for (const [col, val] of rec.eqs) out = out.filter((r) => r[col] === val);
           for (const [col, op, val] of rec.filters) {
@@ -80,10 +85,17 @@ function makeClient(rows: Row[]) {
             const set = new Set((arr as unknown[]) as unknown[]);
             out = out.filter((r) => set.has(r[col]));
           }
+          if ((client as unknown as { fail?: boolean }).fail) {
+            reject(new Error('boom'));
+            return undefined;
+          }
+          if (rec.selectOpts?.head) {
+            resolve({ data: null, count: out.length, error: null });
+            return undefined;
+          }
           const [from, to] = rec.range ?? [0, Infinity];
           out = out.slice(from, to + 1);
-          if ((client as unknown as { fail?: boolean }).fail) reject(new Error('boom'));
-          else resolve({ data: out, error: null });
+          resolve({ data: out, error: null });
           return undefined;
         },
       };
@@ -191,5 +203,38 @@ describe('repo PostgREST catalog_titles (D2-1.5) — cliente mock', () => {
   it('un error de la base se propaga (throw)', async () => {
     setFail(true);
     await expect(postgrestCatalogSource.browse({ limit: 5 })).rejects.toThrow('boom');
+  });
+
+  it('browse con varios géneros llama a genre_ids ov.{a,b}', async () => {
+    await postgrestCatalogSource.browse({ genres: [18, 53], limit: 5 });
+    expect(calls[0].filters).toContainEqual(['genre_ids', 'ov', '{18,53}']);
+  });
+
+  it('search pasa tipo, géneros y década al builder', async () => {
+    await postgrestCatalogSource.search({ query: 'gato', genres: [18], decade: 2010, type: 'movie', limit: 5 });
+    const f = calls[0].filters;
+    expect(f).toContainEqual(['media_type', 'eq', 'movie']);
+    expect(f).toContainEqual(['genre_ids', 'ov', '{18}']);
+    expect(f).toContainEqual(['year', 'gte', '2010']);
+  });
+
+  it('count usa select con count exact + head, sin order ni range', async () => {
+    const n = await postgrestCatalogSource.count({ type: 'movie', genres: [18] });
+    const rec = calls[0];
+    expect(rec.selectOpts).toEqual({ count: 'exact', head: true });
+    expect(rec.orders).toEqual([]);
+    expect(rec.range).toBeNull();
+    expect(rec.filters).toContainEqual(['genre_ids', 'ov', '{18}']);
+    expect(n).toBe(25);
+  });
+
+  it('count con texto aplica el filtro de búsqueda', async () => {
+    await postgrestCatalogSource.count({ query: 'gato' });
+    expect(calls[0].filters.some(([col, op]) => col === 'title_tsv' && op === 'websearch_query')).toBe(true);
+  });
+
+  it('count devuelve null si la base falla (no rompe la UI)', async () => {
+    setFail(true);
+    await expect(postgrestCatalogSource.count({ genres: [18] })).resolves.toBeNull();
   });
 });

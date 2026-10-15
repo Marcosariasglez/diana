@@ -14,12 +14,13 @@ import type { CatalogRow } from './types';
 import {
   buildBrowseQuery,
   buildCandidatesQuery,
+  buildCountFilters,
   buildSearchQuery,
   COLUMNS,
   type CatalogFilter,
   type PostgRestQuery,
 } from './query';
-import type { BrowseParams, PageResult, SearchParams } from './types';
+import type { BrowseParams, CountParams, PageResult, SearchParams } from './types';
 
 import type { RuntimeRange } from './query';
 export type { RuntimeRange } from './query';
@@ -30,6 +31,8 @@ export interface CatalogSource {
   browse(p: BrowseParams): Promise<PageResult<Media>>;
   /** Búsqueda (FTS + trigram). */
   search(p: SearchParams): Promise<PageResult<Media>>;
+  /** Nº total de títulos que pasan los filtros (para «Ver N títulos»); null si no se pudo contar. */
+  count(p: CountParams): Promise<number | null>;
   /** Títulos por (tipo, ids TMDB). */
   byIds(type: 'movie' | 'tv', ids: number[]): Promise<Media[]>;
   /** Candidatos para el motor mood/feed/grupo (los N más populares filtrados). */
@@ -48,7 +51,10 @@ type Builder = {
   or(val: string): Builder;
   order(by: string, opts?: { ascending?: boolean; nullsFirst?: boolean }): Builder;
   range(from: number, to: number): Builder;
-  then?: (resolve: (v: { data: unknown[] | null; error: { message: string } | null }) => void, reject: (e: unknown) => void) => void;
+  then?: (
+    resolve: (v: { data: unknown[] | null; count?: number | null; error: { message: string } | null }) => void,
+    reject: (e: unknown) => void,
+  ) => void;
 };
 
 /**
@@ -91,6 +97,23 @@ async function runQuery(sb: SupabaseClient, q: PostgRestQuery): Promise<CatalogR
   return (res.data ?? []) as unknown as CatalogRow[];
 }
 
+/** Cuenta filas con los mismos filtros (HEAD + count exact: no baja datos). null si falla. */
+async function runCount(sb: SupabaseClient, filters: CatalogFilter[]): Promise<number | null> {
+  try {
+    let builder = sb
+      .from('catalog_titles')
+      .select('tmdb_id', { count: 'exact', head: true }) as unknown as Builder;
+    for (const f of filters) builder = applyOne(builder, f);
+    const res = await new Promise<{ count?: number | null; error: { message: string } | null }>((resolve, reject) => {
+      if (typeof builder.then === 'function') builder.then(resolve, reject);
+      else reject(new Error('catalog: builder no thenable'));
+    });
+    return res.error || typeof res.count !== 'number' ? null : res.count;
+  } catch {
+    return null;
+  }
+}
+
 function toMedia(rows: CatalogRow[]): Media[] {
   return rows.map(rowToMedia);
 }
@@ -110,6 +133,9 @@ export const postgrestCatalogSource: CatalogSource = {
   async search(p: SearchParams): Promise<PageResult<Media>> {
     const q = buildSearchQuery(p);
     return pageFrom(await runQuery(getSupabase(), q), q);
+  },
+  async count(p: CountParams): Promise<number | null> {
+    return runCount(getSupabase(), buildCountFilters(p));
   },
   async byIds(type: 'movie' | 'tv', ids: number[]): Promise<Media[]> {
     if (ids.length === 0) return [];

@@ -15,10 +15,10 @@
 // (supabase-js los añade): dentro de `or=(...)` el separador columna/op es
 // el PUNTO (`col.cs.{…}`), NO el `=` (`col=cs.{…}` → PGRST100 400, verificado
 // contra el PostgREST real de Supabase el 2026-10-11).
-import { MAX_PAGE_SIZE, type BrowseParams, type CatalogSort, type SearchParams } from './types';
+import { MAX_PAGE_SIZE, type BrowseParams, type CatalogSort, type CountParams, type SearchParams } from './types';
 
 /** Operadores PostgREST que usa el catálogo. */
-export type FilterOp = 'eq' | 'neq' | 'cs' | 'gt' | 'gte' | 'lte' | 'or' | 'websearch_query' | 'ilike';
+export type FilterOp = 'eq' | 'neq' | 'cs' | 'ov' | 'gt' | 'gte' | 'lte' | 'or' | 'websearch_query' | 'ilike';
 
 export interface CatalogFilter {
   /** Columna (para `or` es null). */
@@ -77,15 +77,29 @@ export function platformFilter(platforms: readonly string[]): string {
   return combos.join(',');
 }
 
+/** Varios géneros: `genre_ids && {a,b}` (al menos uno), igual que el motor local. */
+function genresFilter(genres?: ReadonlyArray<number>): CatalogFilter[] {
+  return genres && genres.length > 0 ? [{ col: 'genre_ids', op: 'ov', val: `{${genres.join(',')}}` }] : [];
+}
+
+function decadeFilters(decade?: number): CatalogFilter[] {
+  if (decade === undefined) return [];
+  const d = Math.floor(decade / 10) * 10;
+  return [
+    { col: 'year', op: 'gte', val: String(d) },
+    { col: 'year', op: 'lte', val: String(d + 9) },
+  ];
+}
+
+function platformFilters(platforms?: ReadonlyArray<string>): CatalogFilter[] {
+  return platforms && platforms.length > 0 ? [{ col: null, op: 'or', val: platformFilter(platforms) }] : [];
+}
+
 export function buildBrowseQuery(p: BrowseParams): PostgRestQuery {
   const filters: CatalogFilter[] = [HAS_TITLE];
   if (p.type) filters.push({ col: 'media_type', op: 'eq', val: p.type });
   if (p.genre !== undefined) filters.push({ col: 'genre_ids', op: 'cs', val: `{${p.genre}}` });
-  if (p.decade !== undefined) {
-    const d = Math.floor(p.decade / 10) * 10;
-    filters.push({ col: 'year', op: 'gte', val: String(d) }, { col: 'year', op: 'lte', val: String(d + 9) });
-  }
-  if (p.platforms && p.platforms.length > 0) filters.push({ col: null, op: 'or', val: platformFilter(p.platforms) });
+  filters.push(...genresFilter(p.genres), ...decadeFilters(p.decade), ...platformFilters(p.platforms));
   const sort = `${SORT_MAP[p.sort ?? 'popularity']},${TIE}`;
   const limit = clampLimit(p.limit);
   const offset = Math.max(0, p.cursor ?? 0);
@@ -101,10 +115,20 @@ export function buildSearchQuery(p: SearchParams): PostgRestQuery {
     const term = `'${q.replace(/'/g, "''")}'`;
     filters.push({ col: 'title_tsv', op: 'websearch_query', val: term });
   }
-  if (p.platforms && p.platforms.length > 0) filters.push({ col: null, op: 'or', val: platformFilter(p.platforms) });
+  filters.push(...genresFilter(p.genres), ...decadeFilters(p.decade), ...platformFilters(p.platforms));
   const limit = clampLimit(p.limit);
   const offset = Math.max(0, p.cursor ?? 0);
-  return { filters, order: `popularity.desc,${TIE}`, range: [offset, offset + limit - 1], select: COLUMNS };
+  return {
+    filters,
+    order: `${SORT_MAP[p.sort ?? 'popularity']},${TIE}`,
+    range: [offset, offset + limit - 1],
+    select: COLUMNS,
+  };
+}
+
+/** Filtros de `count`: los de búsqueda si hay texto, los de explorar si no. */
+export function buildCountFilters(p: CountParams): CatalogFilter[] {
+  return (p.query?.trim() ? buildSearchQuery({ ...p, query: p.query }) : buildBrowseQuery(p)).filters;
 }
 
 /** Rango de duración (B4). */

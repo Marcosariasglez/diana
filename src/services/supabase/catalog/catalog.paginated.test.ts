@@ -15,7 +15,7 @@
  *    la misma semántica;
  *  - el mapper fila<->Media reconstruye fecha, géneros y plataformas.
  */
-import { browseRows, candidatesRows, filterBrowse, searchRows } from './engine';
+import { browseRows, candidatesRows, countRows, filterBrowse, filterSearch, searchRows } from './engine';
 import { availablePlatforms, mediaToRow, rowToMedia } from './mapper';
 import {
   buildBrowseQuery,
@@ -248,5 +248,70 @@ describe('catálogo paginado (D2-1.5) — mapper', () => {
     expect(
       availablePlatforms({ platforms_flatrate: ['netflix', 'max'], platforms_rent: ['max'], platforms_buy: [] }),
     ).toEqual(['netflix', 'max']);
+  });
+});
+
+describe('catálogo paginado — varios géneros y filtros en búsqueda (rediseño P2)', () => {
+  const rows = movieRows(30);
+  const noche = rows.map((r) => ({ ...r, title: `Noche ${r.tmdb_id}` }));
+
+  it('browse con `genres` coincide con CUALQUIERA de los géneros (solapamiento)', () => {
+    expect(filterBrowse(rows, { genres: [10749, 35] }).length).toBe(rows.length); // pares romance, impares comedia
+    const onlyRomance = filterBrowse(rows, { genres: [10749] });
+    expect(onlyRomance.length).toBeGreaterThan(0);
+    expect(onlyRomance.length).toBeLessThan(rows.length);
+    for (const r of onlyRomance) expect(r.genre_ids).toContain(10749);
+    expect(filterBrowse(rows, { genres: [99999] })).toEqual([]);
+  });
+
+  it('genres vacío no filtra y `genre` sigue funcionando', () => {
+    expect(filterBrowse(rows, { genres: [] }).length).toBe(rows.length);
+    expect(filterBrowse(rows, { genre: 10749 }).length).toBe(filterBrowse(rows, { genres: [10749] }).length);
+  });
+
+  it('buildBrowseQuery con `genres` emite genre_ids=ov.{a,b}', () => {
+    const q = buildBrowseQuery({ genres: [18, 53] });
+    expect(q.filters).toContainEqual({ col: 'genre_ids', op: 'ov', val: '{18,53}' });
+    expect(toQueryStrings(q)).toContain('genre_ids=ov.{18,53}');
+    expect(buildBrowseQuery({ genres: [] }).filters.some((f) => f.col === 'genre_ids')).toBe(false);
+  });
+
+  it('search aplica géneros, década y plataformas además del texto', () => {
+    const all = filterSearch(noche, { query: 'noche' });
+    const romance2010 = filterSearch(noche, { query: 'noche', genres: [10749], decade: 2010 });
+    expect(romance2010.length).toBeGreaterThan(0);
+    expect(romance2010.length).toBeLessThan(all.length);
+    for (const r of romance2010) {
+      expect(r.genre_ids).toContain(10749);
+      expect(r.year).toBeGreaterThanOrEqual(2010);
+      expect(r.year).toBeLessThanOrEqual(2019);
+    }
+    const filmin = filterSearch(noche, { query: 'noche', platforms: ['filmin'] });
+    expect(filmin.length).toBeGreaterThan(0);
+    for (const r of filmin) expect(availablePlatforms(r)).toContain('filmin');
+  });
+
+  it('search respeta `sort` (por defecto popularidad)', () => {
+    const pop = searchRows(noche, { query: 'noche', limit: 30 }).items.map((r) => r.popularity);
+    expect(pop).toEqual([...pop].sort((a, b) => b - a));
+    const years = searchRows(noche, { query: 'noche', sort: 'year', limit: 30 }).items.map((r) => r.year as number);
+    expect(years).toEqual([...years].sort((a, b) => b - a));
+  });
+
+  it('buildSearchQuery aplica los mismos filtros y el orden pedido', () => {
+    const q = buildSearchQuery({ query: 'gato', type: 'tv', genres: [18, 35], decade: 1990, platforms: ['netflix'], sort: 'year' });
+    expect(q.filters).toContainEqual({ col: 'media_type', op: 'eq', val: 'tv' });
+    expect(q.filters).toContainEqual({ col: 'genre_ids', op: 'ov', val: '{18,35}' });
+    expect(q.filters).toContainEqual({ col: 'year', op: 'gte', val: '1990' });
+    expect(q.filters).toContainEqual({ col: 'year', op: 'lte', val: '1999' });
+    expect(q.filters.some((f) => f.op === 'or')).toBe(true);
+    expect(q.order).toBe('year.desc.nullslast,media_type.asc,tmdb_id.asc');
+    expect(buildSearchQuery({ query: 'gato' }).order).toBe('popularity.desc,media_type.asc,tmdb_id.asc');
+  });
+
+  it('countRows cuenta todo lo que pasa el filtro, sin paginar', () => {
+    expect(countRows(rows, { genres: [10749] })).toBe(filterBrowse(rows, { genres: [10749] }).length);
+    expect(countRows(rows, {})).toBe(rows.length);
+    expect(countRows(noche, { query: 'noche', decade: 2000 })).toBe(filterSearch(noche, { query: 'noche', decade: 2000 }).length);
   });
 });

@@ -4,7 +4,15 @@
 // PostgREST traduce los mismos parámetros a filtros SQL (mismo resultado).
 import type { MediaType } from '@/types/media';
 import { availablePlatforms } from './mapper';
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, type BrowseParams, type CatalogRow, type PageResult, type SearchParams } from './types';
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  type BrowseParams,
+  type CatalogRow,
+  type CountParams,
+  type PageResult,
+  type SearchParams,
+} from './types';
 
 function clampLimit(limit?: number): number {
   if (!Number.isFinite(limit) || (limit as number) <= 0) return DEFAULT_PAGE_SIZE;
@@ -33,42 +41,33 @@ function compareRows(sort: BrowseParams['sort']): (a: CatalogRow, b: CatalogRow)
   }
 }
 
-/** Aplica el filtro de `browse`. Devuelve las filas que pasan (sin ordenar). */
-export function filterBrowse(rows: readonly CatalogRow[], p: BrowseParams): CatalogRow[] {
-  const out: CatalogRow[] = [];
-  const platforms = p.platforms;
-  const decade = p.decade !== undefined ? decadeRange(p.decade) : null;
-  for (const r of rows) {
-    if (p.type && r.media_type !== p.type) continue;
-    if (p.genre !== undefined && !r.genre_ids.includes(p.genre)) continue;
-    if (decade && (r.year === null || r.year < decade[0] || r.year > decade[1])) continue;
-    if (platforms && platforms.length > 0) {
-      const avail = availablePlatforms(r);
-      if (!avail.some((x) => platforms.includes(x))) continue;
-    }
-    out.push(r);
-  }
-  return out;
+type Scope = Pick<BrowseParams, 'type' | 'genre' | 'genres' | 'decade' | 'platforms'>;
+
+/** Filtros compartidos por browse, search y count: tipo, género(s), década y plataformas. */
+function inScope(r: CatalogRow, p: Scope, decade: [number, number] | null): boolean {
+  if (p.type && r.media_type !== p.type) return false;
+  if (p.genre !== undefined && !r.genre_ids.includes(p.genre)) return false;
+  if (p.genres && p.genres.length > 0 && !r.genre_ids.some((g) => p.genres!.includes(g))) return false;
+  if (decade && (r.year === null || r.year < decade[0] || r.year > decade[1])) return false;
+  if (p.platforms && p.platforms.length > 0 && !availablePlatforms(r).some((x) => p.platforms!.includes(x))) return false;
+  return true;
 }
 
-/** Aplica el filtro de `search` (substring en minúsculas sobre título/original). */
+/** Aplica el filtro de `browse`. Devuelve las filas que pasan (sin ordenar). */
+export function filterBrowse(rows: readonly CatalogRow[], p: BrowseParams): CatalogRow[] {
+  const decade = p.decade !== undefined ? decadeRange(p.decade) : null;
+  return rows.filter((r) => inScope(r, p, decade));
+}
+
+/** Aplica el filtro de `search` (substring en minúsculas sobre título/original) más los filtros comunes. */
 export function filterSearch(rows: readonly CatalogRow[], p: SearchParams): CatalogRow[] {
   const q = (p.query || '').trim().toLowerCase();
-  const out: CatalogRow[] = [];
-  if (!q) return out;
-  const platforms = p.platforms;
-  for (const r of rows) {
-    if (p.type && r.media_type !== p.type) continue;
-    const t = (r.title || '').toLowerCase();
-    const o = (r.original_title || '').toLowerCase();
-    if (!t.includes(q) && !o.includes(q)) continue;
-    if (platforms && platforms.length > 0) {
-      const avail = availablePlatforms(r);
-      if (!avail.some((x) => platforms.includes(x))) continue;
-    }
-    out.push(r);
-  }
-  return out;
+  if (!q) return [];
+  const decade = p.decade !== undefined ? decadeRange(p.decade) : null;
+  return rows.filter((r) => {
+    if (!inScope(r, p, decade)) return false;
+    return (r.title || '').toLowerCase().includes(q) || (r.original_title || '').toLowerCase().includes(q);
+  });
 }
 
 /** Ordena (estable) y pagina a partir del cursor (offset). */
@@ -89,7 +88,12 @@ export function browseRows(rows: readonly CatalogRow[], p: BrowseParams): PageRe
 /** Comodín: filtrar + ordenar por relevancia (popularidad) + pagina para search. */
 export function searchRows(rows: readonly CatalogRow[], p: SearchParams): PageResult<CatalogRow> {
   const filtered = filterSearch(rows, p);
-  return sortAndPage(filtered, compareRows('popularity'), p.cursor ?? 0, clampLimit(p.limit));
+  return sortAndPage(filtered, compareRows(p.sort ?? 'popularity'), p.cursor ?? 0, clampLimit(p.limit));
+}
+
+/** Cuántas filas pasan el filtro (con texto cuenta como búsqueda), sin paginar. */
+export function countRows(rows: readonly CatalogRow[], p: CountParams): number {
+  return p.query?.trim() ? filterSearch(rows, { ...p, query: p.query }).length : filterBrowse(rows, p).length;
 }
 
 /** Rango de duración (B4). */

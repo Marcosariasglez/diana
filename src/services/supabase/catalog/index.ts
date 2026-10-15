@@ -6,6 +6,7 @@ export type {
   BrowseParams,
   CatalogRow,
   CatalogSort,
+  CountParams,
   PageResult,
   SearchParams,
 } from './types';
