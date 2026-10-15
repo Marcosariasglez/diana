@@ -4,6 +4,7 @@ import { Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoogleButton } from '@/components/ui/GoogleButton';
 import { Button } from '@/components/ui/Button';
+import { BrandMark } from '@/components/ui/BrandMark';
 import { AUTH_MESSAGES, type AuthErrorCode } from '@/constants/authMessages';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useThemedStyles, useTheme } from '@/theme/ThemeProvider';
@@ -47,20 +48,18 @@ export default function Login() {
       maxWidth: 380,
       width: '100%',
       alignSelf: 'center',
+    },
+    // Tarjeta como la de Norte (.n-login__card): card, borde line, radio 24, padding 28×24.
+    card: {
+      backgroundColor: c.card,
+      borderWidth: 1,
+      borderColor: c.line,
+      borderRadius: 24,
+      paddingVertical: 28,
+      paddingHorizontal: 24,
       gap: 16,
     },
-    // Logotipo A3.4: cuadrado de esquinas redondeadas (34 px radio 11; a 56 px, radio 18),
-    // fondo acc + glifo onAcc. No es un círculo.
-    logo: {
-      width: 56,
-      height: 56,
-      borderRadius: 18,
-      backgroundColor: c.acc,
-      alignSelf: 'center',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    logoText: { color: c.onAcc },
+    logo: { alignSelf: 'center' },
     title: { color: c.ink, textAlign: 'center' as const },
     subtitle: { color: c.mut, textAlign: 'center' as const },
     separator: { flexDirection: 'row' as const, alignItems: 'center', gap: 12 },
@@ -90,7 +89,7 @@ export default function Login() {
       fontVariant: ['tabular-nums'],
     },
     error: { color: c.neg, minHeight: 20, textAlign: 'center' as const },
-    footer: { alignItems: 'center' as const, gap: 4, paddingVertical: 24 },
+    footer: { alignItems: 'center' as const, gap: 4, paddingTop: 8 },
     footerText: { color: c.mut },
     link: { color: c.acc },
   }));
@@ -181,8 +180,9 @@ export default function Login() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.card}>
           <View style={styles.logo}>
-            <Text style={[textStyle('heroTitle'), { fontSize: 28 }, styles.logoText]}>D</Text>
+            <BrandMark size={56} background={c.acc} foreground={c.onAcc} />
           </View>
           <Text accessibilityRole="header" style={[textStyle('heroTitle'), styles.title]}>
             Diana
@@ -309,6 +309,7 @@ export default function Login() {
               .
             </Text>
             <Text style={[textStyle('bodySmall'), styles.footerText]}>Una app de VERTICE</Text>
+          </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

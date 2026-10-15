@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { RoomError } from '@/mocks/fakeSocket';
+import { RoomError } from '@/services/room.errors';
 
 const mockRpc = jest.fn().mockResolvedValue({ data: null, error: null });
 const mockFrom = jest.fn();

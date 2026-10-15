@@ -21,12 +21,21 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run verify
+      - name: Guard against mock
+        shell: bash
+        env:
+          B: ${{ vars.BACKEND || 'supabase' }}
+          C: ${{ vars.CATALOG || 'tmdb' }}
+        run: |
+          echo "BACKEND=$B CATALOG=$C"
+          [ "$B" != "mock" ] || { echo "::error::BACKEND=mock no permitido en deploy"; exit 1; }
+          [ "$C" != "mock" ] || { echo "::error::CATALOG=mock no permitido en deploy"; exit 1; }
       - run: npm run build:web
         env:
           EXPO_BASE_URL: /diana
           EXPO_PUBLIC_BASE_URL: /diana
           EXPO_PUBLIC_BACKEND: ${{ vars.BACKEND || 'supabase' }}
-          EXPO_PUBLIC_CATALOG: ${{ vars.CATALOG || 'mock' }}
+          EXPO_PUBLIC_CATALOG: ${{ vars.CATALOG || 'tmdb' }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
       - name: Fallback SPA para rutas profundas

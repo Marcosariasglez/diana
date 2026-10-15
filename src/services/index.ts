@@ -1,46 +1,39 @@
-// Unico punto de cambio mock -> Supabase (7.7). Lee EXPO_PUBLIC_BACKEND y CATALOG.
-import { BACKEND, CATALOG } from '@/lib/env';
-import type { CatalogRepository } from './catalog.repository';
-import { mockWatchlistRepository, type WatchlistRepository } from './watchlist.repository';
-import { importRepository as mockImportRepository, type ImportRepository } from './import.repository';
-import { mockProfileRepository, type ProfileRepository } from './profile.repository';
-import { ratingRepository as mockRatingRepository, type RatingRepository } from './rating.repository';
-import { roomRepository as mockRoomRepository, type RoomRepository } from './room.repository';
-import { searchRepository as mockSearchRepository, type SearchRepository } from './search.repository';
-import { activeCatalogRepository } from './catalog.select';
-import { supabaseProfileRepository } from './supabase/profile.repository';
+// P9 (F4-2): facade SOLO Supabase/TMDB.
+// Los repositorios mock se han eliminado.
+// Ya no lee BACKEND/CATALOG de env.ts (eso muere en P10).
+
+import type { CatalogRepository, GROUP_DECK_SEED } from './catalog.types';
+import { tmdbCatalogRepository } from './tmdb/catalog.repository';
+import type { RatingRepository } from './rating.types';
 import { supabaseRatingRepository } from './supabase/rating.repository';
+import type { ProfileRepository, RemoteUserData } from './profile.types';
+import { supabaseProfileRepository } from './supabase/profile.repository';
+import type { RoomRepository } from './room.types';
 import { supabaseRoomRepository } from './supabase/room.repository';
+import type { SearchRepository } from './search.types';
 import { tmdbSearchRepository } from './tmdb/search.repository';
+import type { ImportRepository } from './import.types';
+import { ImportError, IMPORT_ERROR_MESSAGES } from './import.types';
 import { tmdbImportRepository } from './tmdb/import.repository';
+import type { WatchlistRepository } from './watchlist.types';
 import { supabaseWatchlistRepository } from './supabase/watchlist.repository';
+import { RoomError } from './room.errors';
 
-const useServer = BACKEND === 'supabase';
-const useTmdb = CATALOG === 'tmdb';
+export const catalogRepository: CatalogRepository = tmdbCatalogRepository;
+export const ratingRepository: RatingRepository = supabaseRatingRepository;
+export const profileRepository: ProfileRepository = supabaseProfileRepository;
+export const roomRepository: RoomRepository = supabaseRoomRepository;
+export const searchRepository: SearchRepository = tmdbSearchRepository;
+export const importRepository: ImportRepository = tmdbImportRepository;
+export const watchlistRepository: WatchlistRepository = supabaseWatchlistRepository;
 
-/**
- * Los repositorios mock y los stores se importan entre si (dependencia circular). Para que el
- * resultado no dependa del orden de carga, la eleccion mock/Supabase se resuelve en cada uso.
- */
-function lazy<T extends object>(pick: () => T): T {
-  return new Proxy({} as T, { get: (_t, prop) => Reflect.get(pick(), prop) });
-}
-
-export const catalogRepository = lazy<CatalogRepository>(() => activeCatalogRepository);
-export const ratingRepository = lazy<RatingRepository>(() => (useServer ? supabaseRatingRepository : mockRatingRepository));
-export const profileRepository = lazy<ProfileRepository>(() => (useServer ? supabaseProfileRepository : mockProfileRepository));
-export const roomRepository = lazy<RoomRepository>(() => (useServer ? supabaseRoomRepository : mockRoomRepository));
-export const searchRepository = lazy<SearchRepository>(() => (useTmdb ? tmdbSearchRepository : mockSearchRepository));
-export const importRepository = lazy<ImportRepository>(() => (useTmdb ? tmdbImportRepository : mockImportRepository));
-// D2-3: «Quiero ver» espejo en la tabla watchlist (migración 0008). Solo con
-// servidor: en modo mock la persistencia local (useWatchlistStore) basta.
-export const watchlistRepository = lazy<WatchlistRepository>(() => (useServer ? supabaseWatchlistRepository : mockWatchlistRepository));
-
-export type { CatalogRepository } from './catalog.repository';
-export type { ImportRepository } from './import.repository';
-export { ImportError, IMPORT_ERROR_MESSAGES } from './import.repository';
-export type { ProfileRepository, RemoteUserData } from './profile.repository';
-export type { RatingRepository } from './rating.repository';
-export type { RoomRepository } from './room.repository';
-export { RoomError } from './room.repository';
-export type { SearchRepository } from './search.repository';
+export type { CatalogRepository } from './catalog.types';
+export { GROUP_DECK_SEED } from './catalog.types';
+export type { ImportRepository } from './import.types';
+export { ImportError, IMPORT_ERROR_MESSAGES } from './import.types';
+export type { ProfileRepository, RemoteUserData } from './profile.types';
+export type { RatingRepository } from './rating.types';
+export type { RoomRepository } from './room.types';
+export type { SearchRepository } from './search.types';
+export type { WatchlistRepository } from './watchlist.types';
+export { RoomError } from './room.errors';

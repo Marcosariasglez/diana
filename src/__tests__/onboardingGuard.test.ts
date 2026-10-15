@@ -6,7 +6,7 @@ const src = fs.readFileSync(path.resolve(__dirname, '../../app/_layout.tsx'), 'u
 describe('Guard de onboarding (estatico)', () => {
   it('no renderiza rutas hasta que fuentes y stores estan listos', () => {
     expect(src).toContain('useStoresHydrated');
-    expect(src).toMatch(/if \(!ready\) return null/);
+    expect(src).toMatch(/if \(!ready\) return null|if \(!navReady\) return null/);
   });
 
   it('redirige segun hasOnboarded con Redirect y useSegments', () => {

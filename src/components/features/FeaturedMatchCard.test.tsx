@@ -3,9 +3,9 @@
 // (la heurística y el arranque en frío no la llevan).
 import { render, screen } from '@testing-library/react-native';
 import { FeaturedMatchCard } from './FeaturedMatchCard';
-import { MOVIES } from '@/mocks/data/catalog';
+import { FIXTURE_MOVIES } from '@/test/fixtures/catalog';
 
-const ITEM = { media: MOVIES[1], bucket: 'alto' as const };
+const ITEM = { media: FIXTURE_MOVIES[1], bucket: 'alto' as const };
 
 describe('FeaturedMatchCard · explicación (A.7)', () => {
   it('con explanation pinta la 1ª línea «Porque te gustó…»', async () => {

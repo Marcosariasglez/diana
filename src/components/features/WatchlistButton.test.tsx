@@ -6,9 +6,6 @@
 // estado local ya está cambiado.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-jest.mock('@/services', () => ({
-  watchlistRepository: { upsert: jest.fn(), remove: jest.fn() },
-}));
 jest.mock('@/lib/syncError', () => ({ reportSyncError: jest.fn() }));
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -19,6 +16,11 @@ import { WatchlistButton } from './WatchlistButton';
 
 const mockUpsert = watchlistRepository.upsert as jest.Mock;
 const mockRemove = watchlistRepository.remove as jest.Mock;
+
+beforeEach(() => {
+  mockUpsert.mockResolvedValue(undefined);
+  mockRemove.mockResolvedValue(undefined);
+});
 
 describe('WatchlistButton (D2-3)', () => {
   beforeEach(async () => {

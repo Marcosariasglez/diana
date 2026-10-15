@@ -10,7 +10,7 @@ import { useStoresHydrated } from '@/store/useStoresHydrated';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { ToastProvider } from '@/components/ui/Toast';
-import { BACKEND } from '@/lib/env';
+import { AppSplash } from '@/components/ui/AppSplash';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 import '../global.css';
@@ -24,10 +24,8 @@ function OnboardingGuard() {
   const navReady = !!useRootNavigationState()?.key;
   if (!navReady) return null;
   const first = segments[0] as string | undefined;
-  if (BACKEND === 'supabase') {
-    if (authStatus === 'signedOut') return first === 'login' ? null : <Redirect href="/login" />;
-    if (authStatus === 'signedIn' && first === 'login') return <Redirect href={hasOnboarded ? '/' : '/welcome'} />;
-  }
+  if (authStatus === 'signedOut') return first === 'login' ? null : <Redirect href="/login" />;
+  if (authStatus === 'signedIn' && first === 'login') return <Redirect href={hasOnboarded ? '/' : '/welcome'} />;
   const inOnboarding = first === '(onboarding)';
   if (!hasOnboarded && !inOnboarding) return <Redirect href="/welcome" />;
   if (hasOnboarded && inOnboarding) return <Redirect href="/" />;
@@ -81,7 +79,7 @@ export default function RootLayout() {
   });
   const storesReady = useStoresHydrated();
   const authStatus = useAuthStore((s) => s.status);
-  const ready = (fontsLoaded || !!fontError) && storesReady && (BACKEND === 'mock' || authStatus !== 'loading');
+  const ready = (fontsLoaded || !!fontError) && storesReady && authStatus !== 'loading';
 
   useEffect(() => {
     void useAuthStore.getState().init();
@@ -98,20 +96,22 @@ export default function RootLayout() {
     return () => clearTimeout(t);
   }, []);
 
+  // El splash nativo se quita en cuanto hay fuentes; desde ahí manda <AppSplash/> (marca + «by VERTICE»).
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync();
-  }, [ready]);
-
-  if (!ready) return null;
+    if (fontsLoaded || fontError) SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <ToastProvider>
-            <AppContent />
-          </ToastProvider>
-        </ThemeProvider>
+        {ready && (
+          <ThemeProvider>
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
+          </ThemeProvider>
+        )}
+        <AppSplash ready={ready} />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -5,52 +5,24 @@ import type { ImportErrorCode, ImportPhase, ImportProgress, ImportResult } from 
 import type { HistoryEntry, MediaKey, Rating } from '@/types/rating';
 import type { Movie } from '@/types/media';
 import { MAX_IMPORT_BYTES, MAX_IMPORT_ROWS } from '@/constants/import';
-import { MOVIES, releaseYearOf } from '@/mocks/data/catalog';
-import { predict } from '@/mocks/mock-ai/predict';
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
+import { FIXTURE_MOVIES } from '@/test/fixtures/catalog';
+import { releaseYearOf } from '@/utils/media';
+import { predict } from '@/recommender/predict';
+import { buildTasteProfile } from '@/recommender/taste';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useProfileStore } from '@/store/useProfileStore';
 import { buildMediaKey } from '@/utils/mediaKey';
 import { normalizeTitle } from '@/utils/normalizeTitle';
 import { posterColor } from '@/utils/posterColor';
 
-export interface ImportRepository {
-  parseLetterboxd(
-    file: { uri: string; name: string },
-    opts?: { onProgress?: (p: ImportProgress) => void },
-  ): Promise<ImportResult>;
-}
+// P9: los tipos/helpers se exportaron a import.types.ts; se mantiene el export aquí
+// para compatibilidad (se borra este fichero en P9).
+import type { ImportRepository, CsvRow, ParsedCsv } from './import.types';
+import { ImportError, IMPORT_ERROR_MESSAGES, parseRating, ratedAtOf, IMPORT_YEAR_TOLERANCE } from './import.types';
+export { ImportError, IMPORT_ERROR_MESSAGES, parseRating, ratedAtOf } from './import.types';
+export type { ImportRepository, CsvRow, ParsedCsv } from './import.types';
 
-export const IMPORT_ERROR_MESSAGES: Record<ImportErrorCode, string> = {
-  'unsupported-type': 'Solo se admiten archivos .csv o .zip de Letterboxd.',
-  'too-large': 'El archivo supera los 5 MB. Sube solo ratings.csv o el zip del export.',
-  empty: 'El archivo está vacío.',
-  'zip-without-data': 'No encontramos ratings.csv ni watched.csv dentro del zip.',
-  'missing-columns': 'El archivo no tiene el formato de Letterboxd (faltan columnas).',
-  'read-failed': 'No pudimos leer el archivo. Inténtalo de nuevo.',
-  'no-matches': 'No encontramos ninguna película de tu archivo en nuestro catálogo de prueba.',
-};
-
-/** Error de importacion: `code` es un ImportErrorCode y `message` el texto en espanol. */
-export class ImportError extends Error {
-  readonly code: ImportErrorCode;
-  constructor(code: ImportErrorCode) {
-    super(IMPORT_ERROR_MESSAGES[code]);
-    this.name = 'ImportError';
-    this.code = code;
-  }
-}
-
-/** Tolerancia de anio respecto al de Letterboxd. */
-export const IMPORT_YEAR_TOLERANCE = 1;
 const BATCH = 500;
-
-export type CsvRow = Record<string, string | undefined>;
-
-export interface ParsedCsv {
-  fields: string[];
-  rows: CsvRow[];
-}
 
 const stripBom = (text: string) => (text.charCodeAt(0) === 0xfeff ? text.slice(1) : text);
 
@@ -89,7 +61,7 @@ async function readZipText(entry: JSZip.JSZipObject): Promise<string> {
 
 function buildIndex(): Map<string, Movie[]> {
   const byTitle = new Map<string, Movie[]>();
-  for (const movie of MOVIES) {
+  for (const movie of FIXTURE_MOVIES) {
     for (const name of [movie.title, ...movie.alt_titles]) {
       const k = normalizeTitle(name);
       const list = byTitle.get(k) ?? [];
@@ -120,18 +92,7 @@ function matchMovie(index: Map<string, Movie[]>, row: CsvRow): Movie | null {
   return best;
 }
 
-export function parseRating(raw: string | undefined): Rating | null {
-  const n = Number((raw ?? '').replace(',', '.'));
-  if (!Number.isFinite(n) || n < 0.5 || n > 5) return null;
-  return (Math.round(n * 2) / 2) as Rating;
-}
-
-export function ratedAtOf(date: string | undefined): string {
-  const d = date ? new Date(date) : null;
-  return d && !Number.isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
-}
-
-export type Report = (phase: ImportPhase, processed?: number, total?: number) => void;
+type Report = (phase: ImportPhase, processed?: number, total?: number) => void;
 
 export async function readFile(
   file: { uri: string; name: string },
@@ -210,7 +171,7 @@ export const importRepository: ImportRepository = {
     const history = useHistoryStore.getState();
     const existingKeys = new Set<MediaKey>(history.entries.map((e) => e.key));
     const existingWatched = new Set<MediaKey>(history.watched);
-    const taste = buildTasteProfile(profile.id, profile.initialRatings, history.entries);
+    const taste = buildTasteProfile(profile.id, profile.initialRatings, history.entries, profile.initialGenres);
     const index = buildIndex();
 
     const entries: HistoryEntry[] = [];

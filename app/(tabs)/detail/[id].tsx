@@ -122,7 +122,7 @@ function WhereToWatchRow({ label, ids, c }: { label: string; ids: string[]; c: {
 /**
  * VERTICE-PLAN-2 D2-1.6: «Dónde verla» de la ficha. Consulta la
  * disponibilidad POR MODALIDAD (flatrate / alquiler / compra) del repositorio
- * paginado (catalog_titles en tmdb, memoria en mock). Muestra solo lo que
+ * paginado (catalog_titles vía PostgREST). Muestra solo lo que
  * exista y con el aviso de atribución de JustWatch (D2-1.7).
  */
 function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {

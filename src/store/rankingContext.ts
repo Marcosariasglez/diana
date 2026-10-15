@@ -1,5 +1,5 @@
 import type { RankingContext } from '@/types/rating';
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
+import { buildTasteProfile } from '@/recommender/taste';
 import { selectSeenKeys } from './seen';
 import { useHistoryStore } from './useHistoryStore';
 import { useProfileStore } from './useProfileStore';
@@ -11,7 +11,7 @@ export function getRankingContext(): RankingContext {
   const { profile } = profileState;
   return {
     userId: profile.id,
-    taste: buildTasteProfile(profile.id, profile.initialRatings, history.entries),
+    taste: buildTasteProfile(profile.id, profile.initialRatings, history.entries, profile.initialGenres),
     seenKeys: selectSeenKeys(profileState, history),
   };
 }

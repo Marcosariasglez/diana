@@ -1,7 +1,7 @@
 import type { GroupDecision, RoomSnapshot } from '@/types/room';
 import { getSupabase } from '@/lib/supabase';
 import { useProfileStore } from '@/store/useProfileStore';
-import { RoomError } from '@/mocks/fakeSocket';
+import { RoomError } from '../room.errors';
 import type { RoomRepository } from '../room.repository';
 
 const KNOWN = ['full', 'not-host', 'wrong-phase', 'not-found'] as const;

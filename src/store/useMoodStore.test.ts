@@ -1,9 +1,5 @@
 // D2-5 (calidad): store del mood. El wizard guarda respuestas por id, avanza
 // hasta el número de preguntas de la complejidad y finalize() resuelve
-// resultados (listos/vacíos/error) con protección de carrera por requestId.
-jest.mock('@/services', () => ({
-  catalogRepository: { getMoodResults: jest.fn() },
-}));
 jest.mock('./rankingContext', () => ({ getRankingContext: () => ({}) }));
 jest.mock('./useProfileStore', () => ({
   useProfileStore: { getState: () => ({ profile: { favoritePlatforms: ['netflix'] } }) },
@@ -13,14 +9,16 @@ import { getQuestionsFor } from '@/features/mood/questions';
 import { catalogRepository } from '@/services';
 import { useMoodStore } from './useMoodStore';
 
-const mockGetMoodResults = catalogRepository.getMoodResults as jest.Mock;
-
 const RESULT = { media: { id: 1, media_type: 'movie', title: 'X' }, score: 0.5 };
+
+// P10: catalogRepository.getMoodResults es función real del mock legacy, no jest.fn().
+// Usamos jest.spyOn para interceptar y usar mockResolvedValue.
+const mockGetMoodResults = jest.spyOn(catalogRepository, 'getMoodResults');
 
 describe('useMoodStore (D2-5)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetMoodResults.mockResolvedValue([RESULT]);
+    mockGetMoodResults.mockResolvedValue([{ media: RESULT.media, score: RESULT.score, bucket: 'medio' }]);
     useMoodStore.setState({
       mode: 'solo',
       complexity: 'intermedio',

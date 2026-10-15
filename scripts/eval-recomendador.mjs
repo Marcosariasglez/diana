@@ -84,9 +84,9 @@ function loadTsFile(rel) {
   if (!file) throw new Error(`eval: no existe ${rel}`);
   return loadTs(file, dirname(file));
 }
-const { mediaKeyOf } = loadTsFile('src/mocks/data/catalog.ts');
-const { predictTenths } = loadTsFile('src/mocks/mock-ai/predict.ts');
-const { buildTasteProfile } = loadTsFile('src/mocks/mock-ai/taste.ts');
+const { mediaKeyOf } = loadTsFile('src/utils/media.ts');
+const { predictTenths } = loadTsFile('src/recommender/predict.ts');
+const { buildTasteProfile } = loadTsFile('src/recommender/taste.ts');
 
 // ---------------------------------------------------------------------------
 // Modo --real (fase A, A.6): catálogo y EMBEDDINGS REALES de gte-small,

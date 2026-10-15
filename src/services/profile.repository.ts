@@ -1,22 +1,10 @@
 import type { HistoryEntry, InitialRating, MediaKey } from '@/types/rating';
 import type { ImportResult } from '@/types/import';
 
-export interface RemoteUserData {
-  profile: { displayName: string; favoritePlatforms: string[]; favoriteGenres: number[]; hasOnboarded: boolean };
-  initialRatings: Record<number, InitialRating>;
-  initialGenres: Record<number, number[]>;
-  entries: HistoryEntry[];
-  watched: MediaKey[];
-}
-
-export interface ProfileRepository {
-  /** null en modo mock: no hay servidor. */
-  load(): Promise<RemoteUserData | null>;
-  saveProfile(p: Partial<RemoteUserData['profile']>): Promise<void>;
-  saveInitialRating(mediaId: number, value: InitialRating, genreIds: number[]): Promise<void>;
-  saveImport(result: ImportResult, genresByKey?: Record<MediaKey, number[]>): Promise<void>;
-  removeEntry(key: MediaKey): Promise<void>;
-}
+// P9: los tipos se exportaron a profile.types.ts; se mantiene el export aquí
+// para compatibilidad (se borra este fichero en P9).
+import type { ProfileRepository, RemoteUserData } from './profile.types';
+export type { RemoteUserData, ProfileRepository } from './profile.types';
 
 export const mockProfileRepository: ProfileRepository = {
   async load() { return null; },

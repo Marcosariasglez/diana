@@ -13,8 +13,9 @@ export default {
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: '#F4F3EF',
+      backgroundColor: '#0B7A66',
       foregroundImage: './assets/images/android-icon-foreground.png',
+      monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     package: 'com.diana.app',
   },
@@ -38,7 +39,7 @@ export default {
           backgroundColor: '#0A0C0F',
         },
         image: './assets/images/splash-icon.png',
-        imageWidth: 76,
+        imageWidth: 112,
       },
     ],
     [

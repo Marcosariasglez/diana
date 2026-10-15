@@ -4,9 +4,12 @@ import type { SearchKind, SearchResult } from '@/types/search';
 import { refOf, subtitleOf } from './resultRef';
 import { useDailyLogSearch } from './useDailyLogSearch';
 
-jest.mock('@/services', () => ({ searchRepository: { search: jest.fn() } }));
 
 const search = searchRepository.search as jest.Mock;
+
+beforeEach(() => {
+  search.mockResolvedValue({ results: [], hasMore: false });
+});
 
 const movie = (title: string, id: number): SearchResult => ({
   kind: 'movie',

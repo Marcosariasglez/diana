@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { RankingContext, TasteProfile } from '@/types/rating';
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
+import { buildTasteProfile } from '@/recommender/taste';
 import { useSeenKeys } from '@/store/seen';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useProfileStore } from '@/store/useProfileStore';
@@ -9,10 +9,12 @@ import { useProfileStore } from '@/store/useProfileStore';
 export function useTasteProfile(): TasteProfile {
   const userId = useProfileStore((s) => s.profile.id);
   const initialRatings = useProfileStore((s) => s.profile.initialRatings);
+  const initialGenres = useProfileStore((s) => s.profile.initialGenres);
   const entries = useHistoryStore((s) => s.entries);
+  // P6 (F3-1): el gusto sale de los géneros persistidos (swipe + historial).
   return useMemo(
-    () => buildTasteProfile(userId, initialRatings, entries),
-    [userId, initialRatings, entries],
+    () => buildTasteProfile(userId, initialRatings, entries, initialGenres),
+    [userId, initialRatings, entries, initialGenres],
   );
 }
 

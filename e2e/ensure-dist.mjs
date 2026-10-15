@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const env = {
   EXPO_PUBLIC_BACKEND: 'supabase',
-  EXPO_PUBLIC_CATALOG: 'mock',
+  EXPO_PUBLIC_CATALOG: 'tmdb',
   EXPO_PUBLIC_BASE_URL: '',
   EXPO_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:4319/e2e-sb',
   EXPO_PUBLIC_SUPABASE_ANON_KEY: 'e2e-anon-key',

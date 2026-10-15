@@ -1,18 +1,17 @@
 import type { SearchKind, SearchResult } from '@/types/search';
 import type { Media, Movie, TVSeries } from '@/types/media';
 import { PAGE_SIZE } from '@/constants/feed';
-import { CATALOG, titleOf } from '@/mocks/data/catalog';
-import { fakeDelay } from '@/mocks/latency';
+import { FIXTURE_CATALOG } from '@/test/fixtures/catalog';
+import { titleOf } from '@/utils/media';
 import { normalizeTitle } from '@/utils/normalizeTitle';
 import { posterColor } from '@/utils/posterColor';
 
-export interface SearchRepository {
-  search(params: {
-    query: string;
-    kind?: SearchKind;
-    page?: number;
-  }): Promise<{ results: SearchResult[]; hasMore: boolean }>;
-}
+// P9: el tipo se exportó a search.types.ts; se mantiene el export aquí para compatibilidad
+// (se borra este fichero en P9).
+import type { SearchRepository } from './search.types';
+export type { SearchRepository } from './search.types';
+
+const CATALOG = FIXTURE_CATALOG;
 
 /** Capitulos destacados por serie (id de serie -> [temporada, capitulo]); hasta 2 por serie. */
 export const MOCK_EPISODE_HIGHLIGHTS: Readonly<Record<number, ReadonlyArray<readonly [number, number]>>> = {
@@ -149,7 +148,6 @@ function getMediaById(id: number): Media | undefined {
 
 export const searchRepository: SearchRepository = {
   async search({ query, kind = 'all', page = 0 }) {
-    await fakeDelay();
     const all = searchCatalog(query, kind);
     const start = page * PAGE_SIZE;
     return { results: all.slice(start, start + PAGE_SIZE), hasMore: start + PAGE_SIZE < all.length };

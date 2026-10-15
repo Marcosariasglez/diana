@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react-native';
 import { FeaturedMatchCard } from '@/components/features/FeaturedMatchCard';
 import { MetricCard } from '@/components/features/MetricCard';
-import { MOVIES } from '@/mocks/data/catalog';
+import { FIXTURE_MOVIES } from '@/test/fixtures/catalog';
 import { light } from '@/theme/tokens';
 
 describe('Detalles de wireframe (parte Inicio)', () => {
   it('FeaturedMatchCard muestra "MEJOR MATCH ESTA NOCHE" y el badge "Recomendación Top"', async () => {
-    await render(<FeaturedMatchCard item={{ media: MOVIES[1], bucket: 'alto' }} />);
+    await render(<FeaturedMatchCard item={{ media: FIXTURE_MOVIES[1], bucket: 'alto' }} />);
     expect(screen.getByText('MEJOR MATCH ESTA NOCHE')).toBeTruthy();
     expect(screen.getByText('Recomendación Top', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByText('Match alto')).toBeTruthy();
@@ -14,7 +14,7 @@ describe('Detalles de wireframe (parte Inicio)', () => {
   });
 
   it('el badge de la tarjeta destacada usa el icono Flame', async () => {
-    await render(<FeaturedMatchCard item={{ media: MOVIES[1], bucket: 'alto' }} />);
+    await render(<FeaturedMatchCard item={{ media: FIXTURE_MOVIES[1], bucket: 'alto' }} />);
     const tree = JSON.stringify(screen.toJSON());
     expect(tree).toContain('lucide-flame');
     expect(tree).not.toContain('lucide-star');

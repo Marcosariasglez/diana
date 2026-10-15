@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_PLATFORMS } from '@/constants/platforms';
-import { deriveGenrePreferences } from '@/mocks/mock-ai/taste';
+import { deriveGenrePreferences } from '@/recommender/taste';
 import type { InitialRating } from '@/types/rating';
 import { useHistoryStore } from './useHistoryStore';
 import { profileRepository } from '@/services';
@@ -17,6 +17,12 @@ export interface UserProfile {
   id: string;
   displayName: string;
   initialRatings: Record<number, InitialRating>;
+  /**
+   * P6 (F3-1): `genre_ids` del swipe de onboarding por mediaId (vienen de
+   * `initial_ratings.genre_ids`). Con ellos el gusto se calcula sin buscar el
+   * titulo en ningun catalogo (taste.ts sin lookup).
+   */
+  initialGenres: Record<number, number[]>;
   favoriteGenres: number[];
   favoritePlatforms: string[];
 }
@@ -36,6 +42,7 @@ export const createDefaultProfile = (): UserProfile => ({
   id: DEFAULT_USER_ID,
   displayName: DEFAULT_DISPLAY_NAME,
   initialRatings: {},
+  initialGenres: {},
   favoriteGenres: [],
   favoritePlatforms: [...DEFAULT_PLATFORMS],
 });
@@ -56,8 +63,16 @@ export const useProfileStore = create<ProfileState>()(
         void profileRepository.saveProfile({ favoritePlatforms: [...ids] }).catch(reportSyncError);
       },
       addInitialRating: (mediaId, value, genreIds) => {
+        // P6 (F3-1): los géneros del swipe se guardan en el store: son la señal
+        // con la que se calcula el gusto (ya no hay lookup del catalogo).
         set((s) => ({
-          profile: { ...s.profile, initialRatings: { ...s.profile.initialRatings, [mediaId]: value } },
+          profile: {
+            ...s.profile,
+            initialRatings: { ...s.profile.initialRatings, [mediaId]: value },
+            ...(genreIds !== undefined
+              ? { initialGenres: { ...s.profile.initialGenres, [mediaId]: genreIds } }
+              : {}),
+          },
         }));
         void profileRepository.saveInitialRating(mediaId, value, genreIds ?? []).catch(reportSyncError);
       },
@@ -66,6 +81,7 @@ export const useProfileStore = create<ProfileState>()(
         const favoriteGenres = deriveGenrePreferences(
           profile.initialRatings,
           useHistoryStore.getState().entries,
+          profile.initialGenres,
         );
         set({ hasOnboarded: true, profile: { ...profile, favoriteGenres } });
         void profileRepository.saveProfile({ hasOnboarded: true, favoriteGenres }).catch(reportSyncError);

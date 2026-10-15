@@ -1,8 +1,8 @@
 import type { ImportResult } from '@/types/import';
 import type { HistoryEntry, MediaKey } from '@/types/rating';
 import { genreLookup, registerGenres } from '@/lib/genreIndex';
-import { predictTenths } from '@/mocks/mock-ai/predict';
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
+import { predictTenths } from '@/recommender/predict';
+import { buildTasteProfile } from '@/recommender/taste';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useProfileStore } from '@/store/useProfileStore';
 import { buildMediaKey } from '@/utils/mediaKey';
@@ -38,7 +38,7 @@ export const tmdbImportRepository: ImportRepository = {
     const history = useHistoryStore.getState();
     const existingKeys = new Set<MediaKey>(history.entries.map((e) => e.key));
     const existingWatched = new Set<MediaKey>(history.watched);
-    const taste = buildTasteProfile(profile.id, profile.initialRatings, history.entries);
+    const taste = buildTasteProfile(profile.id, profile.initialRatings, history.entries, profile.initialGenres);
 
     const entries: HistoryEntry[] = [];
     const newKeys = new Set<MediaKey>();

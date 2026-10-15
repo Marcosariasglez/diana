@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Platform } from 'react-native';
 import type { AuthError, Session } from '@supabase/supabase-js';
-import { BACKEND, BASE_URL } from '@/lib/env';
+import { BASE_URL } from '@/lib/env';
 import { getSupabase } from '@/lib/supabase';
 import type { AuthErrorCode } from '@/constants/authMessages';
 import { bootstrapUserData, resetLocalStores } from './bootstrapUserData';
@@ -111,14 +111,14 @@ export const useAuthStore = create<AuthState>()((set, get) => {
   };
 
   return {
-    status: BACKEND === 'supabase' ? 'loading' : 'signedIn',
+    status: 'loading',
     userId: null,
     email: null,
     provider: null,
     error: null,
     clearError: () => set({ error: null }),
     init: async () => {
-      if (started || BACKEND !== 'supabase') return;
+      if (started) return;
       started = true;
       const sb = getSupabase();
       sb.auth.onAuthStateChange((_event, session) => {

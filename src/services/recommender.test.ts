@@ -1,10 +1,11 @@
-// D2-2: recomendador real — interruptor `activeRecommender()` y el mapeo de las
-// respuestas de los RPC `recommend` / `predict_tenths` (migración 0007).
+import type { TVSeries } from '@/types/media';
+
+// D2-2 / F4-3: recomendador real — interruptor `activeRecommender()` y el mapeo
+// de las respuestas de los RPC `recommend` / `predict_tenths` (migración 0007).
 //
-// `recommender.ts` deconstruye `CATALOG`/`RECOMMENDER` al cargar, así que cada
-// prueba fija los valores del mock y vuelve a cargar el módulo (resetModules)
-// para que capture los nuevos.
-const envState: { CATALOG: string; RECOMMENDER: string } = { CATALOG: 'tmdb', RECOMMENDER: 'content' };
+// `recommender.ts` lee `RECOMMENDER` de env.ts al cargar. Se mockea el módulo
+// para controlar el modo del recomendador.
+const envState: { RECOMMENDER: string } = { RECOMMENDER: 'content' };
 const sbState: { client: unknown } = { client: null };
 
 jest.mock('@/lib/env', () => envState);
@@ -15,31 +16,24 @@ function loadRecommender() {
   return require('@/services/recommender');
 }
 
-describe('recommender: activeRecommender (D2-2.6)', () => {
+describe('recommender: activeRecommender (D2-2.6 / F4-3)', () => {
   beforeEach(() => {
-    envState.CATALOG = 'tmdb';
     envState.RECOMMENDER = 'content';
     sbState.client = null;
   });
 
-  it('heuristic cuando RECOMMENDER=heuristic (defecto)', () => {
+  it('heuristic cuando RECOMMENDER=heuristic', () => {
     envState.RECOMMENDER = 'heuristic';
     expect(loadRecommender().activeRecommender()).toBe('heuristic');
   });
 
-  it('heuristic cuando CATALOG=mock aunque RECOMMENDER=content', () => {
-    envState.CATALOG = 'mock';
-    expect(loadRecommender().activeRecommender()).toBe('heuristic');
-  });
-
-  it('content cuando RECOMMENDER=content y CATALOG=tmdb', () => {
+  it('content cuando RECOMMENDER=content', () => {
     expect(loadRecommender().activeRecommender()).toBe('content');
   });
 });
 
 describe('recommender: contentRecommend (RPC recommend)', () => {
   beforeEach(() => {
-    envState.CATALOG = 'tmdb';
     envState.RECOMMENDER = 'content';
   });
 
@@ -65,16 +59,32 @@ describe('recommender: contentRecommend (RPC recommend)', () => {
     expect(recs?.[1]?.media.media_type).toBe('tv');
   });
 
-  it('filas con tmdb_id del catálogo mock devuelven el Media completo (modo desarrollo)', async () => {
+  // F2-1: una fila del RPC con tmdb_id que EXISTE en el catálogo mock (52 →
+  // 'Breaking Bad' en el mock, serie) y un título real distinto debe devolver
+  // SIEMPRE el título de la fila, nunca datos del MOCK_CATALOG.
+  it('F2-1: fila RPC con tmdb_id=52 NO devuelve el título del MOCK_CATALOG', async () => {
     const rpc = jest.fn().mockResolvedValue({
       error: null,
-      data: [{ media_type: 'movie', tmdb_id: 1, title: 'Ignorado', poster_path: null, score: 0.2, explanation: [] }],
+      data: [{ media_type: 'tv', tmdb_id: 52, title: 'The Bear', poster_path: null, score: 0.4, explanation: [] }],
     });
     sbState.client = { rpc };
     const mod = loadRecommender();
     const recs = await mod.contentRecommend({ platforms: ['netflix'] });
-    // id 1 existe en el mock catalog → se devuelve ese Media (no el título del RPC)
-    expect(recs?.[0]?.media.id).toBe(1);
+    expect(recs).toHaveLength(1);
+    const media = recs?.[0]?.media;
+    expect(media).toBeDefined();
+    expect(media?.media_type).toBe('tv');
+    expect(media?.id).toBe(52);
+    // El título es el de la fila del RPC, no el del mock ('Breaking Bad').
+    const tv = media as TVSeries | undefined;
+    expect(tv?.name).toBe('The Bear');
+    expect(tv?.name).not.toBe('Breaking Bad');
+    // NUNCA se complementa con datos mock: géneros/plataformas vacíos, sin
+    // overview ni vote_average del mock (8.9, 14500).
+    expect(media?.genres).toEqual([]);
+    expect(media?.platforms).toEqual([]);
+    expect(media?.vote_average).toBe(0);
+    expect(media?.overview).toBe('');
   });
 
   it('devuelve null si el RPC falla (para que el caller decaiga a heuristic)', async () => {
@@ -91,7 +101,6 @@ describe('recommender: contentRecommend (RPC recommend)', () => {
 
 describe('recommender: contentPredictTenths (RPC predict_tenths)', () => {
   beforeEach(() => {
-    envState.CATALOG = 'tmdb';
     envState.RECOMMENDER = 'content';
   });
 

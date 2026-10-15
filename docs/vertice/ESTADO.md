@@ -8,6 +8,57 @@
 > `BACKEND_PROGRESS.md` e `IMPLEMENTATION_STATUS.md` se eliminaron el 2026-10-08: lo útil
 > quedó absorbido en «Registro histórico (B0–B7)» al final de este documento.
 
+## Plan sin-mock — paquetes P3 y P4 (2026-10-14)
+
+Fuente: `docs/vertice/plan-sin-mock-ejecucion.md` (FASE 2, P3 y P4).
+
+### Variables de CI requeridas (nuevo desde P3)
+
+- `BACKEND=supabase` y `CATALOG=tmdb` en GitHub → Settings → Secrets and variables → Actions → *Variables*.
+  **Si faltan o están en `mock`, el guard `Guard against mock` de
+  [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) FALLO el deploy a propósito**
+  (comportamiento deseado del plan, H6). Desde F4 (P10) solo serán necesarias
+  `SUPABASE_URL`/`SUPABASE_ANON_KEY`.
+- **Paso del dueño (antes del próximo `git push`):** confirmar en GitHub que
+  `BACKEND=supabase` y `CATALOG=tmdb` existen como variables de Actions.
+
+- **P3 (F2-4 + F2-6):**
+  - `deploy.yml`: `EXPO_PUBLIC_CATALOG` ahora cae a `'tmdb'` (no `'mock'`) y el paso
+    `Guard against mock` falla el build si `BACKEND` o `CATALOG` son `mock`
+    (`::error::BACKEND=mock no permitido en deploy` / `CATALOG=mock...`).
+  - «Modo demostración» eliminado de `app/account.tsx` y `app/(tabs)/profile.tsx`
+    (rama `isMock`, estilos `demoBadge`/`demoText` e imports de `BACKEND` huérfanos).
+  - `src/features/profile/resetPrototype.ts` borrado (sin usos en `app/` ni `src/`;
+    no tenía test propio — decisión: eliminar sin migración).
+- **P4 (F2-3):** en `src/mocks/mock-ai/` el parámetro `catalog` pasa a ser
+  **obligatorio** (sin default `= CATALOG`) en: `hiddenGems.ts` (`rankEligible`,
+  `pickFeatured`, `pickRecommendations`, `pickHiddenGems`, `pickCategoryItems`,
+  `pickFeedPage`), `moodFilters.ts` (`rankMoodResults`, `buildGroupDeckMedia.catalog`)
+  y `onboardingDeck.ts` (`getOnboardingDeckMovies`). Ningún llamador de producción
+  puede calcular sobre el catálogo falso sin pasar el pool explícitamente.
+  Llamadores actualizados: `src/services/catalog.repository.ts` (repositorio mock,
+  pasa `CATALOG` explícitamente hasta que muera en P9) y tests
+  (`onboardingDeck.test.ts`, `onboardingDeck.coldstart.test.ts`, `seen.test.ts`
+  pasan el fixture del mock). `tmdb/catalog.repository.ts` ya pasaba el pool en todos
+  los casos: sin cambios.
+
+## Plan sin-mock — paquetes P1 y P2 (2026-10-14)
+
+Fuente: `docs/vertice/plan-sin-mock-ejecucion.md` (FASE 2, P1 y P2).
+
+- **P1 (F2-1):** `mediaFromRpcRow` ([`src/services/recommender.ts`](../../src/services/recommender.ts))
+  mapea la fila del RPC **1:1** — eliminado el import de `MOCK_CATALOG` y la sustitución
+  `MOCK_CATALOG.find(...)`. El feed nunca vuelve a sustituir un título real por uno del mock.
+  Test nuevo F2-1 (`tmdb_id=52` → devuelve el título de la fila, no 'Breaking Bad' del mock) en verde.
+- **P2 (F2-2):** La predicción de la ficha usa el modelo real:
+  `supabaseRatingRepository.saveRating` ([`src/services/supabase/rating.repository.ts`](../../src/services/supabase/rating.repository.ts))
+  llama a `contentPredictTenths` (RPC `predict_tenths`) cuando `activeRecommender() === 'content'`,
+  con fallback seguro a la heurística `predictTenths` si devuelve `null` o falla.
+  **Feed y predicción comparten modelo (RPC `predict_tenths`) — 2026-10-14.**
+  3 tests nuevos en `src/services/supabase/rating.repository.test.ts` (RPC→34, RPC null→heurística,
+  entrada existente→sin recalcular). La ficha (`useDetailData.ts`) ya mostraba `saved.aiPrediction`
+  del repositorio: sin cambios.
+
 ## Ajustes 2026-10-14 (continuación plan-ajustes-oct13.md)
 
 **Plan:** <`docs/vertice/plan-ajustes-oct13.md`> · **Auditoría de mood:** <`docs/vertice/mood-auditoria.md`>

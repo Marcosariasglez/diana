@@ -12,7 +12,6 @@ import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
-import { BACKEND } from '@/lib/env';
 import { getSupabase } from '@/lib/supabase';
 import { exportMyData } from '@/services/export';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -36,8 +35,7 @@ type Sheet = 'none' | 'everywhere' | 'delete' | 'deleteEverywhere';
 /**
  * Pantalla «Cuenta» (A5): correo, nombre editable, apariencia, exportar,
  * cerrar sesión (1 / todos), borrar cuenta (frase BORRAR MI CUENTA) y el
- * enlace de borrado global de la identidad VERTICE. En modo mock muestra
- * «Modo demostración» y oculta las acciones de cuenta.
+ * enlace de borrado global de la identidad VERTICE.
  */
 export default function AccountScreen() {
   const email = useAuthStore((s) => s.email);
@@ -53,7 +51,6 @@ export default function AccountScreen() {
   const [nameDraft, setNameDraft] = useState(displayName);
   const [exporting, setExporting] = useState(false);
   const [sheet, setSheet] = useState<Sheet>('none');
-  const isMock = BACKEND === 'mock';
 
   const { colors } = useTheme();
   const styles = useThemedStyles((c) => StyleSheet.create({
@@ -70,14 +67,6 @@ export default function AccountScreen() {
     title: { color: c.ink, flex: 1 },
     groupLabel: { color: c.mut, marginTop: 8 },
     nameRow: { paddingVertical: 12, gap: 8 },
-    demoBadge: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 99,
-      backgroundColor: c.chip,
-      alignSelf: 'flex-start',
-    },
-    demoText: { color: c.mut },
     footer: { marginTop: 24, alignItems: 'center' as const, gap: 4 },
     footerText: { color: c.mut },
     legal: { color: c.acc },
@@ -189,53 +178,45 @@ export default function AccountScreen() {
           />
         </Card>
 
-        {isMock ? (
-          <View style={styles.demoBadge}>
-            <Text style={[textStyle('bodySmall'), styles.demoText]}>Modo demostración</Text>
-          </View>
-        ) : (
-          <>
-            {/* Cuenta */}
-            <Text style={[textStyle('label'), styles.groupLabel]}>CUENTA</Text>
-            <Card>
-              <ListRow
-                first
-                title="Exportar mis datos"
-                subtitle="Descarga un JSON con todo lo tuyo en Diana"
-                icon={Download}
-                onPress={() => void handleExport()}
-              />
-              <ListRow
-                title="Cerrar sesión"
-                subtitle="Solo este dispositivo"
-                icon={LogOut}
-                onPress={() => void handleSignOut()}
-              />
-              <ListRow
-                title="Cerrar en todos los dispositivos"
-                icon={Globe}
-                onPress={() => setSheet('everywhere')}
-              />
-              <ListRow
-                title="Borrar mi cuenta"
-                subtitle="Borra tus datos de Diana"
-                icon={Trash2}
-                onPress={() => setSheet('delete')}
-              />
-            </Card>
+        {/* Cuenta */}
+        <Text style={[textStyle('label'), styles.groupLabel]}>CUENTA</Text>
+        <Card>
+          <ListRow
+            first
+            title="Exportar mis datos"
+            subtitle="Descarga un JSON con todo lo tuyo en Diana"
+            icon={Download}
+            onPress={() => void handleExport()}
+          />
+          <ListRow
+            title="Cerrar sesión"
+            subtitle="Solo este dispositivo"
+            icon={LogOut}
+            onPress={() => void handleSignOut()}
+          />
+          <ListRow
+            title="Cerrar en todos los dispositivos"
+            icon={Globe}
+            onPress={() => setSheet('everywhere')}
+          />
+          <ListRow
+            title="Borrar mi cuenta"
+            subtitle="Borra tus datos de Diana"
+            icon={Trash2}
+            onPress={() => setSheet('delete')}
+          />
+        </Card>
 
-            <Card>
-              <ListRow
-                first
-                title="Borrar también mi acceso a todas las apps de VERTICE"
-                subtitle="Elimina además la cuenta compartida: afectará a Diana y a las demás apps"
-                icon={Trash2}
-                iconColor={colors.neg}
-                onPress={() => setSheet('deleteEverywhere')}
-              />
-            </Card>
-          </>
-        )}
+        <Card>
+          <ListRow
+            first
+            title="Borrar también mi acceso a todas las apps de VERTICE"
+            subtitle="Elimina además la cuenta compartida: afectará a Diana y a las demás apps"
+            icon={Trash2}
+            iconColor={colors.neg}
+            onPress={() => setSheet('deleteEverywhere')}
+          />
+        </Card>
 
         {/* Pie */}
         <View style={styles.footer}>

@@ -5,7 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { renderHook, waitFor } from '@testing-library/react-native';
 
-jest.mock('@/lib/env', () => ({ BACKEND: 'supabase', CATALOG: 'tmdb' }));
+jest.mock('@/lib/env', () => ({ RECOMMENDER: 'content' }));
 jest.mock('@/services/supabase/catalog/select', () => ({
   activeCatalogSource: { byIds: jest.fn() },
 }));

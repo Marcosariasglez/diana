@@ -3,7 +3,7 @@
 // `${year}-01-01` (el motor de mood solo lee el año: releaseYearOf). Las series
 // no traen temporadas (se piden aparte vía getTvSeason), así que `seasons: []`.
 import type { Media, Movie, TVSeries } from '@/types/media';
-import { genresFromIds } from '@/mocks/data/genres';
+import { genresFromIds } from '@/constants/genres';
 import type { CatalogRow } from './types';
 
 /** Plataforma disponible en CUALQUIER modalidad (flatrate, alquiler o compra). */

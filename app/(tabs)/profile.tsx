@@ -26,7 +26,6 @@ import {
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useSettingsStore, type ReducedMotionOverride } from '@/store/useSettingsStore';
-import { BACKEND } from '@/lib/env';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 import { formatRating } from '@/utils/format';
@@ -89,15 +88,6 @@ export default function ProfileScreen() {
     groupLabel: { color: c.mut, marginTop: 14, marginBottom: 2 },
     footer: { marginTop: 24, alignItems: 'center' as const, gap: 4 },
     footerText: { color: c.mut },
-    demoBadge: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 99,
-      backgroundColor: c.chip,
-      alignSelf: 'center',
-      marginBottom: 8,
-    },
-    demoText: { color: c.mut },
   }));
 
   const seen = useMemo(() => selectSeenCount({ entries, watched }), [entries, watched]);
@@ -108,7 +98,6 @@ export default function ProfileScreen() {
   const empty = seen === 0;
   const seenText = empty ? '—' : String(seen);
   const avgText = formatRating(average);
-  const isMock = BACKEND === 'mock';
   const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
   return (
@@ -260,19 +249,13 @@ export default function ProfileScreen() {
         {/* Grupo Cuenta */}
         <Text style={[textStyle('label'), styles.groupLabel]}>CUENTA</Text>
         <Card style={styles.sectionGap}>
-          {isMock ? (
-            <View style={styles.demoBadge}>
-              <Text style={[textStyle('bodySmall'), styles.demoText]}>Modo demostración</Text>
-            </View>
-          ) : (
-            <ListRow
-              first
-              title="Gestionar cuenta"
-              subtitle="Cerrar sesión, exportar datos, borrar cuenta"
-              icon={User}
-              onPress={() => router.push('/account')}
-            />
-          )}
+          <ListRow
+            first
+            title="Gestionar cuenta"
+            subtitle="Cerrar sesión, exportar datos, borrar cuenta"
+            icon={User}
+            onPress={() => router.push('/account')}
+          />
         </Card>
 
         {/* Pie */}

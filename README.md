@@ -21,9 +21,7 @@ wizard, salas de amigos en tiempo real e importación Letterboxd.
 ```bash
 npm ci
 # crea .env.local (ignorado por git) con:
-#   EXPO_PUBLIC_BACKEND=mock            # mock | supabase
-#   EXPO_PUBLIC_CATALOG=mock            # mock | tmdb (exige BACKEND=supabase)
-#   EXPO_PUBLIC_RECOMMENDER=heuristic   # heuristic | content (content solo con CATALOG=tmdb)
+#   EXPO_PUBLIC_RECOMMENDER=heuristic   # heuristic | content
 #   EXPO_PUBLIC_BASE_URL=               # p. ej. /diana en GitHub Pages
 #   EXPO_PUBLIC_SUPABASE_URL=...
 #   EXPO_PUBLIC_SUPABASE_ANON_KEY=...
@@ -32,8 +30,7 @@ npm start                 # desarrollo
 npm run build:web         # export web → dist/
 ```
 
-Modos: con `BACKEND=mock` la app no pide inicio de sesión y todo es local; con
-`BACKEND=supabase` hay puerta de acceso (Google PKCE o código por correo).
+La app siempre usa Supabase como backend (Google PKCE o código por correo).
 
 ## Comandos
 
@@ -62,8 +59,6 @@ en la misma secuencia, no al mismo tiempo.
 
 | Variable | Uso |
 |----------|-----|
-| `EXPO_PUBLIC_BACKEND` | `mock` \| `supabase` |
-| `EXPO_PUBLIC_CATALOG` | `mock` \| `tmdb` (exige `BACKEND=supabase`) |
 | `EXPO_PUBLIC_RECOMMENDER` | `heuristic` (defecto) \| `content`. «content» usa los RPCs de la migración 0007; si no están desplegados, el cliente degrada a `heuristic` sin romper el feed |
 | `EXPO_PUBLIC_BASE_URL` | Prefijo de despliegue (p. ej. `/diana`) |
 | `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Cliente (público) |
@@ -92,7 +87,7 @@ src/
                           TextField, ConfirmSheet, GoogleButton, …)
   components/features/    componentes de cine (Poster, SwipeDeck, SlotReveal, …)
   store/                  Zustand (auth, perfil, historial, mood, salas, ajustes)
-  services/               repositorios mock/Supabase + export + tmdb
+  services/               repositorios Supabase/TMDB + export
   features/ room/         lógica de salas en tiempo real
   lib/                    env, cliente Supabase
 public/                   assets estáticos (iconos PWA, páginas legales)
@@ -164,7 +159,7 @@ recomendador `content`) se generan con la Edge Function
 
 ## E2E (Playwright)
 
-`npm run e2e` sirve `dist/` (generado con `npm run build:web` y `BACKEND=supabase`) y
+`npm run e2e` sirve `dist/` (generado con `npm run build:web`) y
 **simula las llamadas HTTP de Supabase** con `page.route` (`/auth/v1/*`, `/rest/v1/*`,
 `/functions/v1/*`) con respuestas de la forma que devuelve GoTrue de verdad. Cubre:
 redirección de acceso, vuelta de Google con `?code=…&state=…` (canje y limpieza de la

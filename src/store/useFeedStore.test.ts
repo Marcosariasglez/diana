@@ -8,9 +8,6 @@
 // referencias se toman con require después de importar el módulo.
 import type { Movie } from '@/types/media';
 
-jest.mock('@/services', () => ({
-  catalogRepository: { getFeatured: jest.fn(), getFeedCategories: jest.fn() },
-}));
 jest.mock('@/services/recommender', () => ({
   activeRecommender: jest.fn(),
   contentRecommend: jest.fn(),
@@ -24,8 +21,10 @@ import { useFeedStore } from './useFeedStore';
 
 const { catalogRepository } = require('@/services');
 const { activeRecommender, contentRecommend } = require('@/services/recommender');
-const mockGetFeatured = catalogRepository.getFeatured;
-const mockGetFeedCategories = catalogRepository.getFeedCategories;
+
+// P10: Usamos jest.spyOn en lugar de cast para sobrevivir a jest.clearAllMocks().
+const mockGetFeatured = jest.spyOn(catalogRepository, 'getFeatured');
+const mockGetFeedCategories = jest.spyOn(catalogRepository, 'getFeedCategories');
 
 function movie(id: number, title: string): Movie {
   return {

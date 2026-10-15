@@ -5,7 +5,7 @@
 // los dos modos y la semántica (filtros, orden, paginación, «disponible en mis
 // plataformas») es idéntica.
 import type { Media } from '@/types/media';
-import { CATALOG } from '@/mocks/data/catalog';
+import { FIXTURE_CATALOG } from '@/test/fixtures/catalog';
 import { mediaToRow, rowToMedia } from './mapper';
 import { browseRows, candidatesRows, searchRows } from './engine';
 import type { CatalogSource, RuntimeRange } from './postgrest.repository';
@@ -13,7 +13,7 @@ import type { BrowseParams, CatalogRow, PageResult, SearchParams } from './types
 
 let rows: CatalogRow[] | null = null;
 function allRows(): CatalogRow[] {
-  if (!rows) rows = CATALOG.map(mediaToRow);
+  if (!rows) rows = FIXTURE_CATALOG.map(mediaToRow);
   return rows;
 }
 

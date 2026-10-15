@@ -10,7 +10,7 @@ export default function TabsLayout() {
     <Tabs
       tabBar={(props) => <BottomNav {...props} />}
       backBehavior="history"
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ headerShown: false, animation: 'fade' }}
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="mood" />

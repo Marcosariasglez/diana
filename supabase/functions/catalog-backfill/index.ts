@@ -74,6 +74,49 @@ async function tmdbDetail(mediaType: 'movie' | 'tv', id: number): Promise<AnyRec
   throw new Error(`tmdb reintentos agotados ${path}`);
 }
 
+/** Créditos de un título (directores + top 5 cast). */
+async function tmdbCredits(mediaType: 'movie' | 'tv', id: number): Promise<{ directors: string[]; cast_top: string[] } | null> {
+  // Para TV usa aggregate_credits (créditos agregados de todas las temporadas)
+  const path = mediaType === 'tv' ? `/tv/${id}/aggregate_credits` : `/movie/${id}/credits`;
+  const url = new URL(TMDB + path);
+  url.searchParams.set('language', LANG);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetchImpl(url, {
+      headers: { Authorization: `Bearer ${Deno.env.get('TMDB_READ_TOKEN')}`, accept: 'application/json' },
+    });
+    if (res.status === 404) return null;
+    if ((res.status === 429 || res.status >= 500) && attempt < MAX_RETRIES) {
+      await sleep(1000 * 2 ** attempt);
+      continue;
+    }
+    if (!res.ok) throw new Error(`tmdb ${res.status} ${path}`);
+    const data = (await res.json()) as AnyRecord;
+    // Directores
+    let directors: string[] = [];
+    if (mediaType === 'movie') {
+      // En movies: data.crew, filtrar por job === 'Director'
+      const crew = Array.isArray(data.crew) ? data.crew : [];
+      directors = crew
+        .filter((c: AnyRecord) => c.job === 'Director')
+        .map((c: AnyRecord) => c.name)
+        .filter((n: string) => n);
+    } else {
+      // En TV aggregate_credits: data.directors es array de { name, ... } o similar
+      // Pero aggregate_credits devuelve { cast, crew, ... }. Los directores están en crew.
+      const crew = Array.isArray(data.crew) ? data.crew : [];
+      directors = crew
+        .filter((c: AnyRecord) => c.job === 'Director')
+        .map((c: AnyRecord) => c.name)
+        .filter((n: string) => n);
+    }
+    // Top 5 cast
+    const cast = Array.isArray(data.cast) ? data.cast : [];
+    const cast_top = cast.slice(0, 5).map((c: AnyRecord) => c.name).filter((n: string) => n);
+    return { directors, cast_top };
+  }
+  throw new Error(`tmdb reintentos agotados ${path}`);
+}
+
 /** Minutos de un detalle de TMDB (0 = desconocido o título retirado). */
 export function runtimeFromDetail(mediaType: 'movie' | 'tv', d: AnyRecord | null): number {
   if (!d) return 0;
@@ -207,6 +250,60 @@ Deno.serve(async (req: Request) => {
       .select('tmdb_id', { count: 'exact', head: true })
       .is('runtime', null)) as unknown as { count: number | null };
     return new Response(JSON.stringify({ mode: 'runtime', processed, fixed, unknown, remaining: remaining ?? 0 }), {
+      status: 200,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // MODO CREDITS (P16): rellena `directors` y `cast_top` desde TMDB /credits.
+  // Solo procesa filas donde ambas columnas están vacías (default '{}').
+  if (body.mode === 'credits') {
+    let processed = 0;
+    let fixed = 0;
+    let skipped = 0;
+    for (;;) {
+      if (processed >= maxTitles || Date.now() - startedAt > budgetMs) break;
+      const { data, error } = (await admin
+        .from('catalog_titles')
+        .select('tmdb_id,media_type')
+        .or('directors=is.null,directors.eq.{}')
+        .limit(PAGE)) as unknown as { data: AnyRecord[] | null; error: unknown };
+      if (error) throw new Error(String(error));
+      if (!data || data.length === 0) break;
+      for (const row of data) {
+        if (processed >= maxTitles || Date.now() - startedAt > budgetMs) break;
+        processed += 1;
+        await sleep(REQUEST_INTERVAL_MS);
+        let credits: { directors: string[]; cast_top: string[] } | null = null;
+        try {
+          credits = await tmdbCredits(row.media_type, row.tmdb_id);
+        } catch {
+          continue; // transitorio
+        }
+        if (!credits || (credits.directors.length === 0 && credits.cast_top.length === 0)) {
+          skipped += 1;
+          continue;
+        }
+        const { error: upErr } = await admin
+          .from('catalog_titles')
+          .update({
+            directors: credits.directors,
+            cast_top: credits.cast_top,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('tmdb_id', row.tmdb_id)
+          .eq('media_type', row.media_type);
+        if (upErr) throw new Error(String(upErr));
+        fixed += 1;
+      }
+      if (data.length < PAGE) break;
+    }
+    // Conteo de remaining: filas con directors vacío o null
+    const { count: remaining } = (await admin
+      .from('catalog_titles')
+      .select('tmdb_id', { count: 'exact', head: true })
+      .or('directors=is.null,directors.eq.{}')) as unknown as { count: number | null };
+    return new Response(JSON.stringify({ mode: 'credits', processed, fixed, skipped, remaining: remaining ?? 0 }), {
       status: 200,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     });

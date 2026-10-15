@@ -2,9 +2,8 @@ import type { FeedCategory, Media, MediaType, MediaWithAffinity, Movie, TVSeason
 import type { Complexity, MoodFilters } from '@/types/mood';
 import type { MediaKey, RankingContext } from '@/types/rating';
 import { QUESTIONS_BY_COMPLEXITY } from '@/features/mood/questions';
-import { CATALOG, getMedia, getTvSeason } from '@/mocks/data/catalog';
-import { fakeDelay } from '@/mocks/latency';
-import { bucketOfTenths } from '@/mocks/mock-ai/predict';
+import { FIXTURE_CATALOG, fixtureMedia, fixtureTvSeason } from '@/test/fixtures/catalog';
+import { bucketOfTenths } from '@/recommender/predict';
 import {
   buildGroupDeckMedia,
   getOnboardingDeckMovies,
@@ -12,77 +11,47 @@ import {
   pickFeatured,
   pickFeedPage,
   rankMoodResults,
-} from '@/mocks/mock-ai';
+} from '@/recommender';
 
-export interface CatalogRepository {
-  /** D2-2.5: con `platforms` el mazo usa «populares en tus plataformas» (0 valoraciones). */
-  getOnboardingDeck(count: number, platforms?: ReadonlyArray<string>): Promise<Movie[]>;
-  getFeatured(platforms: string[], ctx: RankingContext): Promise<MediaWithAffinity | null>;
-  getFeedCategories(
-    platforms: string[],
-    ctx: RankingContext,
-    page: number,
-  ): Promise<{ categories: FeedCategory[]; hasMore: boolean }>;
-  getCategoryItems(
-    category: 'hidden-gems' | 'recommendations',
-    platforms: string[],
-    ctx: RankingContext,
-    page: number,
-  ): Promise<{ items: MediaWithAffinity[]; hasMore: boolean }>;
-  getMediaById(type: MediaType, id: number): Promise<Media | null>;
-  getTvSeason(id: number, seasonNumber: number): Promise<TVSeason | null>;
-  getMoodResults(
-    input: { answers: Record<string, string>; complexity: Complexity; platforms: string[] },
-    ctx: RankingContext,
-  ): Promise<MediaWithAffinity[]>;
-  getGroupDeck(input: {
-    excludeKeys: ReadonlySet<MediaKey>;
-    filters: MoodFilters;
-    count: number;
-  }): Promise<Movie[]>;
-}
+// P9: el tipo se exportó a catalog.types.ts; se mantiene el export aquí para compatibilidad
+// (se borra este fichero en P9 junto con los repos mock).
+import type { CatalogRepository } from './catalog.types';
+import { GROUP_DECK_SEED } from './catalog.types';
+export type { CatalogRepository } from './catalog.types';
+export { GROUP_DECK_SEED } from './catalog.types';
 
-/** Semilla fija del orden del mazo de grupo (el contrato de getGroupDeck no lleva codigo de sala). */
-export const GROUP_DECK_SEED = 'group-deck';
+const CATALOG = FIXTURE_CATALOG;
 
 export const catalogRepository: CatalogRepository = {
   async getOnboardingDeck(count, platforms) {
-    await fakeDelay();
     return getOnboardingDeckMovies(count, CATALOG, platforms);
   },
   async getFeatured(platforms, ctx) {
-    await fakeDelay();
-    return pickFeatured(platforms, ctx);
+    return pickFeatured(platforms, ctx, CATALOG);
   },
   async getFeedCategories(platforms, ctx, page) {
-    await fakeDelay();
-    return pickFeedPage(platforms, ctx, page);
+    return pickFeedPage(platforms, ctx, page, CATALOG);
   },
   async getCategoryItems(category, platforms, ctx, page) {
-    await fakeDelay();
-    return pickCategoryItems(category, platforms, ctx, page);
+    return pickCategoryItems(category, platforms, ctx, page, CATALOG);
   },
   async getMediaById(type, id) {
-    await fakeDelay();
-    return getMedia(type, id) ?? null;
+    return fixtureMedia(type, id) ?? null;
   },
   async getTvSeason(id, seasonNumber) {
-    await fakeDelay();
-    return getTvSeason(id, seasonNumber) ?? null;
+    return fixtureTvSeason(id, seasonNumber) ?? null;
   },
   async getMoodResults(input, ctx) {
-    await fakeDelay();
     // Solo cuentan las respuestas del banco de la complejidad elegida.
     const allowed = new Set<string>(QUESTIONS_BY_COMPLEXITY[input.complexity]);
     const answers: Record<string, string> = {};
     for (const [qid, aid] of Object.entries(input.answers)) if (allowed.has(qid)) answers[qid] = aid;
-    return rankMoodResults({ answers, fallbackPlatforms: input.platforms }, ctx).map((r) => ({
+    return rankMoodResults({ answers, fallbackPlatforms: input.platforms }, ctx, CATALOG).map((r) => ({
       media: r.media,
       bucket: bucketOfTenths(r.tenths),
     }));
   },
   async getGroupDeck({ excludeKeys, filters, count }) {
-    await fakeDelay();
-    return buildGroupDeckMedia({ code: GROUP_DECK_SEED, filters, excludeKeys, count });
+    return buildGroupDeckMedia({ code: GROUP_DECK_SEED, filters, excludeKeys, count, catalog: CATALOG });
   },
 };

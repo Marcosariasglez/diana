@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * scripts/capturas-ui.mjs
- * Capturas 390×844 (x2) de TODAS las pantallas contra un build web MOCK servido
+ * Capturas 390×844 (x2) de TODAS las pantallas contra el build web servido
  * por scripts/serve-spa.mjs. Sirve para la auditoría visual del plan
  * docs/vertice/plan-ajustes-oct13.md (capturas «antes» y «después»).
  *
@@ -9,8 +9,7 @@
  *   node scripts/capturas-ui.mjs <carpeta-salida> [baseUrl]
  *   node scripts/capturas-ui.mjs docs/vertice/capturas/ajustes-oct13/despues
  *
- * Nota: el build mock NO tiene pósters (el catálogo mock no trae poster_path):
- * los pósters solo se comprueban con tests y con la app real.
+ * Nota: usa fixtures de historial y perfil en localStorage (sin servidor).
  */
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'fs';

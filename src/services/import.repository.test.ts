@@ -2,9 +2,9 @@ import JSZip from 'jszip';
 import type { ImportErrorCode, ImportProgress } from '@/types/import';
 import type { HistoryEntry } from '@/types/rating';
 import { MAX_IMPORT_BYTES, MAX_IMPORT_ROWS } from '@/constants/import';
-import { getMedia } from '@/mocks/data/catalog';
-import { predict } from '@/mocks/mock-ai/predict';
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
+import { fixtureMedia } from '@/test/fixtures/catalog';
+import { predict } from '@/recommender/predict';
+import { buildTasteProfile } from '@/recommender/taste';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { createDefaultProfile, useProfileStore } from '@/store/useProfileStore';
 import { IMPORT_ERROR_MESSAGES, importRepository } from './import.repository';
@@ -153,7 +153,7 @@ describe('importRepository.parseLetterboxd: lectura de ratings.csv', () => {
     useProfileStore.setState({ profile: { ...createDefaultProfile(), initialRatings: { 3: 'like', 4: 'like' } } });
     const r = await importRepository.parseLetterboxd(csv('f', ratingsCsv(row('Aftersun', 2022, 1))));
     const taste = buildTasteProfile('user-me', { 3: 'like', 4: 'like' }, []);
-    expect(r.entries[0].aiPrediction).toBe(predict(taste, getMedia('movie', 1)!, 'movie:1'));
+    expect(r.entries[0].aiPrediction).toBe(predict(taste, fixtureMedia('movie', 1)!, 'movie:1'));
   });
 
   it('una nota invalida cuenta como sin coincidencia', async () => {
@@ -268,7 +268,7 @@ describe('importRepository.parseLetterboxd: errores de 7.2', () => {
       'Solo se admiten archivos .csv o .zip de Letterboxd.',
     );
     expect(IMPORT_ERROR_MESSAGES['no-matches']).toBe(
-      'No encontramos ninguna película de tu archivo en nuestro catálogo de prueba.',
+      'No encontramos ninguna película de tu archivo en nuestro catálogo.',
     );
     expect(Object.keys(IMPORT_ERROR_MESSAGES)).toHaveLength(7);
   });

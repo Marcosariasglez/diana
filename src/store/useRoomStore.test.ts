@@ -10,7 +10,7 @@ import {
   useRoomStore,
 } from './useRoomStore';
 
-jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
+// P10: @/services and @/services/room.repository are mocked globally in jest.setup.ts
 
 const flush = async (ms: number) => {
   await jest.advanceTimersByTimeAsync(ms);

@@ -2,18 +2,18 @@ import type { Media, MediaType, Movie, TVSeason } from '@/types/media';
 import type { CatalogRepository } from '../catalog.repository';
 import { GROUP_DECK_SEED } from '../catalog.repository';
 import { QUESTIONS, QUESTIONS_BY_COMPLEXITY } from '@/features/mood/questions';
-import { bucketOfTenths } from '@/mocks/mock-ai/predict';
-import { getOnboardingDeckMovies } from '@/mocks/mock-ai/onboardingDeck';
-import { buildGroupDeckMedia, rankMoodResults } from '@/mocks/mock-ai/moodFilters';
-import { pickCategoryItems, pickFeatured, pickFeedPage } from '@/mocks/mock-ai/hiddenGems';
+import { bucketOfTenths } from '@/recommender/predict';
+import { getOnboardingDeckMovies } from '@/recommender/onboardingDeck';
+import { buildGroupDeckMedia, rankMoodResults } from '@/recommender/moodFilters';
+import { pickCategoryItems, pickFeatured, pickFeedPage } from '@/recommender/hiddenGems';
 import { activeCatalogSource } from '@/services/supabase/catalog/select';
 import { invokeTmdb } from './invoke';
 
 /**
  * VERTICE-PLAN-2 D2-1.5: ya no hay un «pool fijo» descargado de una vez. El
  * pool es ahora un conjunto de CANDIDATOS filtrados (300–1000) consultado al
- * repositorio paginado (`catalog_titles` vía PostgREST en modo tmdb, memoria
- * en modo mock). Se filtra por las plataformas del usuario cuando se dan.
+ * repositorio paginado (`catalog_titles` vía PostgREST).
+ * Se filtra por las plataformas del usuario cuando se dan.
  */
 const POOL_SIZE = 600;
 export async function getPool(platforms?: ReadonlyArray<string>, type?: 'movie' | 'tv', runtime?: RuntimeRange): Promise<Media[]> {

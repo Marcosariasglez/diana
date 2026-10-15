@@ -7,7 +7,7 @@ jest.mock('@/services', () => ({
     saveInitialRating: jest.fn().mockResolvedValue(undefined),
   },
 }));
-jest.mock('@/mocks/mock-ai/taste', () => ({
+jest.mock('@/recommender/taste', () => ({
   deriveGenrePreferences: jest.fn(() => [18, 35]),
 }));
 jest.mock('./useHistoryStore', () => ({
@@ -15,7 +15,7 @@ jest.mock('./useHistoryStore', () => ({
 }));
 
 import { DEFAULT_PLATFORMS } from '@/constants/platforms';
-import { deriveGenrePreferences } from '@/mocks/mock-ai/taste';
+import { deriveGenrePreferences } from '@/recommender/taste';
 import { profileRepository } from '@/services';
 import { useProfileStore } from './useProfileStore';
 
@@ -31,6 +31,7 @@ describe('useProfileStore (D2-5)', () => {
         id: 'user-me',
         displayName: 'Juan',
         initialRatings: {},
+        initialGenres: {},
         favoriteGenres: [],
         favoritePlatforms: [...DEFAULT_PLATFORMS],
       },
@@ -62,20 +63,22 @@ describe('useProfileStore (D2-5)', () => {
     expect(mockSaveProfile).toHaveBeenCalledWith({ favoritePlatforms: ['netflix'] });
   });
 
-  it('addInitialRating guarda la valoración y espeja con géneros (default [])', () => {
+  it('addInitialRating guarda la valoración, espeja con géneros (default []) y actualiza initialGenres', () => {
     useProfileStore.getState().addInitialRating(7, 'like', [18]);
     expect(useProfileStore.getState().profile.initialRatings).toEqual({ 7: 'like' });
+    expect(useProfileStore.getState().profile.initialGenres).toEqual({ 7: [18] });
     expect(mockSaveInitialRating).toHaveBeenCalledWith(7, 'like', [18]);
   });
 
-  it('completeOnboarding marca onboarding, deriva géneros y espeja', () => {
-    useProfileStore.getState().addInitialRating(7, 'like');
+  it('completeOnboarding marca onboarding, deriva géneros (con initialGenres) y espeja', () => {
+    useProfileStore.getState().addInitialRating(7, 'like', [18]);
     useProfileStore.getState().completeOnboarding();
     const s = useProfileStore.getState();
     expect(s.hasOnboarded).toBe(true);
     expect(mockDerive).toHaveBeenCalledWith(
       { 7: 'like' },
       [], // entries del useHistoryStore mockeado
+      { 7: [18] }, // initialGenres del store
     );
     expect(s.profile.favoriteGenres).toEqual([18, 35]);
     expect(mockSaveProfile).toHaveBeenCalledWith({

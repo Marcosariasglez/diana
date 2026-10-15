@@ -5,7 +5,6 @@ import { useProfileStore } from '@/store/useProfileStore';
 import { useNotificationTrayStore } from '@/store/useNotificationTrayStore';
 import { activeCatalogSource } from '@/services/supabase/catalog/select';
 import { reportSyncError } from '@/lib/syncError';
-import { BACKEND, CATALOG } from '@/lib/env';
 import { detectNewlyAvailable, keyOf } from './availabilityLogic';
 import { AVAILABILITY_BASELINE_KEY, AVAILABILITY_LAST_CHECK_KEY } from './availabilityKeys';
 
@@ -18,8 +17,6 @@ import { AVAILABILITY_BASELINE_KEY, AVAILABILITY_LAST_CHECK_KEY } from './availa
  *   se guarda la base, sin avisos).
  * - Cooldown de 1 h entre comprobaciones (no hay que golpear el catálogo en
  *   cada montaje): `CHECK_COOLDOWN_MS`.
- * - Solo tiene sentido con catálogo real (CATALOG=tmdb): con el mock el
- *   catálogo es estático y jamás cambia (no se guarda base ni se avisa).
  * - Limpia de la bandeja los avisos de títulos que ya no están en la
  *   watchlist.
  *
@@ -111,12 +108,8 @@ export function useAvailabilityNotifications(): { checking: boolean } {
         baseline,
       );
 
-      // Con CATALOG=mock el catálogo no cambia: no se fija base (no se
-      // generarían avisos falsos) ni se marca la hora.
-      if (CATALOG !== 'mock' && BACKEND !== 'mock') {
-        await AsyncStorage.setItem(AVAILABILITY_BASELINE_KEY, JSON.stringify(nextBaseline));
-        await AsyncStorage.setItem(AVAILABILITY_LAST_CHECK_KEY, String(now));
-      }
+      await AsyncStorage.setItem(AVAILABILITY_BASELINE_KEY, JSON.stringify(nextBaseline));
+      await AsyncStorage.setItem(AVAILABILITY_LAST_CHECK_KEY, String(now));
       if (news.length > 0) {
         const add = useNotificationTrayStore.getState().add;
         for (const n of news) {

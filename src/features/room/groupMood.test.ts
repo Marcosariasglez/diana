@@ -1,16 +1,13 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { ROUTES } from '@/constants/routes';
 import { GROUP_DECK_COUNT, SEEDED_ROOM_CODE } from '@/constants/room';
-import { MOCK_HOST_MOOD_ANSWERS, MOCK_TIMELINE } from '@/mocks/fakeSocket';
+import { MOCK_HOST_MOOD_ANSWERS, MOCK_TIMELINE } from '@/test/fixtures/room';
 import { catalogRepository } from '@/services/catalog.repository';
 import { resetMockRooms } from '@/services/room.repository';
 import { createDefaultProfile, useProfileStore } from '@/store/useProfileStore';
 import { selectGroupFilters, selectMoodComplete, useRoomStore } from '@/store/useRoomStore';
-import { loadGroupDeck } from './useGroupSwipe';
 import { selectedOptions, toggleMultiAnswer, useGroupMood } from './useGroupMood';
 import { getQuestionsFor } from '@/features/mood/questions';
-
-jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
 
 const ANSWERS = [
   ['time', 'h2'],
@@ -89,10 +86,10 @@ describe('Mood de grupo: filtros hacia getGroupDeck', () => {
     const filters = selectGroupFilters({ mood }, ['netflix', 'prime-video']);
     expect(filters).toEqual({ answers: mood.answers, fallbackPlatforms: ['netflix', 'prime-video'] });
 
-    const deck = await loadGroupDeck({
-      members: [{ userId: 'user-me' }, { userId: 'user-maria' }],
-      userSeen: new Set(['movie:1']),
+    const deck = await catalogRepository.getGroupDeck({
+      excludeKeys: new Set(['movie:1']),
       filters,
+      count: GROUP_DECK_COUNT,
     });
     expect(spy).toHaveBeenCalledTimes(1);
     const arg = spy.mock.calls[0][0];

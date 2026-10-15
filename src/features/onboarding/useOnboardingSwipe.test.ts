@@ -4,9 +4,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import type { Movie } from '@/types/media';
 
-jest.mock('@/services', () => ({
-  catalogRepository: { getOnboardingDeck: jest.fn() },
-}));
 // El store de zustand expone `getState` como propiedad de la función hook; el
 // mock replica esa forma para que `useProfileStore.getState()` funcione.
 jest.mock('@/store/useProfileStore', () => {
@@ -20,7 +17,9 @@ import { catalogRepository } from '@/services';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useOnboardingSwipe } from './useOnboardingSwipe';
 
-const getDeck = catalogRepository.getOnboardingDeck as jest.Mock;
+// P10: catalogRepository.getOnboardingDeck es función real del mock legacy, no jest.fn().
+// Usamos jest.spyOn para interceptar y usar mockResolvedValue.
+const getDeck = jest.spyOn(catalogRepository, 'getOnboardingDeck');
 const storeHook = useProfileStore as unknown as { getState: jest.Mock } & jest.Mock;
 
 let platforms: string[] = [];

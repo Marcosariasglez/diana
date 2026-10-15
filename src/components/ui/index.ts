@@ -1,5 +1,7 @@
+export * from './AppSplash';
 export * from './AvatarSlot';
 export * from './BottomNav';
+export * from './BrandMark';
 export * from './BottomSheet';
 export * from './Button';
 export * from './Card';

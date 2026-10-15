@@ -8,7 +8,7 @@ import { mediaTitle } from '@/components/features/mediaHelpers';
 import { EmptyState, ErrorState, Screen, Skeleton } from '@/components/ui';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { PLATFORMS } from '@/constants/platforms';
-import { GENRES } from '@/mocks/data/genres';
+import { GENRES } from '@/constants/genres';
 import { useDebounce } from '@/hooks/useDebounce';
 import { activeCatalogSource } from '@/services/supabase/catalog/select';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -33,8 +33,8 @@ const keyOf = (m: Media) => `${m.media_type}-${m.id}`;
 /**
  * VERTICE-PLAN-2 D2-1.6: «Explorar por plataforma». Chips de plataforma →
  * lista paginada infinita (FlashList) que consulta el repositorio paginado
- * (catalog_titles en modo tmdb, memoria en modo mock). Filtros de género y
- * década. El cursor sale de PageResult.nextCursor.
+ * (catalog_titles vía PostgREST). Filtros de género, década y créditos
+ * (director/actor). El cursor sale de PageResult.nextCursor.
  */
 export default function ExploreScreen() {
   const router = useRouter();
@@ -45,6 +45,10 @@ export default function ExploreScreen() {
   // Buscador
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
+  // P17: Filtro por créditos (director/actor) — degradación si migración 0024 no desplegada
+  const [creditQuery, setCreditQuery] = useState('');
+  const debouncedCreditQuery = useDebounce(creditQuery, 350);
+  const [creditsAvailable, setCreditsAvailable] = useState(true); // false si columna no existe
 
   const [items, setItems] = useState<Media[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -55,13 +59,14 @@ export default function ExploreScreen() {
   const alive = useRef(true);
   const reqId = useRef(0);
 
-  const hasActiveFilters = selectedPlatforms.length > 0 || selectedGenres.length > 0 || decade !== null || debouncedQuery.length > 0;
+  const hasActiveFilters = selectedPlatforms.length > 0 || selectedGenres.length > 0 || decade !== null || debouncedQuery.length > 0 || debouncedCreditQuery.length > 0;
 
   const clearAllFilters = useCallback(() => {
     setSelectedPlatforms([]);
     setSelectedGenres([]);
     setDecade(null);
     setQuery('');
+    setCreditQuery('');
   }, []);
 
   const togglePlatform = useCallback((id: string) => {
@@ -219,9 +224,18 @@ export default function ExploreScreen() {
         ) : null}
       </View>
 
-      {/* Buscador */}
+      {/* Buscador por título */}
       <View style={styles.searchBar}>
         <SearchBar value={query} onChangeText={setQuery} placeholder="Buscar películas y series..." />
+      </View>
+
+      {/* P17: Buscador por director / actor */}
+      <View style={styles.searchBar}>
+        <SearchBar
+          value={creditQuery}
+          onChangeText={setCreditQuery}
+          placeholder="Buscar por director o actor..."
+        />
       </View>
 
       {/* Plataformas - multi-select (E2: etiqueta + padding uniforme) */}

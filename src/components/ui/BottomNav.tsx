@@ -24,7 +24,7 @@ export const NAV_TABS: readonly TabDef[] = [
   { name: 'profile', label: 'Perfil', Icon: User },
 ];
 
-export const BOTTOM_NAV_HEIGHT = 88;
+export const BOTTOM_NAV_HEIGHT = 72; // VERTICE: idéntico a Norte (--mobile-nav-height)
 export const FAB_OVERHANG = 16;
 
 export type BottomNavProps = Pick<BottomTabBarProps, 'state' | 'navigation'> &
@@ -32,7 +32,7 @@ export type BottomNavProps = Pick<BottomTabBarProps, 'state' | 'navigation'> &
     onFabPress?: () => void;
   };
 
-/** Barra inferior X2: alto 88 (+ zona segura), fondo card 92 % con desenfoque 16,
+/** Barra inferior X2: alto 72 (+ zona segura, igual que Norte), fondo card 92 % con desenfoque 16,
  *  borde superior line, pestaña activa ink, etiqueta 10.5/600, FAB con sobresalto 16. */
 export function BottomNav({ state, navigation, onFabPress }: BottomNavProps) {
   const { colors, scheme } = useTheme();
@@ -66,7 +66,8 @@ export function BottomNav({ state, navigation, onFabPress }: BottomNavProps) {
         paddingTop: 4,
       },
       fabSlot: { flex: 1, alignItems: 'center', alignSelf: 'stretch' },
-      fabWrap: { position: 'absolute' as const, top: -FAB_OVERHANG, marginHorizontal: 8 },
+      // 72 − 58 + 16 = 30: el botón sobresale FAB_OVERHANG por encima de la barra (igual que Norte)
+      fabWrap: { position: 'absolute' as const, bottom: BOTTOM_NAV_HEIGHT - 58 + FAB_OVERHANG, marginHorizontal: 8 },
     }),
   );
 

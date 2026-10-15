@@ -79,12 +79,15 @@ async function pushPendingWatchlist(): Promise<void> {
 export async function bootstrapUserData(userId: string): Promise<void> {
   if (useProfileStore.getState().profile.id !== userId) resetLocalStores(userId);
   const remote = await profileRepository.load();
-  if (!remote) return; // modo mock
+  if (!remote) return; // sin datos remotos
   useProfileStore.setState({
     profile: {
       id: userId,
       displayName: typeof remote.profile.displayName === 'string' ? remote.profile.displayName : '',
       initialRatings: remote.initialRatings ?? {},
+      // P6 (F3-1): los géneros del swipe de onboarding (initial_ratings.genre_ids)
+      // alimentan el perfil de gusto sin lookup del catalogo.
+      initialGenres: remote.initialGenres ?? {},
       favoriteGenres: Array.isArray(remote.profile.favoriteGenres) ? remote.profile.favoriteGenres : [],
       favoritePlatforms: Array.isArray(remote.profile.favoritePlatforms)
         ? remote.profile.favoritePlatforms

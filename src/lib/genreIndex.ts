@@ -6,7 +6,7 @@ const index = new Map<MediaKey, number[]>();
 export const registerGenres = (key: MediaKey, ids: number[]): void => void index.set(key, ids);
 export const clearGenres = (): void => index.clear();
 
-/** MediaLookup (src/mocks/mock-ai/taste.ts) que solo conoce los generos registrados. */
+/** Media pseudo (solo `genres`) para la heurística, con los generos registrados. */
 export function genreLookup(type: MediaType, id: number): Media | undefined {
   const ids = index.get(`${type}:${id}`);
   if (!ids) return undefined;

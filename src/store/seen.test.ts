@@ -1,16 +1,14 @@
 import { act, renderHook } from '@testing-library/react-native';
 import type { InitialRating, RankingContext } from '@/types/rating';
-import { MOVIES, mediaKeyOf } from '@/mocks/data/catalog';
-import { FAKE_USERS } from '@/mocks/data/fakeUsers';
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
-import { rankEligible } from '@/mocks/mock-ai';
+import { FIXTURE_CATALOG, FIXTURE_MOVIES, fixtureGenreIds } from '@/test/fixtures/catalog';
+import { mediaKeyOf } from '@/utils/media';
+import { TEST_USERS } from '@/test/fixtures/users';
+import { buildTasteProfile } from '@/recommender/taste';
+import { rankEligible } from '@/recommender';
 import { catalogRepository } from '@/services/catalog.repository';
-import { buildGroupExcludeKeys } from '@/features/room/useGroupSwipe';
 import { buildSeenKeys, selectIsSeen, selectSeenKeys, useSeenKeys } from './seen';
 import { selectSeenCount, useHistoryStore } from './useHistoryStore';
 import { createDefaultProfile, useProfileStore } from './useProfileStore';
-
-jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
 
 const empty = { initialRatings: {}, entries: [], watched: [] };
 const PLATFORMS = ['netflix', 'prime-video', 'max', 'disney-plus'];
@@ -18,10 +16,16 @@ const PLATFORMS = ['netflix', 'prime-video', 'max', 'disney-plus'];
 /** Perfil con senal de gusto: likes en las peliculas de otros generos. */
 const tasteRatings: Record<number, InitialRating> = { 2: 'like', 3: 'like', 4: 'like', 5: 'like', 14: 'like' };
 
+// P6 (F3-1): el gusto sale de los generos persistidos; en el test se derivan
+// del fixture (misma senal que el antiguo lookup por defecto).
+const genresOf = (id: number): number[] => fixtureGenreIds(id);
+const genresFor = (ratings: Record<number, InitialRating>): Record<number, number[]> =>
+  Object.fromEntries(Object.keys(ratings).map((id) => [Number(id), genresOf(Number(id))]));
+
 function ctxFor(initialRatings: Record<number, InitialRating>): RankingContext {
   return {
     userId: 'user-me',
-    taste: buildTasteProfile('user-me', initialRatings, []),
+    taste: buildTasteProfile('user-me', initialRatings, [], genresFor(initialRatings)),
     seenKeys: buildSeenKeys({ ...empty, initialRatings }),
   };
 }
@@ -102,11 +106,11 @@ describe('vistos (S1-S12)', () => {
 
   it('S9 unseen con afinidad alta: si puede aparecer en el feed', async () => {
     const base = ctxFor(tasteRatings);
-    const target = rankEligible(PLATFORMS, base).find((r) => r.media.media_type === 'movie' && r.bucket === 'alto');
+    const target = rankEligible(PLATFORMS, base, FIXTURE_CATALOG).find((r) => r.media.media_type === 'movie' && r.bucket === 'alto');
     expect(target).toBeDefined();
     const withUnseen = ctxFor({ ...tasteRatings, [target!.media.id]: 'unseen' });
     expect(withUnseen.seenKeys.has(target!.key)).toBe(false);
-    const eligible = rankEligible(PLATFORMS, withUnseen);
+    const eligible = rankEligible(PLATFORMS, withUnseen, FIXTURE_CATALOG);
     expect(eligible.some((r) => r.key === target!.key)).toBe(true);
     const recs = await allItems('recommendations', withUnseen);
     const featured = await catalogRepository.getFeatured(PLATFORMS, withUnseen);
@@ -126,25 +130,26 @@ describe('vistos (S1-S12)', () => {
   });
 
   it('S11 getGroupDeck excluye un titulo like solo del amigo Carlos (union de miembros)', async () => {
-    const carlos = FAKE_USERS.find((u) => u.userId === 'user-carlos')!;
-    const others = FAKE_USERS.filter((u) => u.userId !== carlos.userId);
+    const carlos = TEST_USERS.find((u) => u.userId === 'user-carlos')!;
+    const others = TEST_USERS.filter((u) => u.userId !== carlos.userId);
     const onlyCarlos = Object.keys(carlos.initialRatings)
       .map(Number)
       .filter((id) => carlos.initialRatings[id] === 'like')
       .find(
         (id) =>
-          MOVIES.some((m) => m.id === id) &&
+          FIXTURE_MOVIES.some((m) => m.id === id) &&
           others.every((o) => o.initialRatings[id] !== 'like' && o.initialRatings[id] !== 'skip'),
       );
     expect(onlyCarlos).toBeDefined();
     const key = `movie:${onlyCarlos}`;
     const filters = { answers: {}, fallbackPlatforms: [] };
 
-    const withoutCarlos = buildGroupExcludeKeys([{ userId: 'user-maria' }], new Set());
-    const baseline = await catalogRepository.getGroupDeck({ excludeKeys: withoutCarlos, filters, count: 100 });
+    // P5: sin buildGroupExcludeKeys (usaba FAKE_*); el excludeKeys se construye a mano.
+    const baseline = await catalogRepository.getGroupDeck({ excludeKeys: new Set(), filters, count: 100 });
     expect(baseline.some((m) => mediaKeyOf(m) === key)).toBe(true);
 
-    const union = buildGroupExcludeKeys([{ userId: 'user-maria' }, { userId: carlos.userId }], new Set());
+    // vistos del usuario (vacio) ∪ vistos de Carlos
+    const union = new Set(buildSeenKeys({ initialRatings: carlos.initialRatings, entries: [], watched: [] }));
     const deck = await catalogRepository.getGroupDeck({ excludeKeys: union, filters, count: 100 });
     expect(deck.some((m) => mediaKeyOf(m) === key)).toBe(false);
   });

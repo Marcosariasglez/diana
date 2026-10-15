@@ -1,13 +1,14 @@
 import type { RatingRepository } from '../rating.repository';
 import { entryTitle } from '../rating.repository';
 import { getSupabase } from '@/lib/supabase';
-import { titleOf } from '@/mocks/data/catalog';
-import { predictTenths } from '@/mocks/mock-ai/predict';
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
+import { titleOf } from '@/utils/media';
+import { predictTenths } from '@/recommender/predict';
+import { buildTasteProfile } from '@/recommender/taste';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useProfileStore } from '@/store/useProfileStore';
 import { buildMediaKey } from '@/utils/mediaKey';
 import { activeCatalogRepository } from '../catalog.select';
+import { activeRecommender, contentPredictTenths } from '../recommender';
 import { rowToEntry, type HistoryRow } from './mappers';
 
 export const supabaseRatingRepository: RatingRepository = {
@@ -29,9 +30,22 @@ export const supabaseRatingRepository: RatingRepository = {
       tenths = existing.ai_prediction_tenths;
       seen = existing.prediction_seen || origin === 'detail';
     } else {
-      const { entries } = useHistoryStore.getState();
-      const { profile } = useProfileStore.getState();
-      tenths = predictTenths(buildTasteProfile(profile.id, profile.initialRatings, entries), media, key);
+      // F2-2: la ficha comparte el modelo con el feed (RPC `predict_tenths`).
+      // `contentPredictTenths` devuelve `null` si falla (sin sesión, sin RPC
+      // desplegado, valor fuera de 10..50) → red de seguridad: heurística local.
+      const byRpc =
+        activeRecommender() === 'content' ? await contentPredictTenths(mediaRef.mediaType, mediaRef.mediaId) : null;
+      if (byRpc !== null) {
+        tenths = byRpc;
+      } else {
+        const { entries } = useHistoryStore.getState();
+        const { profile } = useProfileStore.getState();
+        tenths = predictTenths(
+          buildTasteProfile(profile.id, profile.initialRatings, entries, profile.initialGenres),
+          media,
+          key,
+        );
+      }
       seen = origin === 'detail';
     }
 

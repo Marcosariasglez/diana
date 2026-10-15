@@ -13,8 +13,6 @@ import { resetMockRooms, roomRepository } from '@/services/room.repository';
 import { createDefaultProfile, useProfileStore } from '@/store/useProfileStore';
 import { useRoomStore } from '@/store/useRoomStore';
 
-jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
-
 beforeEach(() => {
   jest.useFakeTimers();
   useProfileStore.setState({ profile: createDefaultProfile() });

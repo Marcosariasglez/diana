@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * scripts/capturas.mjs
- * Capturas de pantalla 390×844 (claro y oscuro) de Diana con BACKEND=mock.
+ * Capturas de pantalla 390×844 (claro y oscuro) de Diana.
  *
  * Uso:
  *   node scripts/capturas.mjs              # captura "antes" en docs/vertice/capturas/antes/
@@ -12,7 +12,6 @@
  *   npx playwright install chromium         (navegador)
  *   npm run build:web                      (genera dist/)
  *   npx serve dist -l 3000                 (servidor en otro terminal)
- *   BACKEND=mock (por defecto)
  */
 
 import { chromium } from '@playwright/test';

@@ -10,8 +10,8 @@ import type { MediaType } from '@/types/media';
  *
  * Persistencia local (AsyncStorage, clave diana.watchlist.v1) + espejo en la
  * tabla `watchlist` (migración 0008) en modo Supabase: la fuente de verdad
- * al iniciar sesión es el servidor (bootstrapUserData); fuera de línea o en
- * modo mock solo existe la copia local.
+ * al iniciar sesión es el servidor (bootstrapUserData); fuera de línea
+ * solo existe la copia local.
  *
  * COHERENCIA OFFLINE (hallazgo «Server bootstrap discards pending offline
  * mutations»): las operaciones locales que NO llegaron al servidor (un upsert

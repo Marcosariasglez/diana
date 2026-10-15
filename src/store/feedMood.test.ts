@@ -4,8 +4,6 @@ import { useFeedStore } from './useFeedStore';
 import { useHistoryStore } from './useHistoryStore';
 import { useMoodStore } from './useMoodStore';
 
-jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
-
 beforeEach(() => {
   useProfileStore.setState({ profile: createDefaultProfile() });
   useHistoryStore.setState({ entries: [], watched: [] });

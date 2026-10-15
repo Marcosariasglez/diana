@@ -3,37 +3,19 @@ import type { GroupDecision, RoomSnapshot } from '@/types/room';
 import type { Complexity } from '@/types/mood';
 import type { MediaKey } from '@/types/rating';
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, SEEDED_ROOM_CODE } from '@/constants/room';
-import { createFakeRoom, RoomError, type FakeRoom } from '@/mocks/fakeSocket';
-import { fakeDelay } from '@/mocks/latency';
+import { createFakeRoom, type FakeRoom } from '@/__tests__/__mockFakeSocket';
 import { useProfileStore } from '@/store/useProfileStore';
+import { RoomError, type RoomErrorCode } from './room.errors';
 
-export { RoomError } from '@/mocks/fakeSocket';
-export type { RoomErrorCode } from '@/mocks/fakeSocket';
+// RoomError vive en `room.errors` (P5); se re-exporta desde aqui por compatibilidad.
+export { RoomError };
+export type { RoomErrorCode };
 
 export type { RoomSnapshot } from '@/types/room';
 
-export interface RoomRepository {
-  /** Crea la sala. `affinity` (0012): banco de preguntas del mood de grupo;
-   *  por defecto la sala queda 'intermedio' (SQL y mock). */
-  createRoom(hostId: string, affinity?: Complexity): Promise<string>;
-  /** Lanza RoomError con code 'not-found' | 'full'. Si ya es miembro, devuelve el estado actual. */
-  joinRoom(code: string, user: { userId: string; name: string }): Promise<RoomSnapshot>;
-  setReady(code: string, userId: string, ready: boolean): Promise<void>;
-  startMatch(code: string, userId: string): Promise<void>;
-  setMoodAnswer(code: string, userId: string, questionId: string, answerId: string): Promise<void>;
-  confirmMood(code: string, userId: string, deck?: Array<{ mediaType: MediaType; mediaId: number }>): Promise<void>;
-  submitDecision(code: string, userId: string, key: MediaKey, decision: 'like' | 'skip'): Promise<void>;
-  subscribe(code: string, cb: (s: RoomSnapshot) => void): () => void;
-  subscribeDecisions(code: string, cb: (d: GroupDecision) => void): () => void;
-  /** Solo existe en el repositorio real: clave de vistos del grupo. */
-  getGroupSeenKeys?(code: string): Promise<string[]>;
-  /** SOLO MOCK: programa las decisiones de los amigos (7.5). */
-  beginSwipe?(code: string, deck: Media[]): void;
-  /** Anadido (opcional): el miembro sale; libera temporizadores del mock. */
-  leaveRoom?(code: string, userId: string): void;
-  /** Anadido (opcional): vuelve la sala a la fase lobby ("Volver a la sala"). */
-  backToLobby?(code: string): Promise<void>;
-}
+// P9: el tipo se exportó a room.types.ts; se mantiene el export aquí para compatibilidad
+// (se borra este fichero en P9).
+export type { RoomRepository } from './room.types';
 
 const rooms = new Map<string, FakeRoom>();
 
@@ -69,7 +51,6 @@ function newCode(): string {
 
 export const roomRepository: RoomRepository = {
   async createRoom(hostId, affinity) {
-    await fakeDelay();
     const code = newCode();
     const { profile } = useProfileStore.getState();
     const name = profile.id === hostId ? profile.displayName : 'Anfitrión';
@@ -77,27 +58,21 @@ export const roomRepository: RoomRepository = {
     return code;
   },
   async joinRoom(code, user) {
-    await fakeDelay();
     return getRoom(code).join(user);
   },
   async setReady(code, userId, ready) {
-    await fakeDelay();
     getRoom(code).setReady(userId, ready);
   },
   async startMatch(code, userId) {
-    await fakeDelay();
     getRoom(code).startMatch(userId);
   },
   async setMoodAnswer(code, userId, questionId, answerId) {
-    await fakeDelay();
     getRoom(code).setMoodAnswer(userId, questionId, answerId);
   },
   async confirmMood(code, userId) {
-    await fakeDelay();
     getRoom(code).confirmMood(userId);
   },
   async submitDecision(code, userId, key, decision) {
-    await fakeDelay();
     getRoom(code).submitDecision(userId, key, decision);
   },
   subscribe(code, cb) {
@@ -120,7 +95,6 @@ export const roomRepository: RoomRepository = {
     if (key === SEEDED_ROOM_CODE) rooms.set(key, createFakeRoom(key, 'B'));
   },
   async backToLobby(code) {
-    await fakeDelay();
     getRoom(code).backToLobby();
   },
 };

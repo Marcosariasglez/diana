@@ -11,7 +11,7 @@ export const AUTH_STORAGE_KEY = 'vertice-diana-auth';
 
 let client: SupabaseClient | null = null;
 
-/** Cliente unico, creado la primera vez que se pide (en modo mock nunca se crea). */
+/** Cliente único, creado la primera vez que se pide (lazy). */
 export function getSupabase(): SupabaseClient {
   if (client) return client;
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('supabase-not-configured');

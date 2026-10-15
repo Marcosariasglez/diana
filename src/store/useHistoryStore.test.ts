@@ -1,8 +1,13 @@
-import type { HistoryEntry } from '@/types/rating';
+import type { HistoryEntry, MediaRef } from '@/types/rating';
 import type { ImportResult } from '@/types/import';
-import { getMedia } from '@/mocks/data/catalog';
-import { predict } from '@/mocks/mock-ai/predict';
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
+import type { MediaType } from '@/types/media';
+import { fixtureMedia } from '@/test/fixtures/catalog';
+import { predict } from '@/recommender/predict';
+import { buildTasteProfile } from '@/recommender/taste';
+import { entryTitle } from '@/services/rating.types';
+import { buildMediaKey } from '@/utils/mediaKey';
+import { ratingRepository, profileRepository } from '@/services';
+
 import {
   selectAverageRating,
   selectEntryByKey,
@@ -11,7 +16,7 @@ import {
 } from './useHistoryStore';
 import { createDefaultProfile, useProfileStore } from './useProfileStore';
 
-jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
+
 
 const AFTERSUN = { mediaType: 'movie' as const, mediaId: 1 };
 const PAST_LIVES = { mediaType: 'movie' as const, mediaId: 2 };
@@ -31,9 +36,49 @@ function entry(partial: Partial<HistoryEntry> & Pick<HistoryEntry, 'key'>): Hist
   };
 }
 
+// P10: mockSaveRating con comportamiento dinámico
+const mockSaveRating = ratingRepository.saveRating as jest.Mock;
+
 beforeEach(() => {
   useProfileStore.setState({ profile: createDefaultProfile() });
   useHistoryStore.setState({ entries: [], watched: [] });
+  mockSaveRating.mockClear();
+  mockSaveRating.mockImplementation(async (input: { mediaRef: MediaRef; userRating: number; origin: string }) => {
+    const media = fixtureMedia(input.mediaRef.mediaType as MediaType, input.mediaRef.mediaId);
+    if (!media) throw new Error('media-not-found');
+    const key = buildMediaKey(input.mediaRef);
+    const title = (media as any).title ?? (media as any).name ?? 'Unknown';
+    const store = useHistoryStore.getState();
+    const existing = store.entries.find((e: HistoryEntry) => e.key === key);
+    let aiPrediction: number;
+    if (existing) {
+      aiPrediction = existing.aiPrediction;
+    } else {
+      const taste = buildTasteProfile('user-me', {}, store.entries);
+      aiPrediction = predict(taste, media, key);
+    }
+    let predictionSeen: boolean;
+    if (existing) {
+      predictionSeen = existing.predictionSeen || input.origin === 'detail';
+    } else {
+      predictionSeen = input.origin === 'detail';
+    }
+    return {
+      key,
+      ref: input.mediaRef,
+      title: entryTitle(input.mediaRef, title),
+      posterColor: '#000000',
+      userRating: input.userRating,
+      aiPrediction,
+      predictionSeen,
+      ratedAt: '2025-01-01T00:00:00.000Z',
+      source: 'app',
+    };
+  });
+  (profileRepository.saveProfile as jest.Mock).mockResolvedValue(undefined);
+  (profileRepository.saveInitialRating as jest.Mock).mockResolvedValue(undefined);
+  (profileRepository.saveImport as jest.Mock).mockResolvedValue(undefined);
+  (profileRepository.removeEntry as jest.Mock).mockResolvedValue(undefined);
 });
 
 describe('useHistoryStore.addEntry (reglas 1-8 de 6.1)', () => {
@@ -58,7 +103,7 @@ describe('useHistoryStore.addEntry (reglas 1-8 de 6.1)', () => {
     });
     const e = await useHistoryStore.getState().addEntry({ mediaRef: AFTERSUN, userRating: 5, origin: 'detail' });
     const taste = buildTasteProfile('user-me', { 3: 'like', 4: 'like' }, []);
-    expect(e.aiPrediction).toBe(predict(taste, getMedia('movie', 1)!, 'movie:1'));
+    expect(e.aiPrediction).toBe(predict(taste, fixtureMedia('movie', 1)!, 'movie:1'));
     expect(e.aiPrediction).toBeGreaterThanOrEqual(1);
     expect(e.aiPrediction).toBeLessThanOrEqual(5);
     expect(Math.round(e.aiPrediction * 10)).toBe(e.aiPrediction * 10);
@@ -68,10 +113,10 @@ describe('useHistoryStore.addEntry (reglas 1-8 de 6.1)', () => {
     const store = useHistoryStore.getState();
     const first = await store.addEntry({ mediaRef: AFTERSUN, userRating: 5, origin: 'detail' });
     // Perfil previo vacio: la primera prediccion no depende de la nota 5,0.
-    expect(first.aiPrediction).toBe(predict(buildTasteProfile('user-me', {}, []), getMedia('movie', 1)!, 'movie:1'));
+    expect(first.aiPrediction).toBe(predict(buildTasteProfile('user-me', {}, []), fixtureMedia('movie', 1)!, 'movie:1'));
     const second = await store.addEntry({ mediaRef: PAST_LIVES, userRating: 3, origin: 'detail' });
     const taste = buildTasteProfile('user-me', {}, [first]);
-    expect(second.aiPrediction).toBe(predict(taste, getMedia('movie', 2)!, 'movie:2'));
+    expect(second.aiPrediction).toBe(predict(taste, fixtureMedia('movie', 2)!, 'movie:2'));
   });
 
   it('upsert: actualiza nota y fecha, conserva aiPrediction y no duplica', async () => {

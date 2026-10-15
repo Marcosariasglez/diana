@@ -1,60 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Movie } from '@/types/media';
-import type { MoodFilters } from '@/types/mood';
-import type { MediaKey } from '@/types/rating';
-import type { RoomMember } from '@/types/room';
-import { GROUP_DECK_COUNT } from '@/constants/room';
-import { BACKEND } from '@/lib/env';
-import { mediaKeyOf } from '@/mocks/data/catalog';
-import { FAKE_USERS } from '@/mocks/data/fakeUsers';
-import { FAKE_HISTORY } from '@/mocks/data/history';
-import { predictTenths } from '@/mocks/mock-ai/predict';
+import { predictTenths } from '@/recommender/predict';
+import { mediaKeyOf } from '@/utils/media';
 import { catalogRepository, roomRepository } from '@/services';
-import { buildSeenKeys, selectSeenKeys } from '@/store/seen';
-import { useHistoryStore } from '@/store/useHistoryStore';
 import { useProfileStore } from '@/store/useProfileStore';
-import { selectGroupFilters, useRoomStore } from '@/store/useRoomStore';
+import { useRoomStore } from '@/store/useRoomStore';
 import { useTasteProfile } from '@/hooks/useTasteProfile';
 import { computeGroupRanking, isGroupComplete, type GroupRankingItem } from './groupRanking';
-
-/** Vistos de todos los miembros: el usuario y, para cada amigo mock presente, sus like/skip e historial. */
-export function buildGroupExcludeKeys(
-  members: ReadonlyArray<Pick<RoomMember, 'userId'>>,
-  userSeen: ReadonlySet<MediaKey>,
-): Set<MediaKey> {
-  const exclude = new Set<MediaKey>(userSeen);
-  for (const m of members) {
-    const friend = FAKE_USERS.find((f) => f.userId === m.userId);
-    if (!friend) continue;
-    const seen = buildSeenKeys({
-      initialRatings: friend.initialRatings,
-      entries: FAKE_HISTORY[friend.userId] ?? [],
-      watched: [],
-    });
-    seen.forEach((k) => exclude.add(k));
-  }
-  return exclude;
-}
-
-/** Pide el mazo de grupo al catalogo con los filtros del anfitrion tal cual (7.2). */
-export function loadGroupDeck(input: {
-  members: ReadonlyArray<Pick<RoomMember, 'userId'>>;
-  userSeen: ReadonlySet<MediaKey>;
-  filters: MoodFilters;
-  count?: number;
-}): Promise<Movie[]> {
-  return catalogRepository.getGroupDeck({
-    excludeKeys: buildGroupExcludeKeys(input.members, input.userSeen),
-    filters: input.filters,
-    count: input.count ?? GROUP_DECK_COUNT,
-  });
-}
 
 export type GroupSwipeStatus = 'loading' | 'ready' | 'empty' | 'error';
 
 /**
- * Swipe de grupo: carga el mazo, avisa al mock con beginSwipe y expone progreso,
- * espera ("Esperando a {nombres}...") y ranking final.
+ * Swipe de grupo: el mazo SIEMPRE sale de `room.deck` servido por el backend
+ * (lo fija el anfitrión en `confirmMood`, 7.2); sin ramas de datos fake (P5).
+ * Si el mazo llega vacío la UI muestra el estado vacío (F2-5).
  */
 export function useGroupSwipe() {
   const code = useRoomStore((s) => s.code);
@@ -77,14 +36,11 @@ export function useGroupSwipe() {
     let cancelled = false;
     setStatus('loading');
     const room = useRoomStore.getState();
-    const filters = selectGroupFilters(room, useProfileStore.getState().profile.favoritePlatforms);
-    const userSeen = selectSeenKeys(useProfileStore.getState(), useHistoryStore.getState());
-    const load: Promise<Movie[]> =
-      BACKEND === 'supabase'
-        ? Promise.all(room.deck.map((r) => catalogRepository.getMediaById('movie', r.mediaId))).then((list) =>
-            list.filter((m): m is Movie => !!m && m.media_type === 'movie'),
-          )
-        : loadGroupDeck({ members: room.members, userSeen, filters });
+    // El mazo de grupo SIEMPRE lo sirve el backend en `room.deck` (P5 · F2-5):
+    // sin rama local con usuarios/historiales fake; vacío → estado vacío en la UI.
+    const load: Promise<Movie[]> = Promise.all(
+      room.deck.map((r) => catalogRepository.getMediaById('movie', r.mediaId)),
+    ).then((list) => list.filter((m): m is Movie => !!m && m.media_type === 'movie'));
     load
       .then((movies) => {
         if (cancelled) return;

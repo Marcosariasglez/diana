@@ -6,8 +6,6 @@ import { createDefaultProfile, useProfileStore } from '@/store/useProfileStore';
 import { useRoomStore } from '@/store/useRoomStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
-jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
-
 type Persisted = { persist: { getOptions: () => any; rehydrate: () => Promise<void> | void } };
 
 const persistent = [
@@ -104,9 +102,10 @@ describe('completeOnboarding', () => {
     useProfileStore.setState({ profile: createDefaultProfile(), hasOnboarded: false });
     useHistoryStore.setState({ entries: [], watched: [] });
     const store = useProfileStore.getState();
-    store.addInitialRating(1, 'like'); // Aftersun: Drama
-    store.addInitialRating(2, 'like'); // Past Lives: Drama, Romance
-    store.addInitialRating(7, 'skip'); // Fall: Suspense
+    // P6: los géneros del swipe se pasan explícitos (en la app los trae la carta).
+    store.addInitialRating(1, 'like', [18]); // Aftersun: Drama
+    store.addInitialRating(2, 'like', [18, 10749]); // Past Lives: Drama, Romance
+    store.addInitialRating(7, 'skip', [53]); // Fall: Suspense
     useProfileStore.getState().completeOnboarding();
     const s = useProfileStore.getState();
     expect(s.hasOnboarded).toBe(true);

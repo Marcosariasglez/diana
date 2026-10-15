@@ -189,10 +189,44 @@ function makeDb(s: E2EState): Record<string, Table> {
     rooms: { rows: [], pk: ['code'] },
     room_members: { rows: [], pk: ['code', 'user_id'] },
     room_decisions: { rows: [], pk: ['code', 'user_id', 'key'] },
+  catalog_titles: { rows: [], pk: ['tmdb_id'] },
   };
 }
 
-const KNOWN_OPS = ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in', 'is', 'like', 'ilike', 'cs', 'cd'];
+/**
+ * Sembrar datos de catálogo en la tabla `catalog_titles` del mock.
+ * Compatible con `postgrestCatalogSource` de `src/services/supabase/catalog/index.ts`.
+ */
+export function seedCatalogRows(s: E2EState): void {
+  const db = makeDb(s);
+  // Genera 30 películas deterministas para pruebas E2E del catálogo.
+  for (let i = 1; i <= 30; i++) {
+    const platform = i % 3 === 0 ? 'filmin' : i % 2 === 0 ? 'prime-video' : 'netflix';
+    db.catalog_titles.rows.push({
+      tmdb_id: i,
+      media_type: i % 5 === 0 ? 'tv' : 'movie',
+      title: `Película ${i}`,
+      original_title: `Original ${i}`,
+      year: 1990 + (i % 4) * 10,
+      overview: `Sinopsis de la película ${i}.`,
+      genre_ids: [18, i % 2 === 0 ? 10749 : 35],
+      vote_average: 5 + (i % 10) / 10,
+      vote_count: 100 + i * 10,
+      popularity: i * 1.5,
+      runtime: 90 + i * 2,
+      poster_path: `/p/${i}.jpg`,
+      backdrop_path: `/b/${i}.jpg`,
+      original_language: i % 3 === 0 ? 'es' : 'en',
+      platforms_flatrate: [platform],
+      platforms_rent: i % 5 === 0 ? ['max'] : [],
+      platforms_buy: i % 7 === 0 ? ['disney-plus'] : [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
+}
+
+const KNOWN_OPS = ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in', 'is', 'like', 'ilike', 'cs', 'cd', 'or', 'fts', 'plfts', 'websearch'];
 
 /**
  * Filtros PostgREST usados por Diana. supabase-js genera la forma IMPLÍCITA
@@ -203,18 +237,23 @@ function applyFilters(rows: Row[], q: URLSearchParams): Row[] {
   let out = [...rows];
   for (const [k, v] of q.entries()) {
     if (['select', 'order', 'offset', 'limit', 'on_conflict'].includes(k)) continue;
+    // P11: Soporte para operador 'or' PostgREST: or=(col1.eq.val1,col2.eq.val2)
+    if (k === 'or') {
+      const inner = v.replace(/^\(/, '').replace(/\)$/, '');
+      const subFilters = parseOrFilters(inner);
+      out = out.filter((r) => subFilters.some((f) => f(r)));
+      continue;
+    }
+    // P11: Soporte para websearch (text search): col=websearch.term
     let col = k;
     let opRaw: string | undefined;
     let val = v;
     const keyParts = k.split('.');
     if (keyParts.length >= 2 && KNOWN_OPS.includes(keyParts[1])) {
-      // Forma explícita: col.op=val (o col.op.extra=val)
       col = keyParts[0];
       opRaw = keyParts[1];
       val = keyParts.slice(2).join('.');
     } else {
-      // Forma implícita: col=op.val (supabase-js). El valor se reparte por
-      // puntos SOLO si el primer trozo es un operador conocido.
       const valParts = v.split('.');
       if (valParts.length >= 2 && KNOWN_OPS.includes(valParts[0])) {
         opRaw = valParts[0];
@@ -228,9 +267,41 @@ function applyFilters(rows: Row[], q: URLSearchParams): Row[] {
       const vals = val.replace(/^\(/, '').replace(/\)$/, '').split(',');
       out = out.filter((r) => vals.includes(String(r[col])));
     }
-    // Los demás operadores no se usan en los flujos cubiertos.
+    else if (op === 'websearch' || op === 'fts') {
+      // P11: Simula búsqueda de texto — busca el término en la columna
+      const term = val.toLowerCase();
+      out = out.filter((r) => String(r[col] ?? '').toLowerCase().includes(term));
+    }
+    else if (op === 'or') {
+      const subFilters = parseOrFilters(v);
+      out = out.filter((r) => subFilters.some((f) => f(r)));
+    }
   }
   return out;
+}
+
+/** Parsea sub-filtros de operador or: "col1.eq.val1,col2.eq.val2" → funciones filtro. */
+function parseOrFilters(inner: string): Array<(r: Row) => boolean> {
+  const filters: Array<(r: Row) => boolean> = [];
+  // Cada sub-filtro: col.op.val
+  const parts = inner.split(',');
+  for (const part of parts) {
+    const segments = part.split('.');
+    if (segments.length >= 3) {
+      const fc = segments[0];
+      const fo = segments[1];
+      const fv = segments.slice(2).join('.');
+      filters.push((r) => {
+        if (fo === 'eq') return String(r[fc]) === fv;
+        if (fo === 'in') {
+          const vals = fv.replace(/^\(/, '').replace(/\)$/, '').split(',');
+          return vals.includes(String(r[fc]));
+        }
+        return false;
+      });
+    }
+  }
+  return filters;
 }
 
 // ---------------------------------------------------------------------------

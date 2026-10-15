@@ -1,11 +1,11 @@
 // D2-5 (calidad): getRankingContext. Lee el contexto de ranking (userId,
 // taste, seenKeys) de los stores SIN suscribirse: los cambios en history o
 // profile deben reflejarse en la siguiente llamada.
-jest.mock('@/mocks/mock-ai/taste', () => ({
+jest.mock('@/recommender/taste', () => ({
   buildTasteProfile: jest.fn(() => ({ userId: 'u', weightBp: { 18: 500 } })),
 }));
 
-import { buildTasteProfile } from '@/mocks/mock-ai/taste';
+import { buildTasteProfile } from '@/recommender/taste';
 import { getRankingContext } from './rankingContext';
 import { useHistoryStore } from './useHistoryStore';
 import { useProfileStore } from './useProfileStore';
@@ -21,6 +21,7 @@ describe('getRankingContext (D2-5)', () => {
         id: 'user-abc',
         displayName: 'Juan',
         initialRatings: { 5: 'like' },
+        initialGenres: { 5: [18] },
         favoriteGenres: [],
         favoritePlatforms: ['netflix'],
       },

@@ -1,6 +1,6 @@
 import type { Media } from '@/types/media';
 import type { GroupDecision } from '@/types/room';
-import { synthMovie } from '@/mocks/mock-ai/__tests__/helpers';
+import { synthMovie } from '@/recommender/__tests__/helpers';
 import { computeGroupRanking, formatGroupLikes, isGroupComplete } from './groupRanking';
 
 const card = (id: number): { media: Media; key: string } => ({ media: synthMovie(id, [18]), key: `movie:${id}` });

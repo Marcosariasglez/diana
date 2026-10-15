@@ -1,20 +1,16 @@
-// VERTICE-PLAN-2, D2-2: recomendador real (contenido) + interruptor.
+// VERTICE-PLAN-2, D2-2 / F4-3: recomendador real (contenido) + interruptor.
 //
 // Dos modos:
-//   - 'content' (defecto desde A.6, ver env.ts): los RPC de la migración
-//     0007 (`recommend` y `predict_tenths`, ambos security invoker → el
-//     cliente solo ve lo suyo por RLS).
-//   - 'heuristic': la heurística de géneros actual (mock-ai). Sin servidor;
-//     opt-out explícito y red de seguridad.
+//   - 'content' (defecto): recomendador basado en contenido (RPC `recommend` /
+//     `predict_tenths` de la migración 0007).
+//   - 'heuristic': heurística de géneros, sin servidor. Red de seguridad.
 //
-// `activeRecommender()` degrada a 'heuristic' cuando 'content' no tiene
-// sentido (CATALOG=mock, BACKEND=mock, sin cliente Supabase) o cuando el
-// RPC devuelve null (sin sesión, sin features…). Así el cambio de variable
-// nunca rompe la app: la heurística sigue siendo la red de seguridad.
-import { CATALOG, RECOMMENDER } from '@/lib/env';
+// `activeRecommender()` degrada a 'heuristic' cuando RECOMMENDER !== 'content'
+// o en tests sin proceso (Jest). La degradación por fallo del RPC la hacen
+// `contentRecommend`/`contentPredictTenths`, que devuelven `null`.
+import { RECOMMENDER } from '@/lib/env';
 import type { Media, MediaType } from '@/types/media';
 import { getSupabase } from '@/lib/supabase';
-import { CATALOG as MOCK_CATALOG } from '@/mocks/data/catalog';
 
 export type RecommenderKind = 'heuristic' | 'content';
 
@@ -26,10 +22,9 @@ export interface ContentRecommendation {
   explanation: string[];
 }
 
-/** Modo efectivo: degrada a heuristic cuando 'content' no tiene sentido. */
+/** Modo efectivo: degrada a heuristic cuando RECOMMENDER !== 'content'. */
 export function activeRecommender(): RecommenderKind {
   if (RECOMMENDER !== 'content') return 'heuristic';
-  if (CATALOG !== 'tmdb' || typeof process === 'undefined') return 'heuristic';
   return 'content';
 }
 
@@ -106,8 +101,9 @@ export async function contentPredictTenths(type: MediaType, tmdbId: number): Pro
  * Fila del RPC → Media (mínimo para el feed). La ficha completa ya existe en
  * `catalog_repository.getMediaById`; aquí solo hace falta lo suficiente para
  * pintar el carril (poster, géneros vacíos, plataformas desconocidas → []).
- * Si el título ya existe en el catálogo de mocks, devuelve ese Media completo
- * (modo de desarrollo: el build de pruebas no tiene 0006 desplegada).
+ * F2-1: el mapeo es 1:1 desde la fila del servidor — NUNCA se sustituye ni se
+ * complementa con datos del catálogo mock (el id del mock es un espacio distinto
+ * al de TMDB y «enriquecía» títulos reales con datos inventados).
  */
 function mediaFromRpcRow(row: {
   media_type: MediaType;
@@ -116,9 +112,6 @@ function mediaFromRpcRow(row: {
   original_title?: string;
   poster_path: string | null;
 }): Media | null {
-  // Reutiliza el Media del catálogo mock si existe (ids 1-122 en desarrollo).
-  const inMock = MOCK_CATALOG.find((m) => m.media_type === row.media_type && m.id === row.tmdb_id);
-  if (inMock) return inMock;
   // Fallback: title puede estar vacío cuando sync solo guardó original_title.
   const resolvedTitle = row.title || row.original_title || '';
   // Sin título no se pinta: saldría «Película 9772» y su ficha no existiría.

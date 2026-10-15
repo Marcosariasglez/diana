@@ -1,7 +1,7 @@
-import { CATALOG } from '@/mocks/data/catalog';
+import { FIXTURE_CATALOG } from '@/test/fixtures/catalog';
 import { MOCK_EPISODE_HIGHLIGHTS, searchRepository } from './search.repository';
 
-jest.mock('@/mocks/latency', () => ({ fakeDelay: () => Promise.resolve() }));
+const CATALOG = FIXTURE_CATALOG;
 
 describe('searchRepository', () => {
   it('caso de referencia "Fall": Fall (Pelicula), Fallout (Serie), Fallout T1 · E3 (Capitulo), en ese orden', async () => {

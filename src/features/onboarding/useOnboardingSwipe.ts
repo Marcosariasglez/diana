@@ -20,7 +20,7 @@ export interface OnboardingSwipe {
    * con 0 valoraciones). La pantalla lo muestra como rótulo.
    */
   popularOnPlatforms: boolean;
-  decide: (media: { id: number }, dir: SwipeDir) => void;
+  decide: (media: Pick<Movie, 'id' | 'genres'>, dir: SwipeDir) => void;
   retry: () => void;
 }
 
@@ -75,9 +75,11 @@ export function useOnboardingSwipe(): OnboardingSwipe {
   }, [load]);
 
   const decide = useCallback(
-    (media: { id: number }, dir: SwipeDir) => {
+    (media: Pick<Movie, 'id' | 'genres'>, dir: SwipeDir) => {
       if (finished.current) return;
-      addInitialRating(media.id, dir);
+      // P6 (F3-1): persiste los géneros de la carta (initial_ratings.genre_ids):
+      // son la señal con la que el perfil de gusto se calcula sin lookup.
+      addInitialRating(media.id, dir, media.genres.map((g) => g.id));
       remaining.current -= 1;
       setCards((c) => c.filter((m) => m.id !== media.id));
       setDecided((n) => n + 1);

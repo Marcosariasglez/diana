@@ -4,12 +4,10 @@ import type { WatchlistItem } from '@/store/useWatchlistStore';
  * VERTICE-PLAN-2, D2-3: espejo de «Quiero ver» en la tabla `watchlist`
  * (migración 0008, RLS «solo lo tuyo»).
  */
-export interface WatchlistRepository {
-  /** null en modo mock: no hay servidor. */
-  load(): Promise<WatchlistItem[] | null>;
-  upsert(item: WatchlistItem): Promise<void>;
-  remove(mediaType: WatchlistItem['mediaType'], mediaId: number): Promise<void>;
-}
+// P9: el tipo se exportó a watchlist.types.ts; se mantiene el export aquí para compatibilidad
+// (se borra este fichero en P9).
+import type { WatchlistRepository } from './watchlist.types';
+export type { WatchlistRepository } from './watchlist.types';
 
 export const mockWatchlistRepository: WatchlistRepository = {
   async load() {
