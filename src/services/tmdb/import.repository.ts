@@ -1,4 +1,4 @@
-import type { ImportResult } from '@/types/import';
+import type { ImportPhase, ImportResult } from '@/types/import';
 import type { HistoryEntry, MediaKey } from '@/types/rating';
 import { genreLookup, registerGenres } from '@/lib/genreIndex';
 import { predictTenths } from '@/recommender/predict';
@@ -7,7 +7,8 @@ import { useHistoryStore } from '@/store/useHistoryStore';
 import { useProfileStore } from '@/store/useProfileStore';
 import { buildMediaKey } from '@/utils/mediaKey';
 import { posterColor } from '@/utils/posterColor';
-import { ImportError, parseRating, ratedAtOf, readFile, type ImportRepository, type Report } from '../import.repository';
+import { ImportError, parseRating, ratedAtOf, type CsvRow, type ImportRepository, type Report } from '../import.types';
+import { readFile } from '../import.repository';
 import { invokeTmdb } from './invoke';
 
 const BATCH = 40;
@@ -22,14 +23,14 @@ interface MatchRow {
 export const tmdbImportRepository: ImportRepository = {
   async parseLetterboxd(file, opts) {
     const onProgress = opts?.onProgress;
-    const report: Report = (phase, processed = 0, total = 0) => onProgress?.({ phase, processed, total });
+    const report: Report = (phase: ImportPhase, processed = 0, total = 0) => onProgress?.({ phase, processed, total });
 
     const { ratings, watched } = await readFile(file, report);
     const ratingRows = ratings?.rows ?? [];
     const watchedRows = watched?.rows ?? [];
     const all = [
-      ...ratingRows.map((row) => ({ row, kind: 'rating' as const })),
-      ...watchedRows.map((row) => ({ row, kind: 'watched' as const })),
+      ...ratingRows.map((row: CsvRow) => ({ row, kind: 'rating' as const })),
+      ...watchedRows.map((row: CsvRow) => ({ row, kind: 'watched' as const })),
     ];
     const total = all.length;
 

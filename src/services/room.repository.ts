@@ -15,6 +15,7 @@ export type { RoomSnapshot } from '@/types/room';
 
 // P9: el tipo se exportó a room.types.ts; se mantiene el export aquí para compatibilidad
 // (se borra este fichero en P9).
+import type { RoomRepository } from './room.types';
 export type { RoomRepository } from './room.types';
 
 const rooms = new Map<string, FakeRoom>();

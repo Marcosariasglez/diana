@@ -7,9 +7,12 @@ jest.mock('./useProfileStore', () => ({
 
 import { getQuestionsFor } from '@/features/mood/questions';
 import { catalogRepository } from '@/services';
+import type { MediaWithAffinity } from '@/types/media';
 import { useMoodStore } from './useMoodStore';
+import { fixtureMedia } from '@/test/fixtures/catalog';
 
-const RESULT = { media: { id: 1, media_type: 'movie', title: 'X' }, score: 0.5 };
+const RESULT_MEDIA = fixtureMedia('movie', 1)!;
+const RESULT: MediaWithAffinity = { media: RESULT_MEDIA, bucket: 'medio' };
 
 // P10: catalogRepository.getMoodResults es función real del mock legacy, no jest.fn().
 // Usamos jest.spyOn para interceptar y usar mockResolvedValue.
@@ -18,7 +21,7 @@ const mockGetMoodResults = jest.spyOn(catalogRepository, 'getMoodResults');
 describe('useMoodStore (D2-5)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetMoodResults.mockResolvedValue([{ media: RESULT.media, score: RESULT.score, bucket: 'medio' }]);
+    mockGetMoodResults.mockResolvedValue([RESULT]);
     useMoodStore.setState({
       mode: 'solo',
       complexity: 'intermedio',
@@ -79,7 +82,7 @@ describe('useMoodStore (D2-5)', () => {
     const first = new Promise((r) => {
       resolveFirst = r;
     });
-    mockGetMoodResults.mockReturnValueOnce(first);
+    mockGetMoodResults.mockReturnValueOnce(first as unknown as Promise<MediaWithAffinity[]>);
     mockGetMoodResults.mockResolvedValueOnce([RESULT]);
 
     const p1 = useMoodStore.getState().finalize();

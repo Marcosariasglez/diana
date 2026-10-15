@@ -1,5 +1,5 @@
 import type { InitialRating } from '@/types/rating';
-import { getMedia } from './catalog';
+import { fixtureMedia as getMedia } from '@/test/fixtures/catalog';
 
 export interface FakeUser {
   userId: string;
@@ -125,6 +125,6 @@ const BASE = [
 export const FAKE_USERS: ReadonlyArray<FakeUser> = BASE.map((u) => ({
   ...u,
   initialGenres: Object.fromEntries(
-    Object.keys(u.initialRatings).map((id) => [Number(id), getMedia('movie', Number(id))?.genres.map((g) => g.id) ?? []]),
+    Object.keys(u.initialRatings).map((id) => [Number(id), getMedia('movie', Number(id))?.genres.map((g: { id: number }) => g.id) ?? []]),
   ),
 }));

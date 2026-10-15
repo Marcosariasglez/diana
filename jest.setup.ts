@@ -349,7 +349,7 @@ jest.mock('@/services', () => {
         if (!room) return;
         room.members = room.members.filter((m: any) => m.userId !== userId);
         // Clear friend-join timers for this room
-        mockTimers.forEach((t) => clearTimeout(t));
+        mockTimers.forEach((t: unknown) => clearTimeout(t as number));
         mockTimers.length = 0;
       }),
       backToLobby: jest.fn().mockImplementation(async (code) => {
