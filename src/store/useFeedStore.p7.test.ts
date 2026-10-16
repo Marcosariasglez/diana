@@ -189,7 +189,7 @@ describe('useFeedStore P7: feed personalizado', () => {
     expect(heroWithGenres.length).toBeGreaterThan(0);
   });
 
-  it('RPC null → hero=[], top10=[], rows de fallback (no vacíos)', async () => {
+  it('RPC null → hero y Top 10 salen del feed clásico, y hay filas de fallback', async () => {
     (contentRecommend as jest.Mock).mockResolvedValue(null);
 
     // browse devuelve items para filas de fallback
@@ -203,8 +203,13 @@ describe('useFeedStore P7: feed personalizado', () => {
     const s = useFeedStore.getState();
 
     expect(s.status).toBe('ready');
-    expect(s.hero).toEqual([]);
-    expect(s.top10).toEqual([]);
+    // P9: sin RPC, hero y Top 10 se rellenan desde el feed clásico (sin razón).
+    expect(s.hero.length).toBeGreaterThan(0);
+    expect(s.hero.length).toBeLessThanOrEqual(5);
+    expect(s.top10.length).toBeLessThanOrEqual(10);
+    expect(s.hero.every((i) => i.reason === undefined)).toBe(true);
+    const keys = [...s.hero, ...s.top10].map((i) => `${i.media.media_type}:${i.media.id}`);
+    expect(new Set(keys).size).toBe(keys.length);
     // F7: rows NO deben estar vacíos — deben tener filas variadas de fallback
     expect(s.rows.length).toBeGreaterThan(0);
   });
@@ -221,8 +226,7 @@ describe('useFeedStore P7: feed personalizado', () => {
     const s = useFeedStore.getState();
 
     expect(s.status).toBe('ready');
-    expect(s.hero).toEqual([]);
-    expect(s.top10).toEqual([]);
+    expect(s.hero.length).toBeGreaterThan(0);
     expect(s.rows.length).toBeGreaterThan(0);
   });
 

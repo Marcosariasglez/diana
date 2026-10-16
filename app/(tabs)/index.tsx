@@ -11,22 +11,18 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, Tv } from 'lucide-react-native';
-import { FeaturedMatchCard } from '@/components/features/FeaturedMatchCard';
+import { HeroCarousel } from '@/components/features/home/HeroCarousel';
+import { Top10Row } from '@/components/features/home/Top10Row';
 import { PosterCarousel } from '@/components/features/PosterCarousel';
 import { EmptyState, ErrorState, PillGroup, Screen, Skeleton } from '@/components/ui';
 import { BOTTOM_NAV_HEIGHT } from '@/components/ui/BottomNav';
 import { PLATFORMS } from '@/constants/platforms';
-import { useFeedData } from '@/features/feed/useFeedData';
+import { usePersonalizedFeed } from '@/features/feed/usePersonalizedFeed';
 import { selectUnreadCount, useNotificationTrayStore } from '@/store/useNotificationTrayStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
 import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
-import type { FeedCategory, Media } from '@/types/media';
-
-const CATEGORY_TITLES: Record<FeedCategory['id'], string> = {
-  'hidden-gems': 'Joyas ocultas',
-  recommendations: 'Recomendaciones',
-};
+import type { Media } from '@/types/media';
 
 const PLATFORM_ITEMS = PLATFORMS.map((p) => ({ label: p.name, value: p.id }));
 const NEAR_END = 240;
@@ -40,7 +36,7 @@ const SKELETON_STYLES = StyleSheet.create({
 function FeedSkeleton() {
   return (
     <View style={SKELETON_STYLES.skeleton} accessibilityLabel="Cargando tu feed">
-      <Skeleton width="100%" height={300} radius={16} />
+      <Skeleton width="100%" height={440} radius={24} />
       {[0, 1].map((i) => (
         <View key={i} style={SKELETON_STYLES.skeletonRow}>
           <Skeleton width={160} height={22} />
@@ -57,8 +53,8 @@ function FeedSkeleton() {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const feed = useFeedData();
-  const { featured, categories, status, platforms } = feed;
+  const feed = usePersonalizedFeed();
+  const { hero, top10, rows, status, platforms } = feed;
   const unread = useNotificationTrayStore(selectUnreadCount);
   const { colors } = useTheme();
   const styles = useThemedStyles((c) => StyleSheet.create({
@@ -93,7 +89,6 @@ export default function HomeScreen() {
     pillScroll: { flexGrow: 0 },
     pills: { paddingHorizontal: 20, paddingVertical: 4 },
     sections: { gap: 24 },
-    featured: { paddingHorizontal: 20 },
     skeleton: { paddingHorizontal: 20, gap: 24 },
     skeletonRow: { gap: 12 },
     skeletonPosters: { flexDirection: 'row' as const, gap: 12 },
@@ -119,14 +114,16 @@ export default function HomeScreen() {
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
     if (contentOffset.y + layoutMeasurement.height >= contentSize.height - NEAR_END) {
-      void feed.loadMore();
+      void feed.loadMoreRows();
     }
   };
 
   const noPlatforms = platforms.length === 0;
   const loading = !noPlatforms && (status === 'idle' || status === 'loading');
-  const ready = !noPlatforms && status !== 'idle' && status !== 'loading' && !feed.fatalError;
-  const nothing = ready && !featured && categories.length === 0;
+  const empty = hero.length === 0 && top10.length === 0 && rows.length === 0;
+  const fatalError = !noPlatforms && status === 'error' && empty;
+  const ready = !noPlatforms && status === 'ready';
+  const nothing = ready && empty;
 
   return (
     <Screen>
@@ -181,7 +178,7 @@ export default function HomeScreen() {
 
         {loading ? <FeedSkeleton /> : null}
 
-        {feed.fatalError ? (
+        {fatalError ? (
           <ErrorState message="No pudimos cargar tu feed" onRetry={feed.reload} />
         ) : null}
 
@@ -195,23 +192,17 @@ export default function HomeScreen() {
 
         {ready && !nothing ? (
           <View style={styles.sections}>
-            {featured ? (
-              <View style={styles.featured}>
-                {/* A.7: la explicación del recomendador «content» (1ª línea del RPC). */}
-                <FeaturedMatchCard
-                  item={featured}
-                  explanation={featured.explanation?.[0]}
-                  onPress={() => openDetail(featured.media)}
-                />
-              </View>
-            ) : null}
-            {categories.map((cat) => (
+            <HeroCarousel items={hero} onPress={openDetail} />
+            <Top10Row items={top10} onPress={openDetail} />
+            {rows.map((row) => (
               <PosterCarousel
-                key={cat.id}
-                title={CATEGORY_TITLES[cat.id]}
-                items={cat.media}
+                key={row.id}
+                title={row.title}
+                subtitle={row.subtitle}
+                items={row.items}
+                showYear
                 onPress={openDetail}
-                onSeeAll={() => router.push(`/see-all/${cat.id}`)}
+                onSeeAll={row.seeAll ? () => router.push(`/see-all/${row.seeAll}`) : undefined}
               />
             ))}
             {feed.loadingMore ? (
@@ -221,13 +212,13 @@ export default function HomeScreen() {
                 style={styles.spinner}
               />
             ) : null}
-            {feed.pageError ? (
+            {feed.rowsError ? (
               <View style={styles.inlineError}>
                 <Text style={textStyle('bodySmall', { color: colors.textSecondary })}>
                   No pudimos cargar más títulos
                 </Text>
                 <Pressable
-                  onPress={() => void feed.retryMore()}
+                  onPress={() => void feed.loadMoreRows()}
                   accessibilityRole="button"
                   accessibilityLabel="Reintentar"
                   style={styles.retry}

@@ -137,6 +137,25 @@ function mergeCategories(current: FeedCategory[], incoming: FeedCategory[]): Fee
   return merged;
 }
 
+/**
+ * Respaldo cuando no hay feed personalizado (RPC sin respuesta): hero y Top 10
+ * salen del feed clásico (destacado + categorías), sin razón textual.
+ */
+export function fallbackHeroTop10(
+  featured: MediaWithAffinity | null,
+  categories: FeedCategory[],
+): { hero: FeedItem[]; top10: FeedItem[] } {
+  const seen = new Set<string>();
+  const items: FeedItem[] = [];
+  for (const it of [...(featured ? [featured] : []), ...categories.flatMap((c) => c.media)]) {
+    const key = dedupKey(it.media);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    items.push({ media: it.media, bucket: it.bucket, explanation: it.explanation });
+  }
+  return { hero: items.slice(0, 5), top10: items.slice(5, 15) };
+}
+
 function dedupKey(media: Media): string {
   return `${media.media_type}:${media.id}`;
 }
@@ -396,15 +415,17 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
       const initialRowCount = Math.min(3, finalRows.length);
       const rowTotal = poolRows.length;
 
+      const noPersonal = personalized.hero.length === 0 && personalized.top10.length === 0;
       if (content) {
+        const fb = noPersonal ? fallbackHeroTop10(content.featured, content.categories) : null;
         set({
           featured: content.featured,
           categories: content.categories,
           hasMore: false,
           page: 0,
           status: 'ready',
-          hero: personalized.hero,
-          top10: personalized.top10,
+          hero: fb ? fb.hero : personalized.hero,
+          top10: fb ? fb.top10 : personalized.top10,
           rows: finalRows.slice(0, initialRowCount),
           _rowsPool: poolRows,
           rowCursor: initialRowCount,
@@ -419,14 +440,15 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
           catalogRepository.getFeedCategories(platforms, ctx, 0),
         ]);
         if (id !== loadId) return;
+        const fb = noPersonal ? fallbackHeroTop10(featured, first.categories) : null;
         set({
           featured,
           categories: first.categories,
           hasMore: first.hasMore,
           page: 0,
           status: 'ready',
-          hero: personalized.hero,
-          top10: personalized.top10,
+          hero: fb ? fb.hero : personalized.hero,
+          top10: fb ? fb.top10 : personalized.top10,
           rows: finalRows.slice(0, initialRowCount),
           _rowsPool: poolRows,
           rowCursor: initialRowCount,

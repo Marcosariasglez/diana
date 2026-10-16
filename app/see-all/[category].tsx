@@ -6,7 +6,11 @@ import { ArrowLeft, Film } from 'lucide-react-native';
 import { Poster } from '@/components/features/Poster';
 import { mediaTitle } from '@/components/features/mediaHelpers';
 import { EmptyState, ErrorState, LockedAffinityChip, Screen, Skeleton } from '@/components/ui';
+import { resolveSeeAll } from '@/features/feed/seeAll';
+import { affinity } from '@/recommender/affinity';
 import { catalogRepository } from '@/services';
+import { postgrestCatalogSource } from '@/services/supabase/catalog/postgrest.repository';
+import { mediaKeyOf } from '@/utils/media';
 import { getRankingContext } from '@/store/rankingContext';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -14,21 +18,14 @@ import { SHADOWS } from '@/theme/shadows';
 import { textStyle } from '@/theme/typography';
 import type { Media, MediaWithAffinity } from '@/types/media';
 
-type CategoryId = 'hidden-gems' | 'recommendations';
-
-const TITLES: Record<CategoryId, string> = {
-  'hidden-gems': 'Joyas ocultas',
-  recommendations: 'Recomendaciones',
-};
-
-const isCategory = (v: string | undefined): v is CategoryId => v === 'hidden-gems' || v === 'recommendations';
+const PAGE = 30;
 const keyOf = (m: MediaWithAffinity) => `${m.media.media_type}-${m.media.id}`;
 
 export default function SeeAllScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ category?: string | string[] }>();
   const raw = Array.isArray(params.category) ? params.category[0] : params.category;
-  const category = isCategory(raw) ? raw : null;
+  const target = resolveSeeAll(raw);
 
   const [items, setItems] = useState<MediaWithAffinity[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -40,11 +37,27 @@ export default function SeeAllScreen() {
 
   const fetchPage = useCallback(
     async (p: number) => {
-      if (!category) return;
+      if (!target) return;
       busy.current = true;
       try {
         const platforms = useProfileStore.getState().profile.favoritePlatforms;
-        const res = await catalogRepository.getCategoryItems(category, platforms, getRankingContext(), p);
+        const ctx = getRankingContext();
+        let res: { items: MediaWithAffinity[]; hasMore: boolean };
+        if (target.kind === 'legacy') {
+          res = await catalogRepository.getCategoryItems(target.id, platforms, ctx, p);
+        } else {
+          // Filas nuevas: el cursor es el desplazamiento (30 títulos por página).
+          const r = await postgrestCatalogSource.browse({
+            platforms,
+            ...target.def.params,
+            limit: PAGE,
+            cursor: p * PAGE,
+          });
+          res = {
+            items: r.items.map((m) => ({ media: m, bucket: affinity(ctx.taste, m, mediaKeyOf(m)) })),
+            hasMore: r.hasMore,
+          };
+        }
         if (!alive.current) return;
         page.current = p;
         setItems((cur) => {
@@ -60,7 +73,7 @@ export default function SeeAllScreen() {
         if (alive.current) setLoadingMore(false);
       }
     },
-    [category],
+    [target?.kind, target?.title, raw],
   );
 
   const loadFirst = useCallback(() => {
@@ -145,11 +158,11 @@ export default function SeeAllScreen() {
           <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text accessibilityRole="header" style={textStyle('screenTitle', { color: colors.ink })}>
-          {category ? TITLES[category] : 'Ver todo'}
+          {target ? target.title : 'Ver todo'}
         </Text>
       </View>
 
-      {!category ? (
+      {!target ? (
         <View style={styles.center}>
           <EmptyState icon={Film} title="Esta categoría no existe" />
         </View>
