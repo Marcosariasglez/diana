@@ -24,7 +24,6 @@ import { textStyle } from '@/theme/typography';
 import type { Media } from '@/types/media';
 
 /** Padding inferior para no chocar con la bottom navigation. */
-const BOTTOM_PADDING = 80;
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -95,7 +94,7 @@ export default function ExploreScreen() {
   return (
     <Screen>
       {/* Título — Fix 1: textStyle('screenTitle') + color del tema */}
-      <Text style={[styles.title, textStyle('screenTitle'), { color: colors.ink }]}>Explorar</Text>
+      <Text accessibilityRole="header" style={[styles.title, textStyle('screenTitle'), { color: colors.ink }]}>Explorar</Text>
 
       {/* SearchBar + FilterButton */}
       <View style={styles.searchBar}>
@@ -137,9 +136,6 @@ export default function ExploreScreen() {
         pageError={pageError}
         onPageRetry={loadMore}
       />
-
-      {/* Espacio inferior para bottom nav */}
-      <View style={{ height: BOTTOM_PADDING }} />
 
       {/* BottomSheet de filtros */}
       <BottomSheet visible={sheetOpen} onClose={closeFilterSheet} snapPoints={[0.85]}>

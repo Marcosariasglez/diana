@@ -11,7 +11,7 @@ export interface BrandMarkProps {
 export function BrandMark({ size = 72, background, foreground }: BrandMarkProps) {
   const ticks = Array.from({ length: 12 }, (_, i) => i * 30);
   return (
-    <Svg width={size} height={size} viewBox="0 0 1024 1024" accessibilityElementsHidden>
+    <Svg width={size} height={size} viewBox="0 0 1024 1024" accessible={false}>
       <Rect width={1024} height={1024} rx={300} fill={background} />
       {ticks.map((deg) => (
         <Rect

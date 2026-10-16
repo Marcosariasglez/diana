@@ -37,6 +37,10 @@ export interface FeedState {
   rowTotal: number;
   /** Pool interno de TODAS las filas compuestas (personalizadas + variadas). */
   _rowsPool: FeedRow[];
+  /** P11: desplazamiento del siguiente tramo de recomendaciones del RPC (null = sin RPC). */
+  _recOffset: number | null;
+  /** P11: el RPC ya no tiene más recomendaciones. */
+  _recsDone: boolean;
   loadNextRows: () => Promise<void>;
 }
 
@@ -57,7 +61,15 @@ const INITIAL_ROWS = {
   rowCursor: 0,
   rowTotal: 0,
   _rowsPool: [] as FeedRow[],
+  _recOffset: null as number | null,
+  _recsDone: false,
 };
+
+/** Recomendaciones que pide la primera carga y cada tramo siguiente (P11). */
+const REC_FIRST = 80;
+const REC_PAGE = 40;
+/** Títulos por fila «Más para ti». */
+const MORE_ROW_SIZE = 20;
 
 // Contador para loadFirstPage / loadNextPage (descarta cargas obsoletas)
 let loadId = 0;
@@ -245,6 +257,58 @@ async function fillVariedRows(
   return { filledRows: filled, hadError };
 }
 
+type StoreSet = (partial: Partial<FeedState> | ((s: FeedState) => Partial<FeedState>)) => void;
+
+/**
+ * P11: cuando se acaban las filas, pide el siguiente tramo al RPC (`p_offset`) y lo
+ * añade como fila «Más para ti». Sin RPC, o con el RPC agotado, no hace nada.
+ */
+async function loadMoreRecommendations(set: StoreSet, get: () => FeedState): Promise<void> {
+  const { _recOffset: offset, _recsDone: done } = get();
+  if (done || offset === null || activeRecommender() !== 'content') return;
+  const rid = ++rowsLoadId;
+  set({ rowsStatus: 'loading' });
+  try {
+    const platforms = useProfileStore.getState().profile.favoritePlatforms;
+    const ctx = getRankingContext();
+    const recs = await contentRecommend({ platforms, limit: REC_PAGE, offset });
+    if (rid !== rowsLoadId) return;
+    if (!recs) {
+      set({ rowsStatus: 'ready', _recsDone: true });
+      return;
+    }
+    const s = get();
+    const shown = new Set<string>(ctx.seenKeys);
+    for (const it of [...s.hero, ...s.top10]) shown.add(dedupKey(it.media));
+    for (const r of s.rows) for (const it of r.items) shown.add(dedupKey(it.media));
+    const items: FeedItem[] = [];
+    for (const r of recs) {
+      const key = dedupKey(r.media);
+      if (shown.has(key)) continue;
+      shown.add(key);
+      items.push({ media: r.media, bucket: bucketFromScore(r.score), explanation: r.explanation });
+      if (items.length >= MORE_ROW_SIZE) break;
+    }
+    const progress = { _recOffset: offset + recs.length, _recsDone: recs.length < REC_PAGE };
+    if (items.length === 0) {
+      set({ rowsStatus: 'ready', ...progress });
+      return;
+    }
+    set((cur) => ({
+      rows: [
+        ...cur.rows,
+        { id: `more-${offset}`, title: 'Más para ti', subtitle: 'Por tu gusto personal', items, seeAll: null },
+      ],
+      rowTotal: cur.rowTotal + 1,
+      rowCursor: cur.rowCursor + 1,
+      rowsStatus: 'ready',
+      ...progress,
+    }));
+  } catch {
+    if (rid === rowsLoadId) set({ rowsStatus: 'ready', rowsError: true, _recsDone: true });
+  }
+}
+
 export const useFeedStore = create<FeedState>()((set, get) => ({
   ...INITIAL,
   ...INITIAL_ROWS,
@@ -259,7 +323,7 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
       // F8: RPC call conditional - solo si activeRecommender es 'content'
       let rpcRecs: ContentRecommendation[] | null = null;
       if (activeRecommender() === 'content') {
-        rpcRecs = await contentRecommend({ platforms, limit: 80 });
+        rpcRecs = await contentRecommend({ platforms, limit: REC_FIRST });
         if (id !== loadId) return;
       }
 
@@ -432,6 +496,8 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
           rowTotal,
           rowsStatus: 'ready',
           rowsError: rowsErr,
+          _recOffset: rpcRecs && rpcRecs.length > 0 ? rpcRecs.length : null,
+          _recsDone: !rpcRecs || rpcRecs.length < REC_FIRST,
         });
       } else {
         // Heurística
@@ -455,6 +521,8 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
           rowTotal,
           rowsStatus: 'ready',
           rowsError: rowsErr,
+          _recOffset: rpcRecs && rpcRecs.length > 0 ? rpcRecs.length : null,
+          _recsDone: !rpcRecs || rpcRecs.length < REC_FIRST,
         });
       }
     } catch {
@@ -486,7 +554,11 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
     // concurrent calls from bumping rid and invalidating each other.
     const { rowsStatus, rowCursor, rowTotal, _rowsPool } = get();
     if (rowsStatus === 'loading') return;
-    if (rowCursor >= rowTotal) return;
+    if (rowCursor >= rowTotal) {
+      // P11: filas agotadas → siguiente tramo de recomendaciones del RPC.
+      await loadMoreRecommendations(set, get);
+      return;
+    }
     if (_rowsPool.length === 0) return;
     const rid = ++rowsLoadId;
     set({ rowsStatus: 'loading' });

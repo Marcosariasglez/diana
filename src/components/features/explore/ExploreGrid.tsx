@@ -23,6 +23,8 @@ export interface ExploreGridProps {
   onPageRetry?: () => void;
 }
 
+/** Barra inferior (BOTTOM_NAV_HEIGHT = 72) + 24 de aire; no se importa para no arrastrar la barra a los tests. */
+const NAV_CLEARANCE = 96;
 const keyOf = (m: Media) => `${m.media_type}-${m.id}`;
 
 /** Calcula columnas responsive según el ancho de pantalla (reactivo a redimensionar). */
@@ -144,7 +146,8 @@ export function ExploreGrid({ items, status, hasMore, loadingMore, pageError, on
 const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 20,
-    paddingBottom: 160,
+    // La rejilla llega hasta el borde: el espacio para la barra inferior va DENTRO del scroll.
+    paddingBottom: NAV_CLEARANCE,
     paddingTop: 4,
   },
   cell: {

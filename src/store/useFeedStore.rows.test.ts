@@ -97,4 +97,34 @@ describe('loadNextRows — regresión', () => {
     expect(s.rowsStatus).toBe('ready');
     expect(s.rowCursor).toBe(s.rowTotal);
   });
+
+  it('P11: al agotar las filas pide más recomendaciones con offset y añade «Más para ti»', async () => {
+    browseWithItems();
+    const rec = (id: number) => ({ media: movie(id), score: 0.5, explanation: [] as string[] });
+    (contentRecommend as jest.Mock).mockImplementation(async (p: { offset?: number; limit?: number }) => {
+      if (!p.offset) return Array.from({ length: 80 }, (_, i) => rec(i + 1));
+      if (p.offset === 80) return Array.from({ length: 40 }, (_, i) => rec(500 + i));
+      return [];
+    });
+    await useFeedStore.getState().loadFirstPage();
+    for (let i = 0; i < 12; i++) await useFeedStore.getState().loadNextRows();
+    const more = useFeedStore.getState().rows.filter((r) => r.id.startsWith('more-'));
+    expect(more).toHaveLength(1);
+    expect(more[0].title).toBe('Más para ti');
+    expect(more[0].items.length).toBeGreaterThan(0);
+    expect(contentRecommend).toHaveBeenCalledWith(expect.objectContaining({ offset: 80 }));
+    // 40 < REC_PAGE no: el tramo vino completo → pide otro; el siguiente vacío cierra.
+    const s = useFeedStore.getState();
+    expect(s.rowsStatus).toBe('ready');
+    expect(s._recsDone).toBe(true);
+  });
+
+  it('P11: sin RPC (null) no se piden más recomendaciones', async () => {
+    browseWithItems();
+    (contentRecommend as jest.Mock).mockResolvedValue(null);
+    await useFeedStore.getState().loadFirstPage();
+    const calls = (contentRecommend as jest.Mock).mock.calls.length;
+    for (let i = 0; i < 12; i++) await useFeedStore.getState().loadNextRows();
+    expect((contentRecommend as jest.Mock).mock.calls.length).toBe(calls);
+  });
 });

@@ -18,8 +18,6 @@ export function RankNumber({ rank, size = 110 }: RankNumberProps) {
       width={width}
       height={size}
       accessible={false}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
       testID="rank-number"
     >
       <SvgText
