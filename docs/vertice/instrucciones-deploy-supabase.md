@@ -88,7 +88,7 @@ Asegúrate de que estos secretos existen en Supabase:
 
 ```bash
 cd diana-tmp
-npx supabase functions deploy catalog-backfill --no-variables
+npx supabase functions deploy catalog-backfill --project-ref hvjmewokgxgrshtzhdjq
 ```
 
 #### B.3 Ejecutar la función manualmente

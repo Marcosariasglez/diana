@@ -1,11 +1,13 @@
 # Relleno del catálogo. Llama a la Edge Function `catalog-backfill`
 # (reanudable: cada llamada procesa ~60 títulos y devuelve `remaining`).
-# Dos modos:
+# Tres modos:
 #   - titles:  filas con título vacío (stubs de TMDB discover, 2026-10-11).
+#   - credits: directores y reparto (credits_checked_at NULL, migración 0026):
+#              alimenta la búsqueda por director/actor de Explorar.
 #   - runtime: filas con duración NULL (discover no la trae: TODA fila nueva
 #              de la sync llega sin duración, 2026-10-13).
 #
-# El cron diario ejecuta los DOS modos seguidos; un dispatch manual ejecuta
+# El cron diario ejecuta los TRES modos seguidos; un dispatch manual ejecuta
 # solo el elegido. BOMBA: repite mientras `remaining > 0`. El primer relleno
 # de duración (~40.000 títulos) ocupa varios días de cron (~10.000/día); a
 # partir de ahí cada día solo rellena las novedades de la sync.
@@ -21,9 +23,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'titles = rellena títulos vacíos; runtime = rellena la duración (NULL)'
+        description: 'titles = títulos vacíos; runtime = duración (NULL); credits = directores y reparto'
         type: choice
-        options: [titles, runtime]
+        options: [titles, runtime, credits]
         default: titles
 
 jobs:
@@ -37,8 +39,8 @@ jobs:
     steps:
       - name: 'Relleno (bomba: repite mientras queden filas vacías)'
         env:
-          # Cron: los dos modos. Dispatch manual: solo el elegido.
-          MODES: ${{ inputs.mode || 'titles runtime' }}
+          # Cron: los tres modos. Dispatch manual: solo el elegido.
+          MODES: ${{ inputs.mode || 'titles runtime credits' }}
         run: |
           set -uo pipefail
           # BOMBA: cada llamada procesa un presupuesto (~2 min) y es REANUDABLE

@@ -11,6 +11,7 @@
  *   supabase/migrations/0006_catalogo.sql
  *   supabase/migrations/0024_catalog_credits.sql
  *   supabase/migrations/0025_search_titles.sql
+ *   supabase/migrations/0026_catalog_credits_checked.sql
  *   scripts/sql-search-test.sql        (datos sintéticos + asserts; falla si alguno cae)
  *
  * Uso: node scripts/sql-search-local.mjs [--keep]
@@ -74,6 +75,7 @@ try {
     'supabase/migrations/0006_catalogo.sql',
     'supabase/migrations/0024_catalog_credits.sql',
     'supabase/migrations/0025_search_titles.sql',
+    'supabase/migrations/0026_catalog_credits_checked.sql',
     'scripts/sql-search-test.sql',
   ];
   for (const f of files) {
@@ -83,7 +85,13 @@ try {
   console.log('✓ scripts copiados al contenedor');
 
   // 5 · Setup + migraciones, en orden.
-  const steps = ['sql-recommend-setup.sql', '0006_catalogo.sql', '0024_catalog_credits.sql', '0025_search_titles.sql'];
+  const steps = [
+    'sql-recommend-setup.sql',
+    '0006_catalogo.sql',
+    '0024_catalog_credits.sql',
+    '0025_search_titles.sql',
+    '0026_catalog_credits_checked.sql',
+  ];
   for (const s of steps) {
     const r = docker([
       'exec', '-e', 'PGPASSWORD=postgres', NAME,

@@ -183,3 +183,22 @@ end
 $$;
 
 select 'OK 0025: search_titles verificada (' || count(*) || ' filas sintéticas)' as resultado from public.catalog_titles;
+
+-- 14 · Migración 0026: la cola de créditos pendientes es `credits_checked_at IS NULL`.
+do $$
+declare pendientes int; marcados int;
+begin
+  -- Las filas de prueba se insertaron DESPUÉS de la migración: todas pendientes.
+  select count(*) into pendientes from public.catalog_titles where credits_checked_at is null;
+  if pendientes <> 14 then raise exception 'assert-14a: pendientes = % (esperado 14)', pendientes; end if;
+  -- Marcar una fila la saca de la cola, tenga o no créditos.
+  update public.catalog_titles set credits_checked_at = now() where tmdb_id in (7, 14);
+  select count(*) into pendientes from public.catalog_titles where credits_checked_at is null;
+  select count(*) into marcados from public.catalog_titles where credits_checked_at is not null;
+  if pendientes <> 12 or marcados <> 2 then raise exception 'assert-14b: % pendientes / % marcados', pendientes, marcados; end if;
+  -- El índice parcial existe.
+  if not exists (select 1 from pg_indexes where indexname = 'catalog_titles_credits_pending_idx') then
+    raise exception 'assert-14c: falta el índice de pendientes';
+  end if;
+end
+$$;
