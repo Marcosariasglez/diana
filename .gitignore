@@ -1,0 +1,66 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# logs de build/servidor locales
+*.log
+
+# artefactos locales de la fase A (backfill de features y evaluación real)
+docs/vertice/plan2/eval-dump.json
+# export personal de Letterboxd del dueño (datos reales, NUNCA versionar)
+docs/vertice/plan2/btest-export/
+scripts/.tmp-*.mjs
+scripts/.tmp-*.js
+scripts/.tmp-*.sql
+
+# tests (Playwright E2E)
+test-results/
+playwright-report/
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+example
+
+# generated native folders
+/ios
+/android
+jest-out.txt
+
+# test coverage
+coverage/
+
+# Supabase CLI (estado local del CLI, no parte del repo)
+supabase/.temp/
+supabase/.env*
