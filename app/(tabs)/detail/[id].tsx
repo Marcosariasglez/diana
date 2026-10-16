@@ -163,7 +163,7 @@ function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
   }, [type, id]);
 
   if (!data) return null;
-  if (data.flatrate.length === 0 && data.rent.length === 0 && data.buy.length === 0 && data.rentOrBuy.length === 0) return null;
+  if (data.flatrate.length === 0 && data.rent.length === 0 && data.buy.length === 0) return null;
   return (
     <View style={wttStyles.wrap} accessibilityLabel="Dónde verla">
       <View style={wttStyles.head}>
@@ -173,7 +173,6 @@ function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
       <WhereToWatchRow label="Suscripción" ids={data.flatrate} c={colors} />
       <WhereToWatchRow label="Alquiler" ids={data.rent} c={colors} />
       <WhereToWatchRow label="Compra" ids={data.buy} c={colors} />
-      <WhereToWatchRow label="Alquiler o compra" ids={data.rentOrBuy} c={colors} />
       <Text style={[textStyle('bodySmall', { fontSize: 10, color: colors.mut })]}>{'Datos de disponibilidad por JustWatch'}</Text>
     </View>
   );
