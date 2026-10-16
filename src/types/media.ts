@@ -64,3 +64,32 @@ export interface FeedCategory {
   media: MediaWithAffinity[];
   hasSeeAll: boolean;
 }
+
+// --- P6: tipos del feed rediseñado ---
+
+/** Razón de recomendación (expuesta al usuario, nunca nota numérica). */
+export type ReasonKind = 'liked' | 'genre' | 'era';
+
+export interface Reason {
+  kind: ReasonKind;
+  /** Texto visible: «Porque te gustó X», «Porque te gusta el drama», «Porque buscas cine de los 90». */
+  text: string;
+}
+
+/** Ítem de feed: MediaWithAffinity extendido con razón. */
+export interface FeedItem extends MediaWithAffinity {
+  reason?: Reason;
+}
+
+/** Fila del feed de Inicio: título + ítems + razón opcional + enlace «Ver todo». */
+export interface FeedRow {
+  /** Id único: puede ser string libre como 'genre-18', 'decade-1990', 'liked-movie-496243', 'popular', 'top-rated'. */
+  id: string;
+  /** Título de sección: «Joyas ocultas», «Porque te gustó Sicario», etc. */
+  title: string;
+  /** Subtítulo de razón: «Basado en tus valoraciones de thriller» (vacío si no aplica). */
+  subtitle?: string;
+  items: FeedItem[];
+  /** Categoría de see-all (null si no hay «Ver todo»). */
+  seeAll?: string | null;
+}

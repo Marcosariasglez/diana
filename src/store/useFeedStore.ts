@@ -1,16 +1,10 @@
 import { create } from 'zustand';
-import type { AffinityBucket, FeedCategory, MediaWithAffinity } from '@/types/media';
+import type { FeedCategory, MediaWithAffinity } from '@/types/media';
+import { bucketFromScore } from '@/recommender/affinity';
 import { catalogRepository } from '@/services';
 import { activeRecommender, contentRecommend } from '@/services/recommender';
 import { getRankingContext } from './rankingContext';
 import { useProfileStore } from './useProfileStore';
-
-/** score del RPC `recommend` ([-1,1], 0 en frío) → cubo de afinidad. */
-function bucketFromScore(score: number): AffinityBucket {
-  // Mismos umbrales relativos que bucketOfTenths (alto/medio/bajo) pero sobre
-  // un score normalizado: >0.25 alto, >=0 medio, resto bajo.
-  return score > 0.25 ? 'alto' : score >= 0 ? 'medio' : 'bajo';
-}
 
 /**
  * D2-2.6: primer página del feed con el recomendador activo. `content`
