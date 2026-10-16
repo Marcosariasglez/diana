@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useState } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Search, X } from 'lucide-react-native';
@@ -8,12 +9,15 @@ export interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
+  /** Elemento renderizado a la derecha, dentro del contenedor. */
+  accessory?: React.ReactNode;
 }
 
 export function SearchBar({
   value,
   onChangeText,
   placeholder = 'Buscar películas y series',
+  accessory,
 }: SearchBarProps) {
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -57,6 +61,7 @@ export function SearchBar({
           <X size={18} color={colors.textSecondary} />
         </Pressable>
       ) : null}
+      {accessory}
     </View>
   );
 }

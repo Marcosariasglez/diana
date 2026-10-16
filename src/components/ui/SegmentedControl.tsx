@@ -3,12 +3,12 @@ import { useThemedStyles } from '@/theme/ThemeProvider';
 import { textStyle } from '@/theme/typography';
 
 export interface SegmentedOption {
-  label: string;
-  value: string;
+  readonly label: string;
+  readonly value: string;
 }
 
 export interface SegmentedControlProps {
-  options: SegmentedOption[];
+  readonly options: readonly SegmentedOption[];
   selected: string;
   onChange: (value: string) => void;
   /** Variante compacta (13/600, ancho automático). */
