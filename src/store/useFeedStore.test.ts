@@ -12,9 +12,24 @@ jest.mock('@/services/recommender', () => ({
   activeRecommender: jest.fn(),
   contentRecommend: jest.fn(),
 }));
-jest.mock('./rankingContext', () => ({ getRankingContext: () => ({}) }));
+jest.mock('./rankingContext', () => ({
+  getRankingContext: () => ({
+    userId: 'test',
+    taste: { userId: 'test', weightBp: {} },
+    seenKeys: new Set<string>(),
+  }),
+}));
 jest.mock('./useProfileStore', () => ({
   useProfileStore: { getState: () => ({ profile: { favoritePlatforms: ['netflix'] } }) },
+}));
+jest.mock('./useHistoryStore', () => ({
+  useHistoryStore: { getState: () => ({ entries: [], watched: [] }) },
+}));
+jest.mock('@/services/supabase/catalog/postgrest.repository', () => ({
+  postgrestCatalogSource: {
+    byIds: jest.fn().mockResolvedValue([]),
+    browse: jest.fn().mockResolvedValue({ items: [], nextCursor: null, hasMore: false }),
+  },
 }));
 
 import { useFeedStore } from './useFeedStore';
@@ -93,7 +108,7 @@ describe('useFeedStore con recomendador (D2-2.6)', () => {
     expect(s.categories[0].media.map((m) => m.media.id)).toEqual([22]);
     expect(s.categories[0].media[0].explanation).toEqual(['Porque te gustó Y']);
     expect(mockGetFeatured).not.toHaveBeenCalled();
-    expect(contentRecommend).toHaveBeenCalledWith({ platforms: ['netflix'], limit: 60 });
+    expect(contentRecommend).toHaveBeenCalledWith({ platforms: ['netflix'], limit: 80 });
   });
 
   it('en content en frío (scores 0, sin explicación) pinta populares sin crashear', async () => {

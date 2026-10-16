@@ -1,4 +1,44 @@
 import { ROUTES, roomPathForPhase } from '@/constants/routes';
+
+jest.mock('@/services/recommender', () => ({
+  activeRecommender: jest.fn(() => 'heuristic'),
+  contentRecommend: jest.fn(),
+}));
+jest.mock('@/services/supabase/catalog/postgrest.repository', () => ({
+  postgrestCatalogSource: {
+    byIds: jest.fn().mockResolvedValue([]),
+    browse: jest.fn().mockResolvedValue({
+      items: [
+        {
+          id: 100,
+          media_type: 'movie',
+          title: 'Pelicula 100',
+          release_date: '2022-01-01',
+          runtime: 100,
+          poster_path: null,
+          backdrop_path: null,
+          genres: [],
+          overview: '',
+          vote_average: 0,
+          vote_count: 0,
+          popularity: 0,
+          platforms: ['netflix'],
+          alt_titles: [],
+        },
+      ],
+      nextCursor: null,
+      hasMore: false,
+    }),
+  },
+}));
+jest.mock('./rankingContext', () => ({
+  getRankingContext: () => ({
+    userId: 'test',
+    taste: { userId: 'test', weightBp: {} },
+    seenKeys: new Set<string>(),
+  }),
+}));
+
 import { createDefaultProfile, useProfileStore } from './useProfileStore';
 import { useFeedStore } from './useFeedStore';
 import { useHistoryStore } from './useHistoryStore';

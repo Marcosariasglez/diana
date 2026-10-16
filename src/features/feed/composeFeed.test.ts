@@ -217,4 +217,19 @@ describe('composeFeed', () => {
     expect(rowIds).toContain('top-rated');
     expect(rowIds).toContain('tv');
   });
+
+  it('regresión pickHero: dos recs mismo género, segundo con backdrop → 2 sin colgar', () => {
+    const recs = [
+      rec(movie(1, 'M1', [18], false, 2020), 0.8),  // drama, sin backdrop
+      rec(movie(2, 'M2', [18], true, 2020), 0.7),   // drama, con backdrop
+    ];
+    const result = composeFeed({
+      recs,
+      enriched: emptyEnriched(),
+      taste: taste({}),
+      eraPref: null,
+      seenKeys: emptySeen(),
+    });
+    expect(result.hero.length).toBe(2);
+  });
 });

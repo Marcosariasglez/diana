@@ -33,6 +33,8 @@ export interface RecommendParams {
   /** nº de candidatos (el servidor ordena por afinidad y recorta). */
   limit?: number;
   type?: MediaType;
+  /** Offset para paginación (el RPC ya tiene p_offset). */
+  offset?: number;
 }
 
 /**
@@ -47,7 +49,7 @@ export async function contentRecommend(params: RecommendParams): Promise<Content
     const { data, error } = await sb.rpc('recommend', {
       p_platforms: [...params.platforms],
       p_limit: params.limit ?? 50,
-      p_offset: 0,
+      p_offset: params.offset ?? 0,
       p_types: params.type ? [params.type] : null,
     });
     if (error) return null;

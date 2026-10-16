@@ -233,20 +233,20 @@ export function composeFeed(input: ComposeFeedInput): ComposeFeedOutput {
     });
   }
 
-  // Alterna personalizada / variada
+  // Alterna personalizada / variada (for...of sobre colección finita, sin while)
   const rows: FeedRow[] = [];
-  let pi = 0, vi = 0;
-  let usePersonalized = true;
+  const maxLen = Math.max(personalizedRows.length, variedRows.length);
 
-  while (pi < personalizedRows.length || vi < variedRows.length) {
-    if (usePersonalized && pi < personalizedRows.length) {
-      rows.push(personalizedRows[pi++]);
-    } else if (vi < variedRows.length) {
-      rows.push(variedRows[vi++]);
+  for (let i = 0; i < maxLen; i++) {
+    if (i % 2 === 0) {
+      // Par: personalizada primero, luego variada
+      if (i < personalizedRows.length) rows.push(personalizedRows[i]);
+      if (i < variedRows.length) rows.push(variedRows[i]);
     } else {
-      rows.push(personalizedRows[pi++]);
+      // Impar: variada primero, luego personalizada
+      if (i < variedRows.length) rows.push(variedRows[i]);
+      if (i < personalizedRows.length) rows.push(personalizedRows[i]);
     }
-    usePersonalized = !usePersonalized;
   }
 
   return { hero, top10, rows };
