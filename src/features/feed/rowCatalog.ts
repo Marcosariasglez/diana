@@ -18,6 +18,7 @@ export const ROW_CATALOG: readonly RowDefinition[] = [
     id: 'hidden-gems',
     title: 'Joyas ocultas',
     params: { sort: 'vote', type: 'movie' },
+    seeAll: 'hidden-gems',
   },
   {
     id: 'popular',

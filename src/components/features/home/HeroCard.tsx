@@ -73,7 +73,7 @@ export function HeroCard({ item, index, total, width, height, onPress, eyebrow =
             <Poster media={media} size="giant" hideTitle />
           </View>
         ) : null}
-        <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Svg width="100%" height="100%" preserveAspectRatio="none" style={[StyleSheet.absoluteFill, styles.noTouch]}>
           <Defs>
             <LinearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0.25" stopColor={colors.card} stopOpacity={0} />
@@ -85,7 +85,8 @@ export function HeroCard({ item, index, total, width, height, onPress, eyebrow =
         </Svg>
       </Pressable>
 
-      <View style={styles.content} pointerEvents="box-none">
+      <View style={[styles.content, styles.passThrough]}>
+        <View style={[styles.info, styles.noTouch]}>
         <Text style={[textStyle('label'), { color: colors.textSecondary }]} accessibilityElementsHidden>
           {eyebrow}
         </Text>
@@ -101,6 +102,7 @@ export function HeroCard({ item, index, total, width, height, onPress, eyebrow =
             <LockedAffinityChip bucket={bucket} locked />
           </View>
         )}
+        </View>
         <View style={styles.actions}>
           <Button label="Ver ficha" onPress={() => onPress(media)} accessibilityLabel={`Ver ficha de ${title}`} style={styles.primary} />
           <WatchlistButton mediaType={media.media_type} mediaId={media.id} />
@@ -114,6 +116,9 @@ const styles = StyleSheet.create({
   card: { borderRadius: 24, overflow: 'hidden' },
   posterWrap: { alignItems: 'center', paddingTop: 16 },
   content: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 6 },
+  info: { gap: 6 },
+  noTouch: { pointerEvents: 'none' },
+  passThrough: { pointerEvents: 'box-none' },
   chipRow: { flexDirection: 'row' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 },
   primary: { flex: 1 },

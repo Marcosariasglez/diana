@@ -87,7 +87,8 @@ export function HeroCarousel({ items, onPress }: HeroCarouselProps) {
         showsHorizontalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
         contentContainerStyle={{ paddingHorizontal: SIDE }}
-        onMomentumScrollEnd={onScrollEnd}
+        onScroll={onScrollEnd}
+        scrollEventThrottle={32}
       />
       {items.length > 1 ? (
         <View

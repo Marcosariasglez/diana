@@ -302,6 +302,7 @@ async function loadMoreRecommendations(set: StoreSet, get: () => FeedState): Pro
       rowTotal: cur.rowTotal + 1,
       rowCursor: cur.rowCursor + 1,
       rowsStatus: 'ready',
+      rowsError: false,
       ...progress,
     }));
   } catch {
@@ -615,6 +616,7 @@ export const useFeedStore = create<FeedState>()((set, get) => ({
         rows: [...s.rows, ...newRows],
         rowCursor: s.rowCursor + added,
         rowsStatus: 'ready',
+        rowsError: false,
       }));
     } catch {
       if (rid === rowsLoadId) set({ rowsStatus: 'ready', rowsError: true });
