@@ -1,5 +1,5 @@
 // Edge Function `tmdb` (Deno). Proxy de TMDB con la clave oculta, cache en tmdb_cache y limite por usuario.
-// Entrada: POST JSON { action, ... }. Acciones: 'pool' | 'media' | 'season' | 'search' | 'match' | 'providers'.
+// Entrada: POST JSON { action, ... }. Acciones: 'pool' | 'media' | 'season' | 'search' | 'match' | 'providers' | 'availability'.
 // Salida: JSON ya normalizado al formato de Diana (src/types/media.ts). Secretos: TMDB_READ_TOKEN.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { filterDocumentaries, filterShorts, tagDocumentaryInResults } from './searchKinds.ts';
@@ -368,6 +368,22 @@ Deno.serve(async (req) => {
           return { i, ...hit };
         });
         return json(out.sort((a, b) => a.i - b.i));
+      }
+      case 'availability': {
+        // «Dónde verla»: disponibilidad REAL por modalidad en España (TMDB /watch/providers).
+        const type = body.type === 'tv' ? 'tv' : body.type === 'movie' ? 'movie' : null;
+        const id = Number(body.id);
+        if (!type || !Number.isInteger(id) || id <= 0) return json({ error: 'bad-input' }, 400);
+        return json(
+          await cached(`avail:${type}:${id}:v1`, 6 * HOUR, async () => {
+            const res = await tmdb(`/${type}/${id}/watch/providers`);
+            const es = (res?.results?.[REGION] ?? {}) as Any;
+            const ids = (list: Any[] | undefined) => [
+              ...new Set((list ?? []).map((p) => PROVIDER_MAP[p.provider_id]).filter((x): x is string => !!x)),
+            ];
+            return { flatrate: ids(es.flatrate), rent: ids(es.rent), buy: ids(es.buy) };
+          }),
+        );
       }
       case 'providers': {
         const res = await tmdb('/watch/providers/movie', { watch_region: REGION });

@@ -14,6 +14,8 @@ import { mediaMeta, mediaTitle, mediaYear, posterUri } from '@/components/featur
 import { Button, ErrorState, Screen, Skeleton } from '@/components/ui';
 import { parseDetailParams, valoringLabel, type DetailParams } from '@/features/detail/detailParams';
 import { useDetailData, useDetailMedia } from '@/features/detail/useDetailData';
+import { groupAvailability, type Availability } from '@/features/detail/whereToWatch';
+import { invokeTmdb } from '@/services/tmdb/invoke';
 import { activeCatalogSource } from '@/services/supabase/catalog/select';
 import type { CatalogRow } from '@/services/supabase/catalog/types';
 import { useTheme, useThemedStyles } from '@/theme/ThemeProvider';
@@ -97,12 +99,6 @@ import { light } from '@/theme/tokens';
 
 const FALLBACK_COLORS = { inkColor: light.ink, cardColor: light.card };
 
-interface WhereToWatchData {
-  flatrate: string[];
-  rent: string[];
-  buy: string[];
-}
-
 function WhereToWatchRow({ label, ids, c }: { label: string; ids: string[]; c: { accSoft: string; acc: string; textSecondary: string } }) {
   if (ids.length === 0) return null;
   return (
@@ -127,7 +123,7 @@ function WhereToWatchRow({ label, ids, c }: { label: string; ids: string[]; c: {
  */
 function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
   const { colors } = useTheme();
-  const [data, setData] = useState<WhereToWatchData | null>(null);
+  const [data, setData] = useState<ReturnType<typeof groupAvailability> | null>(null);
   // Token por request (no un `alive` compartido): un ref común lo reabre el
   // siguiente efecto, y una respuesta LENTA del título anterior pasaría la
   // guarda y pintaría la disponibilidad sobre el título nuevo. Con un token
@@ -138,23 +134,36 @@ function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
     // Al cambiar de título se descarta el bloque anterior (si el nuevo no
     // tiene disponibilidad, el bloque no debe seguir mostrando el del viejo).
     setData(null);
-    activeCatalogSource
-      .availability(type, id)
-      .then((row: CatalogRow | null) => {
-        if (token !== requestId.current || !row) return;
-        setData({
-          flatrate: row.platforms_flatrate ?? [],
-          rent: row.platforms_rent ?? [],
-          buy: row.platforms_buy ?? [],
-        });
-      })
-      .catch(() => {
-        /* sin disponibilidad: no se pinta el bloque */
-      });
+    const apply = (raw: Availability, reliable: boolean) => {
+      if (token === requestId.current) setData(groupAvailability(raw, reliable));
+    };
+    // 1) Disponibilidad real de TMDB (función `tmdb`, acción availability).
+    // 2) Si no está disponible (sin red, función sin desplegar, modo mock):
+    //    el catálogo guardado, que NO distingue alquiler de compra.
+    invokeTmdb<Availability>({ action: 'availability', type, id })
+      .then((live) => apply(live, true))
+      .catch(() =>
+        activeCatalogSource
+          .availability(type, id)
+          .then((row: CatalogRow | null) => {
+            if (!row) return;
+            apply(
+              {
+                flatrate: row.platforms_flatrate ?? [],
+                rent: row.platforms_rent ?? [],
+                buy: row.platforms_buy ?? [],
+              },
+              false,
+            );
+          })
+          .catch(() => {
+            /* sin disponibilidad: no se pinta el bloque */
+          }),
+      );
   }, [type, id]);
 
   if (!data) return null;
-  if (data.flatrate.length === 0 && data.rent.length === 0 && data.buy.length === 0) return null;
+  if (data.flatrate.length === 0 && data.rent.length === 0 && data.buy.length === 0 && data.rentOrBuy.length === 0) return null;
   return (
     <View style={wttStyles.wrap} accessibilityLabel="Dónde verla">
       <View style={wttStyles.head}>
@@ -164,6 +173,7 @@ function WhereToWatch({ type, id }: { type: 'movie' | 'tv'; id: number }) {
       <WhereToWatchRow label="Suscripción" ids={data.flatrate} c={colors} />
       <WhereToWatchRow label="Alquiler" ids={data.rent} c={colors} />
       <WhereToWatchRow label="Compra" ids={data.buy} c={colors} />
+      <WhereToWatchRow label="Alquiler o compra" ids={data.rentOrBuy} c={colors} />
       <Text style={[textStyle('bodySmall', { fontSize: 10, color: colors.mut })]}>{'Datos de disponibilidad por JustWatch'}</Text>
     </View>
   );
